@@ -6,11 +6,18 @@ import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
 import AnnouncementBar from "./AnnouncementBar";
 import Navbar from "./Navbar";
 import ThoranamLogo from "@/components/ui/ThoranamLogo";
-import { CATEGORY_LINKS } from "@/lib/navigation";
+import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+
+  useState(() => {
+    if (typeof window !== "undefined") {
+      setCategories(getStoredCategories());
+    }
+  });
 
   return (
     <header className="w-full sticky top-0 z-40 bg-white shadow-xs">
@@ -47,9 +54,9 @@ export default function Header() {
           {/* Right: Account & Cart Icons */}
           <div className="flex items-center justify-end gap-4 sm:gap-5 w-1/3">
             <Link
-              href="/contact"
+              href="/dashboard"
               className="text-white/90 hover:text-white transition-colors p-1"
-              aria-label="User Account"
+              aria-label="Admin Dashboard"
             >
               <User className="w-5 h-5 stroke-[1.8]" />
             </Link>
@@ -96,8 +103,8 @@ export default function Header() {
                 Collections
               </p>
               <ul className="space-y-3">
-                {CATEGORY_LINKS.map((item) => (
-                  <li key={item.label}>
+                {categories.map((item) => (
+                  <li key={item.id || item.label}>
                     <Link
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
