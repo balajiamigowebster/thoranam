@@ -62,6 +62,10 @@ export default function DashboardProducts() {
   };
 
   const handleSaveProduct = async (productData) => {
+    // If filtering by a category that differs, switch filter to all so user sees their new saree immediately
+    if (selectedCategory !== "all" && productData.category !== selectedCategory) {
+      setSelectedCategory("all");
+    }
     await saveProductToDb(productData);
     const refreshed = await fetchProductsFromDb();
     setProducts(refreshed);

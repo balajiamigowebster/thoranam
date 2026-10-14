@@ -20,13 +20,11 @@ export async function fetchProductsFromDb() {
 
 export async function saveProductToDb(productData) {
   try {
-    const isEdit = Boolean(productData.id && typeof productData.id === "number" && productData.id < 1000000000);
-    // If it has a real DB ID (typically integer auto-increment) or if editing
-    const method = productData.id && !String(productData.id).startsWith("temp_") ? "PUT" : "POST";
+    const isEdit = Boolean(productData.id);
+    const method = isEdit ? "PUT" : "POST";
     
-    // We send to API
     const res = await fetch("/api/products", {
-      method: productData.id ? "PUT" : "POST",
+      method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(productData),
     });
@@ -34,6 +32,8 @@ export async function saveProductToDb(productData) {
     if (json.success && json.data) {
       window.dispatchEvent(new Event("thoranam_products_updated"));
       return json.data;
+    } else {
+      console.error("API error saving product:", json.message);
     }
   } catch (err) {
     console.warn("Could not save product to MySQL API:", err.message);

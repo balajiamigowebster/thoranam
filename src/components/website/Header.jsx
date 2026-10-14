@@ -7,11 +7,13 @@ import AnnouncementBar from "./AnnouncementBar";
 import Navbar from "./Navbar";
 import ThoranamLogo from "@/components/ui/ThoranamLogo";
 import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
+import { useCart } from "@/context/CartContext";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const { totalCartCount, badgeBump } = useCart();
 
   useState(() => {
     if (typeof window !== "undefined") {
@@ -62,13 +64,28 @@ export default function Header() {
             </Link>
 
             <Link
+              id="header-cart-icon-btn"
               href="/products"
-              className="relative text-white/90 hover:text-white transition-colors p-1"
+              className={`relative text-white/90 hover:text-white transition-all p-1.5 rounded-full ${
+                badgeBump
+                  ? "scale-125 bg-white/20 text-amber-300 ring-2 ring-amber-400/50"
+                  : "hover:scale-105"
+              }`}
               aria-label="Shopping Cart"
             >
-              <ShoppingBag className="w-5 h-5 stroke-[1.8]" />
-              <span className="absolute -top-1 -right-1.5 bg-amber-400 text-[#800F17] text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
-                1
+              <ShoppingBag
+                className={`w-5 h-5 stroke-[1.8] transition-transform duration-300 ${
+                  badgeBump ? "rotate-[-12deg] scale-110" : ""
+                }`}
+              />
+              <span
+                className={`absolute -top-1 -right-1 bg-amber-400 text-[#800F17] text-[10px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
+                  badgeBump
+                    ? "scale-140 bg-amber-300 ring-4 ring-amber-400/50 animate-bounce"
+                    : ""
+                }`}
+              >
+                {totalCartCount}
               </span>
             </Link>
           </div>

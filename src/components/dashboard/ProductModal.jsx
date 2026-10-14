@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   X,
   Upload,
@@ -11,10 +11,16 @@ import {
   Info,
   CheckCircle2,
   Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
-import Image from "next/image";
 
-export default function ProductModal({ isOpen, onClose, onSave, editingProduct = null, categories = [] }) {
+export default function ProductModal({
+  isOpen,
+  onClose,
+  onSave,
+  editingProduct = null,
+  categories = [],
+}) {
   const [formData, setFormData] = useState(() => {
     if (editingProduct) {
       return {
@@ -44,8 +50,12 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
   });
 
   const [activeTab, setActiveTab] = useState("details"); // 'details' | 'description' | 'media' | 'specs'
-  const [newGalleryInput, setNewGalleryInput] = useState("");
   const [newHighlightInput, setNewHighlightInput] = useState("");
+  const [isUploadingMain, setIsUploadingMain] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+
+  const mainFileInputRef = useRef(null);
+  const galleryFileInputRef = useRef(null);
 
   if (!isOpen) return null;
 
@@ -69,14 +79,67 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
     }));
   };
 
-  const handleAddGalleryImage = (url) => {
-    const imgUrl = url || newGalleryInput;
-    if (!imgUrl.trim()) return;
-    setFormData((prev) => ({
-      ...prev,
-      galleryImages: [...(prev.galleryImages || []), imgUrl.trim()],
-    }));
-    setNewGalleryInput("");
+  // Upload main image file
+  const handleMainFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingMain(true);
+      const data = new FormData();
+      data.append("files", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: data,
+      });
+      const json = await res.json();
+      if (json.success && json.url) {
+        setFormData((prev) => ({ ...prev, mainImage: json.url }));
+      } else {
+        alert(json.message || "Failed to upload image");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading image");
+    } finally {
+      setIsUploadingMain(false);
+      if (mainFileInputRef.current) mainFileInputRef.current.value = "";
+    }
+  };
+
+  // Upload multiple gallery images files
+  const handleGalleryFilesUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    try {
+      setIsUploadingGallery(true);
+      const data = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        data.append("files", files[i]);
+      }
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: data,
+      });
+      const json = await res.json();
+      if (json.success && json.urls) {
+        setFormData((prev) => ({
+          ...prev,
+          galleryImages: [...(prev.galleryImages || []), ...json.urls],
+        }));
+      } else {
+        alert(json.message || "Failed to upload gallery images");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error uploading gallery images");
+    } finally {
+      setIsUploadingGallery(false);
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = "";
+    }
   };
 
   const handleRemoveGalleryImage = (index) => {
@@ -95,25 +158,18 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
 
     const cleanedData = {
       ...formData,
-      id: formData.id || Date.now(),
+      // Only keep existing ID if editing an existing product; for new products leave undefined so MySQL auto-increments
+      id: editingProduct?.id ? editingProduct.id : undefined,
       stock: Number(formData.stock) || 0,
-      price: formData.price.startsWith("₹") || formData.price.startsWith("Rs.")
-        ? formData.price
-        : `₹ ${formData.price}`,
+      price:
+        formData.price.startsWith("₹") || formData.price.startsWith("Rs.")
+          ? formData.price
+          : `₹ ${formData.price}`,
     };
 
     onSave(cleanedData);
     onClose();
   };
-
-  const sampleImages = [
-    { label: "Product 1", url: "/images/product-1.jpg" },
-    { label: "Product 2", url: "/images/product-2.jpg" },
-    { label: "Product 3", url: "/images/product-3.jpg" },
-    { label: "Product 4", url: "/images/product-4.jpg" },
-    { label: "Bestseller 1", url: "/images/bestseller-1.jpg" },
-    { label: "Bestseller 2", url: "/images/bestseller-2.jpg" },
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -132,7 +188,7 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
                 {editingProduct ? "Edit Saree Product" : "Add New Saree Product"}
               </h2>
               <p className="text-xs text-slate-500">
-                Provide comprehensive saree descriptions, highlights, media, and inventory specifications
+                Upload images directly to /uploads, set descriptions, highlights, and specs
               </p>
             </div>
           </div>
@@ -367,19 +423,22 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
             </div>
           )}
 
-          {/* TAB 3: MEDIA (MAIN & GALLERY) */}
+          {/* TAB 3: MEDIA (MAIN & GALLERY) - UPLOAD DRIVEN */}
           {activeTab === "media" && (
             <div className="space-y-6">
-              {/* Main Image */}
+              {/* Main Image Upload Box */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-800">
                     Main Display Image <span className="text-rose-500">*</span>
                   </label>
-                  <span className="text-[11px] text-slate-400">Shown as the primary hero image</span>
+                  <span className="text-[11px] text-slate-400">
+                    Saved to <code className="text-[#800F17] font-semibold">/public/uploads/</code>
+                  </span>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-4 items-start">
-                  <div className="relative w-36 h-48 rounded-2xl overflow-hidden border-2 border-[#800F17]/30 bg-stone-50 shadow-xs shrink-0 group">
+
+                <div className="flex flex-col sm:flex-row gap-4 items-start bg-stone-50/70 p-4 rounded-2xl border border-slate-200">
+                  <div className="relative w-36 h-48 rounded-2xl overflow-hidden border-2 border-[#800F17]/40 bg-white shadow-xs shrink-0 group">
                     <img
                       src={formData.mainImage || "/images/product-1.jpg"}
                       alt="Main Preview"
@@ -389,50 +448,64 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
                       }}
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-semibold">
-                      Main Cover
+                      Main Saree Cover
                     </div>
                   </div>
 
                   <div className="flex-1 space-y-3 w-full">
+                    {/* Hidden Native File Input */}
+                    <input
+                      type="file"
+                      ref={mainFileInputRef}
+                      accept="image/*"
+                      onChange={handleMainFileUpload}
+                      className="hidden"
+                    />
+
+                    <div
+                      onClick={() => mainFileInputRef.current?.click()}
+                      className="cursor-pointer border-2 border-dashed border-[#800F17]/30 hover:border-[#800F17] hover:bg-[#800F17]/5 rounded-2xl p-4 text-center transition-all flex flex-col items-center justify-center gap-2"
+                    >
+                      {isUploadingMain ? (
+                        <>
+                          <Loader2 className="w-6 h-6 text-[#800F17] animate-spin" />
+                          <p className="text-xs font-semibold text-[#800F17]">
+                            Uploading image to server...
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <div className="w-10 h-10 rounded-full bg-[#800F17]/10 text-[#800F17] flex items-center justify-center">
+                            <Upload className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold text-slate-800">
+                              Click to Upload Main Saree Image
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">
+                              PNG, JPG, WEBP up to 10MB
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
                     <div className="space-y-1">
-                      <label className="text-[11px] font-medium text-slate-500">
-                        Image URL / File Path:
+                      <label className="text-[10px] font-medium text-slate-500">
+                        Uploaded File Path:
                       </label>
                       <input
                         type="text"
+                        readOnly
                         value={formData.mainImage}
-                        onChange={(e) => handleChange("mainImage", e.target.value)}
-                        placeholder="/images/product-1.jpg"
-                        className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17]"
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs bg-white text-slate-600 font-mono"
                       />
-                    </div>
-
-                    <div>
-                      <span className="text-[11px] font-medium text-slate-400 block mb-1.5">
-                        Or select from Thoranam boutique library:
-                      </span>
-                      <div className="flex flex-wrap gap-2">
-                        {sampleImages.map((s) => (
-                          <button
-                            key={s.url}
-                            type="button"
-                            onClick={() => handleChange("mainImage", s.url)}
-                            className={`px-2.5 py-1 text-[11px] rounded-lg border transition-all ${
-                              formData.mainImage === s.url
-                                ? "border-[#800F17] bg-[#800F17]/10 text-[#800F17] font-bold"
-                                : "border-slate-200 text-slate-600 hover:bg-slate-50"
-                            }`}
-                          >
-                            {s.label}
-                          </button>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Gallery Images */}
+              {/* Gallery Images Upload Box */}
               <div className="space-y-3 pt-3 border-t border-slate-100">
                 <div className="flex items-center justify-between">
                   <div>
@@ -440,7 +513,7 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
                       Gallery Images
                     </label>
                     <span className="text-[11px] text-slate-400">
-                      Additional angles, pallu details, pleats, and blouse close-ups
+                      Upload multiple images: close-ups, border, pallu, pleats & blouse details
                     </span>
                   </div>
                   <span className="text-[11px] text-[#800F17] font-bold">
@@ -448,43 +521,42 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
                   </span>
                 </div>
 
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Enter gallery image path e.g. /images/product-3.jpg"
-                    value={newGalleryInput}
-                    onChange={(e) => setNewGalleryInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddGalleryImage();
-                      }
-                    }}
-                    className="flex-1 px-3.5 py-2 rounded-xl border border-slate-200 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAddGalleryImage()}
-                    className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-colors inline-flex items-center gap-1.5"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Add Image
-                  </button>
-                </div>
+                {/* Hidden Native Multiple File Input */}
+                <input
+                  type="file"
+                  ref={galleryFileInputRef}
+                  accept="image/*"
+                  multiple
+                  onChange={handleGalleryFilesUpload}
+                  className="hidden"
+                />
 
-                {/* Quick Add presets for gallery */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[11px] text-slate-400">Quick add:</span>
-                  {sampleImages.map((s) => (
-                    <button
-                      key={s.url}
-                      type="button"
-                      onClick={() => handleAddGalleryImage(s.url)}
-                      className="px-2 py-0.5 text-[10px] bg-stone-100 hover:bg-[#800F17]/10 hover:text-[#800F17] text-slate-600 rounded-md transition-colors"
-                    >
-                      + {s.label}
-                    </button>
-                  ))}
+                <div
+                  onClick={() => galleryFileInputRef.current?.click()}
+                  className="cursor-pointer border-2 border-dashed border-slate-300 hover:border-[#800F17] hover:bg-stone-50 rounded-2xl p-4 text-center transition-all flex flex-col items-center justify-center gap-2"
+                >
+                  {isUploadingGallery ? (
+                    <>
+                      <Loader2 className="w-6 h-6 text-[#800F17] animate-spin" />
+                      <p className="text-xs font-semibold text-[#800F17]">
+                        Uploading gallery photos to /public/uploads...
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+                        <Upload className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800">
+                          Click to Select & Upload Multiple Gallery Images
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          You can choose multiple saree shots at once
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Gallery List Preview */}
@@ -492,7 +564,7 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
                   {formData.galleryImages?.map((url, idx) => (
                     <div
                       key={idx}
-                      className="relative group rounded-xl overflow-hidden border border-slate-200 aspect-[3/4] bg-stone-100"
+                      className="relative group rounded-xl overflow-hidden border border-slate-200 aspect-[3/4] bg-stone-100 shadow-2xs"
                     >
                       <img
                         src={url}
@@ -518,7 +590,7 @@ export default function ProductModal({ isOpen, onClose, onSave, editingProduct =
                   {(!formData.galleryImages || formData.galleryImages.length === 0) && (
                     <div className="col-span-full py-8 text-center border-2 border-dashed border-slate-200 rounded-2xl">
                       <ImageIcon className="w-8 h-8 text-slate-300 mx-auto mb-1.5" />
-                      <p className="text-xs text-slate-400">No gallery images added yet</p>
+                      <p className="text-xs text-slate-400">No gallery images uploaded yet</p>
                     </div>
                   )}
                 </div>

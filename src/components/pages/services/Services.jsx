@@ -1,75 +1,76 @@
 import Container from "@/components/ui/Container";
-import Button from "@/components/ui/Button";
-import { Code, Layout, Database, Smartphone, Cloud, ArrowUpRight } from "lucide-react";
+import { Sparkles, Scissors, ShieldCheck, HeartHandshake, Truck, Gift } from "lucide-react";
 
 export default function Services() {
-  const serviceItems = [
+  const boutiqueServices = [
     {
-      icon: Layout,
-      title: "Web Application Design",
-      description: "Modern, dynamic, and intuitive interfaces optimized for smooth user engagement and performance.",
+      icon: Scissors,
+      title: "Custom Blouse Tailoring",
+      description:
+        "Precision bespoke stitching, aari embroidery, and maggam work tailored to your exact measurements.",
     },
     {
-      icon: Code,
-      title: "Frontend Engineering",
-      description: "Next.js, React, and modular styling tailored for optimal speed, SEO, and maintainability.",
+      icon: Sparkles,
+      title: "Fall & Pico Hemming",
+      description:
+        "Complimentary fall attachment and delicate pico hemming on every pure silk and handloom saree.",
     },
     {
-      icon: Database,
-      title: "Backend & Database Integration",
-      description: "Scalable API design and robust database architectures structured for high reliability.",
+      icon: HeartHandshake,
+      title: "Bridal Styling Consultation",
+      description:
+        "One-on-one virtual or in-boutique consultations to curate wedding trousseaus and muhurtham sarees.",
     },
     {
-      icon: Smartphone,
-      title: "Responsive Cross-Platform",
-      description: "Flawless viewports on mobile devices, tablets, and high-resolution desktop screens.",
+      icon: ShieldCheck,
+      title: "Silk Mark Certification",
+      description:
+        "100% genuine Mulberry silks certified with official Silk Mark tags guaranteeing purity.",
     },
     {
-      icon: Cloud,
-      title: "Cloud & Deployment",
-      description: "Automated pipelines, edge deployments, and secure hosting environments.",
+      icon: Truck,
+      title: "Worldwide Express Delivery",
+      description:
+        "Insured global shipping with real-time tracking across USA, UK, Canada, Singapore, and Australia.",
+    },
+    {
+      icon: Gift,
+      title: "Luxury Gift Packaging",
+      description:
+        "Heirloom wooden boxes, fragrance sachets, and personalized gift notes for festive gifting.",
     },
   ];
 
   return (
-    <div className="py-16 sm:py-24 space-y-16">
+    <div className="py-16 sm:py-24 bg-white min-h-screen">
       <Container>
-        <div className="max-w-3xl mx-auto text-center space-y-4">
-          <span className="text-emerald-600 font-semibold text-sm uppercase tracking-wider">
-            Our Offerings
+        <div className="max-w-2xl mx-auto text-center space-y-3 mb-14">
+          <span className="text-[#800F17] font-semibold text-xs uppercase tracking-widest bg-rose-50 px-3 py-1 rounded-full border border-rose-100">
+            Boutique Services
           </span>
-          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Services Tailored to Your Needs
+          <h1 className="text-3xl sm:text-5xl font-serif font-bold text-slate-900">
+            Thoranam Bespoke Services
           </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-300">
-            End-to-end digital expertise designed to help your projects scale efficiently.
+          <p className="text-sm sm:text-base text-slate-600">
+            From heirloom handloom curation to custom bridal tailoring, we bring timeless luxury to every drape.
           </p>
         </div>
 
-        <div className="mt-14 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {serviceItems.map((s) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {boutiqueServices.map((s, idx) => {
             const Icon = s.icon;
             return (
               <div
-                key={s.title}
-                className="group p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/50 hover:shadow-lg transition-all duration-200 flex flex-col justify-between"
+                key={idx}
+                className="bg-stone-50/70 border border-slate-200/80 rounded-3xl p-8 space-y-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300"
               >
-                <div className="space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                    {s.title}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {s.description}
-                  </p>
+                <div className="w-12 h-12 rounded-2xl bg-[#800F17]/10 text-[#800F17] flex items-center justify-center">
+                  <Icon className="w-6 h-6" />
                 </div>
-                <div className="pt-6">
-                  <span className="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400 group-hover:underline">
-                    Learn more <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
-                  </span>
-                </div>
+                <h3 className="text-xl font-bold text-slate-900">{s.title}</h3>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  {s.description}
+                </p>
               </div>
             );
           })}

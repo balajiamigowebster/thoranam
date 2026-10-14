@@ -3,8 +3,9 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingBag, ChevronRight, ChevronLeft } from "lucide-react";
+import { Heart, ShoppingBag, ChevronRight, ChevronLeft, Check } from "lucide-react";
 import Container from "@/components/ui/Container";
+import { useCart } from "@/context/CartContext";
 
 const bestsellers = [
   {
@@ -37,7 +38,25 @@ const bambooCottonProducts = [
 ];
 
 export default function HomeShop() {
+  const { triggerAddToCartAnimation } = useCart();
   const [wishlist, setWishlist] = useState({});
+  const [addedItems, setAddedItems] = useState({});
+
+  const handleAddToCart = (item, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = item.id;
+    setAddedItems((prev) => ({ ...prev, [id]: true }));
+    triggerAddToCartAnimation({
+      startElementOrRect: e?.currentTarget,
+      image: item.image || "/images/product-1.jpg",
+      item: item,
+      quantity: 1,
+    });
+    setTimeout(() => {
+      setAddedItems((prev) => ({ ...prev, [id]: false }));
+    }, 1800);
+  };
 
   const toggleWishlist = (id, e) => {
     e.preventDefault();
@@ -97,10 +116,20 @@ export default function HomeShop() {
                     <div className="absolute bottom-3 inset-x-3 z-10 translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                       <button
                         type="button"
+                        onClick={(e) => handleAddToCart(item, e)}
                         className="w-full py-2.5 px-4 rounded-xl bg-[#800F17] hover:bg-[#660B12] text-white text-xs font-medium flex items-center justify-center gap-2 shadow-lg active:scale-98 transition-all cursor-pointer"
                       >
-                        <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>Add to Cart</span>
+                        {addedItems[item.id] ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Added to Cart!</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingBag className="w-3.5 h-3.5" />
+                            <span>Add to Cart</span>
+                          </>
+                        )}
                       </button>
                     </div>
                   </div>
@@ -190,9 +219,20 @@ export default function HomeShop() {
                   <div className="mt-4 pt-2">
                     <button
                       type="button"
-                      className="w-full py-2.5 px-4 rounded-xl bg-[#800F17] hover:bg-[#680C13] text-white text-xs font-semibold tracking-wider uppercase transition-all duration-200 shadow-sm hover:shadow active:scale-98 cursor-pointer"
+                      onClick={(e) => handleAddToCart(p, e)}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[#800F17] hover:bg-[#680C13] text-white text-xs font-semibold tracking-wider uppercase transition-all duration-200 shadow-sm hover:shadow active:scale-98 cursor-pointer flex items-center justify-center gap-2"
                     >
-                      ADD TO CART
+                      {addedItems[p.id] ? (
+                        <>
+                          <Check className="w-4 h-4 text-emerald-300" />
+                          <span>ADDED TO CART</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShoppingBag className="w-4 h-4" />
+                          <span>ADD TO CART</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
