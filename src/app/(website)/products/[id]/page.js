@@ -1,11 +1,13 @@
 import { Suspense } from "react";
 import ProductDetailView from "@/components/pages/products/ProductDetailView";
-import { productController } from "@/controllers/productController";
+import { getApiUrl } from "@/config";
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
   try {
-    const product = await productController.getProductById(id);
+    const res = await fetch(getApiUrl(`/api/products/${id}`));
+    const json = await res.json();
+    const product = json?.data;
     if (product) {
       const pageTitle = product.seoTitle?.trim()
         ? product.seoTitle

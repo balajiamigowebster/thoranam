@@ -50,8 +50,8 @@ export default function ProductDetailView({ productId }) {
       try {
         setIsLoading(true);
         const [res, allRes] = await Promise.all([
-          fetch(`/api/products/${productId}`),
-          fetch("/api/products"),
+          fetch(getApiUrl(`/api/products/${productId}`)),
+          fetch(getApiUrl("/api/products")),
         ]);
         const json = await res.json();
         const allJson = await allRes.json();
