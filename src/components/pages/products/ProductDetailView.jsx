@@ -24,6 +24,7 @@ import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { useCart } from "@/context/CartContext";
 import { getAssetUrl } from "@/config";
+import { INITIAL_PRODUCTS } from "@/lib/initial-products";
 
 // Global Rupee Formatter to fix ? or corrupted currency strings
 function formatRupee(priceStr) {
@@ -90,11 +91,25 @@ export default function ProductDetailView({ productId }) {
           setSelectedImage(foundProduct.mainImage || "/images/product-1.jpg");
         }
 
-        if (mounted && allJson.success && Array.isArray(allJson.data)) {
-          // Filter out current product and take 4 related items
-          const related = allJson.data
-            .filter((p) => String(p.id) !== String(productId))
-            .slice(0, 4);
+        // Populate 'You may also like' related products
+        let candidates = [];
+        if (allJson.success && Array.isArray(allJson.data) && allJson.data.length > 0) {
+          candidates = allJson.data;
+        } else if (typeof window !== "undefined") {
+          try {
+            const saved = localStorage.getItem("thoranam_products");
+            if (saved) candidates = JSON.parse(saved);
+          } catch (e) {}
+        }
+        if (!candidates || candidates.length === 0) {
+          candidates = INITIAL_PRODUCTS;
+        }
+
+        const related = candidates
+          .filter((p) => String(p.id) !== String(productId))
+          .slice(0, 4);
+
+        if (mounted) {
           setRelatedProducts(related);
         }
       } catch (e) {
