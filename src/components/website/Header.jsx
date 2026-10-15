@@ -13,7 +13,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
-  const { totalCartCount, badgeBump } = useCart();
+  const { totalCartCount, badgeBump, openCart } = useCart();
 
   useState(() => {
     if (typeof window !== "undefined") {
@@ -56,22 +56,23 @@ export default function Header() {
           {/* Right: Account & Cart Icons */}
           <div className="flex items-center justify-end gap-4 sm:gap-5 w-1/3">
             <Link
-              href="/dashboard"
+              href="/login"
               className="text-white/90 hover:text-white transition-colors p-1"
-              aria-label="Admin Dashboard"
+              aria-label="Admin Portal Sign In"
             >
               <User className="w-5 h-5 stroke-[1.8]" />
             </Link>
 
-            <Link
+            <button
               id="header-cart-icon-btn"
-              href="/products"
-              className={`relative text-white/90 hover:text-white transition-all p-1.5 rounded-full ${
+              type="button"
+              onClick={openCart}
+              className={`relative text-white/90 hover:text-white transition-all p-1.5 rounded-full cursor-pointer ${
                 badgeBump
                   ? "scale-125 bg-white/20 text-amber-300 ring-2 ring-amber-400/50"
                   : "hover:scale-105"
               }`}
-              aria-label="Shopping Cart"
+              aria-label="Open Shopping Cart"
             >
               <ShoppingBag
                 className={`w-5 h-5 stroke-[1.8] transition-transform duration-300 ${
@@ -87,7 +88,7 @@ export default function Header() {
               >
                 {totalCartCount}
               </span>
-            </Link>
+            </button>
           </div>
         </div>
 

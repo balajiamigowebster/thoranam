@@ -1,5 +1,6 @@
 import Header from "@/components/website/Header";
 import Footer from "@/components/website/Footer";
+import CartDrawer from "@/components/website/CartDrawer";
 import { CartProvider } from "@/context/CartContext";
 
 export default function WebsiteLayout({ children }) {
@@ -9,6 +10,7 @@ export default function WebsiteLayout({ children }) {
         <Header />
         <main className="flex-1 flex flex-col">{children}</main>
         <Footer />
+        <CartDrawer />
       </div>
     </CartProvider>
   );

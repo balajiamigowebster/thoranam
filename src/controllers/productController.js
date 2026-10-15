@@ -73,6 +73,10 @@ export const productController = {
       material: data.material || "",
       size: data.size || "",
       wash_care: data.washCare || "",
+      seo_title: data.seoTitle || "",
+      seo_description: data.seoDescription || "",
+      seo_keywords: data.seoKeywords || "",
+      og_image: data.ogImage || "",
     });
 
     return formatProduct(created.toJSON());
@@ -100,6 +104,10 @@ export const productController = {
       material: data.material !== undefined ? data.material : product.material,
       size: data.size !== undefined ? data.size : product.size,
       wash_care: data.washCare !== undefined ? data.washCare : product.wash_care,
+      seo_title: data.seoTitle !== undefined ? data.seoTitle : product.seo_title,
+      seo_description: data.seoDescription !== undefined ? data.seoDescription : product.seo_description,
+      seo_keywords: data.seoKeywords !== undefined ? data.seoKeywords : product.seo_keywords,
+      og_image: data.ogImage !== undefined ? data.ogImage : product.og_image,
     });
 
     return formatProduct(product.toJSON());
@@ -134,6 +142,10 @@ function formatProduct(r) {
     material: r.material || "",
     size: r.size || "",
     washCare: r.wash_care || "",
+    seoTitle: r.seo_title || "",
+    seoDescription: r.seo_description || "",
+    seoKeywords: r.seo_keywords || "",
+    ogImage: r.og_image || "",
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };

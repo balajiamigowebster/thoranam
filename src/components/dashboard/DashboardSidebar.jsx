@@ -21,7 +21,7 @@ const navigationItems = [
   { id: "categories", label: "Categories", icon: Layers },
   { id: "customers", label: "Customers", icon: Users },
   { id: "promotions", label: "Discounts & Offers", icon: Percent },
-  { id: "settings", label: "Store Settings", icon: Settings },
+  { id: "settings", label: "Slideshow & SEO", icon: Settings },
 ];
 
 export default function DashboardSidebar({ activeTab, setActiveTab }) {
@@ -78,13 +78,19 @@ export default function DashboardSidebar({ activeTab, setActiveTab }) {
           <ExternalLink className="w-4 h-4 text-white/60" />
           <span>View Public Store</span>
         </Link>
-        <Link
-          href="/"
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-red-200 hover:bg-red-500/20 hover:text-white transition-all"
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await fetch("/api/auth/login", { method: "DELETE" });
+            } catch (e) {}
+            window.location.href = "/login";
+          }}
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-red-200 hover:bg-red-500/20 hover:text-white transition-all cursor-pointer"
         >
           <LogOut className="w-4 h-4 text-red-300" />
-          <span>Exit Dashboard</span>
-        </Link>
+          <span>Sign Out</span>
+        </button>
       </div>
     </aside>
   );

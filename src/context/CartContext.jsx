@@ -4,25 +4,32 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const CartContext = createContext(null);
 
+const DEFAULT_INITIAL_ITEM = [
+  {
+    id: "default-item",
+    title: "Verdant Ikat – Bamboo Cotton Silk Saree",
+    price: "Rs. 1,500.00",
+    quantity: 1,
+    mainImage: "/images/product-1.jpg",
+  },
+];
+
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("thoranam_cart");
+        if (stored) {
+          return JSON.parse(stored);
+        }
+      } catch (e) {
+        console.error("Cart localStorage error:", e);
+      }
+    }
+    return DEFAULT_INITIAL_ITEM;
+  });
   const [animatingFlyers, setAnimatingFlyers] = useState([]);
   const [badgeBump, setBadgeBump] = useState(false);
-
-  // Initialize cart from localStorage if present
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem("thoranam_cart");
-      if (stored) {
-        setCartItems(JSON.parse(stored));
-      } else {
-        // default 1 item to match initial design count of 1
-        setCartItems([{ id: "default-item", quantity: 1 }]);
-      }
-    } catch (e) {
-      console.error("Cart localStorage error:", e);
-    }
-  }, []);
 
   const saveCart = (items) => {
     setCartItems(items);
@@ -141,6 +148,46 @@ export function CartProvider({ children }) {
     0
   );
 
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
+
+  const updateQuantity = (id, delta) => {
+    setCartItems((prev) => {
+      const updated = prev
+        .map((item) => {
+          if (item.id === id) {
+            const newQty = (item.quantity || 1) + delta;
+            return newQty > 0 ? { ...item, quantity: newQty } : null;
+          }
+          return item;
+        })
+        .filter(Boolean);
+      try {
+        localStorage.setItem("thoranam_cart", JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const removeFromCart = (id) => {
+    setCartItems((prev) => {
+      const updated = prev.filter((item) => item.id !== id);
+      try {
+        localStorage.setItem("thoranam_cart", JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+    try {
+      localStorage.removeItem("thoranam_cart");
+    } catch (e) {}
+  };
+
   return (
     <CartContext.Provider
       value={{
@@ -148,6 +195,13 @@ export function CartProvider({ children }) {
         totalCartCount,
         triggerAddToCartAnimation,
         badgeBump,
+        isCartOpen,
+        setIsCartOpen,
+        openCart,
+        closeCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
       }}
     >
       {children}
@@ -196,9 +250,16 @@ export function useCart() {
   if (!context) {
     return {
       cartItems: [],
-      totalCartCount: 1,
+      totalCartCount: 0,
       triggerAddToCartAnimation: () => {},
       badgeBump: false,
+      isCartOpen: false,
+      setIsCartOpen: () => {},
+      openCart: () => {},
+      closeCart: () => {},
+      updateQuantity: () => {},
+      removeFromCart: () => {},
+      clearCart: () => {},
     };
   }
   return context;

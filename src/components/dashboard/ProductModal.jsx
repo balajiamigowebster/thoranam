@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   Image as ImageIcon,
   Loader2,
+  Search,
+  Globe,
 } from "lucide-react";
 
 export default function ProductModal({
@@ -27,6 +29,10 @@ export default function ProductModal({
         ...editingProduct,
         highlights: editingProduct.highlights || [""],
         galleryImages: editingProduct.galleryImages || [],
+        seoTitle: editingProduct.seoTitle || "",
+        seoDescription: editingProduct.seoDescription || "",
+        seoKeywords: editingProduct.seoKeywords || "",
+        ogImage: editingProduct.ogImage || editingProduct.mainImage || "",
       };
     }
     return {
@@ -46,6 +52,10 @@ export default function ProductModal({
       material: "",
       size: "6.3 Meters (including 0.8m blouse piece)",
       washCare: "Dry Clean Only",
+      seoTitle: "",
+      seoDescription: "",
+      seoKeywords: "",
+      ogImage: "",
     };
   });
 
@@ -207,6 +217,7 @@ export default function ProductModal({
             { id: "description", label: "Story, Highlights & Closing" },
             { id: "media", label: "Main & Gallery Images" },
             { id: "specs", label: "Material, Size & Care" },
+            { id: "seo", label: "SEO & Social Share" },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -672,6 +683,115 @@ export default function ProductModal({
             </div>
           )}
 
+          {/* TAB 5: SEO & SOCIAL SHARE */}
+          {activeTab === "seo" && (
+            <div className="space-y-5">
+              <div className="p-3.5 bg-amber-50/60 border border-amber-200/80 rounded-2xl flex items-start gap-3">
+                <Globe className="w-5 h-5 text-[#800F17] shrink-0 mt-0.5" />
+                <div className="text-xs text-slate-700 space-y-1">
+                  <p className="font-bold text-[#800F17]">Next.js Native Search Engine Optimization</p>
+                  <p>
+                    These tags directly power the Google search result snippet, WhatsApp link previews, Facebook, and Instagram shares for this product.
+                  </p>
+                </div>
+              </div>
+
+              {/* Live Google Search Result Preview */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Google Search Snippet Preview
+                </span>
+                <div className="space-y-1">
+                  <p className="text-xs text-slate-500 font-mono">
+                    https://thoranam.co/products/{formData.id || "new-saree"}
+                  </p>
+                  <h4 className="text-base font-medium text-blue-700 hover:underline cursor-pointer line-clamp-1">
+                    {formData.seoTitle || formData.title || "Handcrafted Luxury Saree | Thoranam Boutique"}
+                  </h4>
+                  <p className="text-xs text-slate-600 line-clamp-2">
+                    {formData.seoDescription ||
+                      formData.description?.slice(0, 160) ||
+                      "Explore heirloom weaves, pure silk, and festive cotton sarees handcrafted with traditional artistry by Thoranam Boutique."}
+                  </p>
+                </div>
+              </div>
+
+              {/* SEO Inputs */}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800">
+                      SEO Meta Title
+                    </label>
+                    <span className="text-[11px] text-slate-400">
+                      {(formData.seoTitle || "").length}/60 chars recommended
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. Pure Kanchipuram Silk Saree in Crimson Red | Thoranam Boutique"
+                    value={formData.seoTitle || ""}
+                    onChange={(e) => handleChange("seoTitle", e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17]"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Leave blank to auto-use Product Title + Boutique Name
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-slate-800">
+                      SEO Meta Description
+                    </label>
+                    <span className="text-[11px] text-slate-400">
+                      {(formData.seoDescription || "").length}/160 chars recommended
+                    </span>
+                  </div>
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Shop our authentic handloom Kanchipuram silk saree with intricate zari pallu and matching unstitched blouse piece. Free express shipping across India."
+                    value={formData.seoDescription || ""}
+                    onChange={(e) => handleChange("seoDescription", e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17]"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Concise summary displayed in search engines and social cards
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-800">
+                    Keywords & Search Tags (Comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. silk saree, wedding saree, kanchipuram, handloom, festive wear"
+                    value={formData.seoKeywords || ""}
+                    onChange={(e) => handleChange("seoKeywords", e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-800">
+                    Social Share Image (OG Image) URL
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Defaults to Main Saree Image if left empty"
+                    value={formData.ogImage || ""}
+                    onChange={(e) => handleChange("ogImage", e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17]"
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Image preview rendered when sharing on WhatsApp, iMessage, Facebook or Twitter
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Modal Footer Actions */}
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
             <button
@@ -682,11 +802,11 @@ export default function ProductModal({
               Cancel
             </button>
             <div className="flex items-center gap-2">
-              {activeTab !== "specs" && (
+              {activeTab !== "seo" && (
                 <button
                   type="button"
                   onClick={() => {
-                    const tabs = ["details", "description", "media", "specs"];
+                    const tabs = ["details", "description", "media", "specs", "seo"];
                     const nextIdx = (tabs.indexOf(activeTab) + 1) % tabs.length;
                     setActiveTab(tabs[nextIdx]);
                   }}

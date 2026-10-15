@@ -5,6 +5,7 @@ import Order from "./Order";
 import Customer from "./Customer";
 import Promotion from "./Promotion";
 import StoreSetting from "./StoreSetting";
+import AdminUser from "./AdminUser";
 
 let isSynced = false;
 
@@ -23,7 +24,7 @@ export async function syncDatabase(options = {}) {
       throw error;
     }
   }
-  return { sequelize, Product, Category, Order, Customer, Promotion, StoreSetting };
+  return { sequelize, Product, Category, Order, Customer, Promotion, StoreSetting, AdminUser };
 }
 
 export {
@@ -34,4 +35,5 @@ export {
   Customer,
   Promotion,
   StoreSetting,
+  AdminUser,
 };

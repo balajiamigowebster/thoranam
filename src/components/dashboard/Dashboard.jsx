@@ -6,6 +6,7 @@ import DashboardHeader from "./DashboardHeader";
 import DashboardOverview from "./DashboardOverview";
 import DashboardProducts from "./DashboardProducts";
 import DashboardCategories from "./DashboardCategories";
+import DashboardStoreSettings from "./DashboardStoreSettings";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -25,7 +26,7 @@ export default function Dashboard() {
       case "promotions":
         return "Offers & Coupons";
       case "settings":
-        return "Store Configuration";
+        return "Homepage Slideshow & Global Store SEO";
       default:
         return "Dashboard";
     }
@@ -44,14 +45,18 @@ export default function Dashboard() {
           {activeTab === "overview" && <DashboardOverview />}
           {activeTab === "products" && <DashboardProducts />}
           {activeTab === "categories" && <DashboardCategories />}
-          {activeTab !== "overview" && activeTab !== "products" && activeTab !== "categories" && (
-            <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3">
-              <h3 className="text-base font-bold text-slate-800">{getPageTitle()}</h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto">
-                This section is configured and ready for additional modules and database connections.
-              </p>
-            </div>
-          )}
+          {activeTab === "settings" && <DashboardStoreSettings />}
+          {activeTab !== "overview" &&
+            activeTab !== "products" &&
+            activeTab !== "categories" &&
+            activeTab !== "settings" && (
+              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3">
+                <h3 className="text-base font-bold text-slate-800">{getPageTitle()}</h3>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  This section is configured and ready for additional modules and database connections.
+                </p>
+              </div>
+            )}
         </main>
       </div>
     </div>

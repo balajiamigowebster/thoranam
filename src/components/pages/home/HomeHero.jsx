@@ -1,34 +1,58 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-const slides = [
+const DEFAULT_SLIDES = [
   {
     id: 1,
     imageSrc: "/images/hero-1.webp",
-    imageAlt: "Thoranam Saree Collection Banner 1",
+    imageAlt: "Semi Mangalagiri Saree Collection Banner",
+    link: "/products",
   },
   {
     id: 2,
     imageSrc: "/images/hero-2.webp",
-    imageAlt: "Thoranam Saree Collection Banner 2",
+    imageAlt: "Heirloom Festive Silk Sarees Banner",
+    link: "/products",
   },
 ];
 
+import { getApiUrl } from "@/config";
+
 export default function HomeHero() {
+  const [slides, setSlides] = useState(DEFAULT_SLIDES);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
+  useEffect(() => {
+    let mounted = true;
+    async function loadHeroSlides() {
+      try {
+        const res = await fetch(getApiUrl("/api/settings"));
+        const json = await res.json();
+        if (mounted && json.success && json.data?.hero_slides?.length > 0) {
+          setSlides(json.data.hero_slides);
+        }
+      } catch (e) {
+        console.warn("Could not load dynamic hero slides:", e);
+      }
+    }
+    loadHeroSlides();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Auto advance slides every 5 seconds
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || slides.length <= 1) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, slides.length]);
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
@@ -52,23 +76,48 @@ export default function HomeHero() {
       <div className="relative w-full aspect-[1920/700]">
         {slides.map((slide, index) => {
           const isActive = currentSlide === index;
-          return (
+          const mobileSrc = slide.mobileImageSrc || slide.imageSrc;
+          const content = (
             <div
-              key={slide.id}
+              key={slide.id || index}
               className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
                 isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
               }`}
             >
-              <Image
+              {/* Desktop / Tablet Image */}
+              <img
                 src={slide.imageSrc}
-                alt={slide.imageAlt}
-                fill
-                priority={index === 0}
-                sizes="100vw"
-                className="w-full h-full object-contain md:object-cover object-center"
+                alt={slide.imageAlt || "Thoranam Saree Banner"}
+                className={`w-full h-full object-contain md:object-cover object-center ${
+                  slide.mobileImageSrc ? "hidden sm:block" : "block"
+                }`}
+                onError={(e) => {
+                  e.target.src = "/images/hero-1.webp";
+                }}
               />
+
+              {/* Dedicated Mobile View Image (active only on mobile screens if uploaded) */}
+              {slide.mobileImageSrc && (
+                <img
+                  src={slide.mobileImageSrc}
+                  alt={slide.imageAlt || "Thoranam Saree Mobile Banner"}
+                  className="sm:hidden w-full h-full object-cover object-center"
+                  onError={(e) => {
+                    e.target.src = slide.imageSrc || "/images/hero-1.webp";
+                  }}
+                />
+              )}
             </div>
           );
+
+          if (slide.link) {
+            return (
+              <Link key={slide.id || index} href={slide.link}>
+                {content}
+              </Link>
+            );
+          }
+          return content;
         })}
 
         {/* Left Arrow Button */}

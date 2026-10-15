@@ -68,6 +68,22 @@ export const Product = sequelize.isDefined("Product")
           type: DataTypes.TEXT,
           allowNull: true,
         },
+        seo_title: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        seo_description: {
+          type: DataTypes.TEXT,
+          allowNull: true,
+        },
+        seo_keywords: {
+          type: DataTypes.STRING(500),
+          allowNull: true,
+        },
+        og_image: {
+          type: DataTypes.STRING(500),
+          allowNull: true,
+        },
       },
       {
         tableName: "products",

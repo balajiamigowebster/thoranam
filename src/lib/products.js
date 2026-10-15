@@ -2,10 +2,11 @@
 // Connects with MySQL backend API /api/products with offline fallback to localStorage
 
 import { INITIAL_PRODUCTS } from "./initial-products";
+import { getApiUrl } from "@/config";
 
 export async function fetchProductsFromDb() {
   try {
-    const res = await fetch("/api/products");
+    const res = await fetch(getApiUrl("/api/products"));
     if (!res.ok) throw new Error("Network response was not ok");
     const json = await res.json();
     if (json.success && Array.isArray(json.data)) {
@@ -23,7 +24,7 @@ export async function saveProductToDb(productData) {
     const isEdit = Boolean(productData.id);
     const method = isEdit ? "PUT" : "POST";
     
-    const res = await fetch("/api/products", {
+    const res = await fetch(getApiUrl("/api/products"), {
       method,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(productData),
@@ -55,7 +56,7 @@ export async function saveProductToDb(productData) {
 
 export async function deleteProductFromDb(productId) {
   try {
-    const res = await fetch(`/api/products?id=${productId}`, {
+    const res = await fetch(getApiUrl(`/api/products?id=${productId}`), {
       method: "DELETE",
     });
     const json = await res.json();

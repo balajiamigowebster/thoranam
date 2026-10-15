@@ -21,6 +21,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Container from "@/components/ui/Container";
+import ProductCard from "@/components/ui/ProductCard";
 import { useCart } from "@/context/CartContext";
 
 export default function ProductDetailView({ productId }) {
@@ -471,69 +472,18 @@ export default function ProductDetailView({ productId }) {
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-7">
-              {relatedProducts.map((item) => {
-                const isAdded = addedItems[item.id];
-                return (
-                  <div
-                    key={item.id}
-                    className="group relative bg-white rounded-2xl p-3 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_36px_rgba(128,15,23,0.12)] hover:-translate-y-1.5 transition-all duration-300 ease-out flex flex-col"
-                  >
-                    <Link
-                      href={`/products/${item.id}`}
-                      className="relative aspect-square w-full rounded-xl overflow-hidden bg-stone-100 block"
-                    >
-                      <img
-                        src={item.mainImage || "/images/product-1.jpg"}
-                        alt={item.title}
-                        className="w-full h-full object-cover object-center transform group-hover:scale-106 transition-transform duration-500 ease-out"
-                        onError={(e) => {
-                          e.target.src = "/images/product-1.jpg";
-                        }}
-                      />
-
-                      <div className="absolute top-2.5 left-2.5 z-10">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/90 text-[#800F17] shadow-xs backdrop-blur-xs">
-                          {item.category || "Exclusive"}
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={(e) => handleAddRelatedToCart(item, e)}
-                        aria-label="Add to cart"
-                        className="absolute bottom-3 right-3 z-20 w-10 h-10 rounded-full bg-white/95 hover:bg-white text-slate-800 hover:text-[#800F17] shadow-[0_4px_16px_rgba(0,0,0,0.15)] flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer border border-slate-200/80 group/btn"
-                        title="Add to Cart"
-                      >
-                        {isAdded ? (
-                          <Check className="w-5 h-5 text-emerald-600 animate-in zoom-in" />
-                        ) : (
-                          <ShoppingBag className="w-4 h-4 text-slate-700 group-hover/btn:text-[#800F17] transition-colors" />
-                        )}
-                      </button>
-                    </Link>
-
-                    <div className="pt-3.5 pb-1 px-1 flex-1 flex flex-col justify-between space-y-1.5">
-                      <Link
-                        href={`/products/${item.id}`}
-                        className="group-hover:text-[#800F17] transition-colors"
-                      >
-                        <h3 className="text-sm font-medium text-slate-800 line-clamp-2 leading-snug">
-                          {item.title}
-                        </h3>
-                      </Link>
-
-                      <div className="flex items-center justify-between pt-1">
-                        <p className="text-sm font-bold text-[#800F17]">
-                          {item.price}
-                        </p>
-                        <span className="text-[11px] text-slate-400">
-                          {item.stock} in stock
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {relatedProducts.map((item) => (
+                <ProductCard
+                  key={item.id}
+                  id={item.id}
+                  title={item.title}
+                  price={item.price}
+                  image={item.mainImage || "/images/product-1.jpg"}
+                  category={item.category || "Exclusive"}
+                  stock={item.stock}
+                  href={`/products/${item.id}`}
+                />
+              ))}
             </div>
           </div>
         )}

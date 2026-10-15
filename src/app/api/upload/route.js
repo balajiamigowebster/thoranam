@@ -1,9 +1,16 @@
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { uploadMiddleware } from "@/middleware/uploadMiddleware";
 
 export async function POST(request) {
   try {
+    // 1. Validate images through uploadMiddleware
+    const validation = await uploadMiddleware(request);
+    if (!validation.isValid) {
+      return validation.response;
+    }
+
     const data = await request.formData();
     const files = data.getAll("files");
 
