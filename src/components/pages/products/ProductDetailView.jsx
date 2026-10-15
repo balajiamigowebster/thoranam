@@ -23,7 +23,7 @@ import {
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { useCart } from "@/context/CartContext";
-import { getAssetUrl } from "@/config";
+import { getApiUrl, getAssetUrl } from "@/config";
 import { INITIAL_PRODUCTS } from "@/lib/initial-products";
 
 // Global Rupee Formatter to fix ? or corrupted currency strings
@@ -72,7 +72,11 @@ export default function ProductDetailView({ productId }) {
         if (json.success && json.data) {
           foundProduct = json.data;
         } else if (allJson.success && Array.isArray(allJson.data)) {
-          foundProduct = allJson.data.find((p) => String(p.id) === String(productId));
+          foundProduct = allJson.data.find(
+            (p) =>
+              String(p.id) === String(productId) ||
+              p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === String(productId).toLowerCase()
+          );
         }
 
         // Offline / localStorage fallback
@@ -81,9 +85,22 @@ export default function ProductDetailView({ productId }) {
             const saved = localStorage.getItem("thoranam_products");
             if (saved) {
               const localList = JSON.parse(saved);
-              foundProduct = localList.find((p) => String(p.id) === String(productId));
+              foundProduct = localList.find(
+                (p) =>
+                  String(p.id) === String(productId) ||
+                  p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === String(productId).toLowerCase()
+              );
             }
           } catch (err) {}
+        }
+
+        // Static catalog fallback (e.g. initial seeded items or slug match)
+        if (!foundProduct) {
+          foundProduct = INITIAL_PRODUCTS.find(
+            (p) =>
+              String(p.id) === String(productId) ||
+              p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === String(productId).toLowerCase()
+          );
         }
 
         if (mounted && foundProduct) {
