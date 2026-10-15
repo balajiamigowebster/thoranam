@@ -82,6 +82,9 @@ export default function DashboardSidebar({ activeTab, setActiveTab }) {
           type="button"
           onClick={async () => {
             try {
+              localStorage.removeItem("thoranam_admin_token");
+              localStorage.removeItem("thoranam_admin_user");
+              document.cookie = "thoranam_admin_token=; path=/; max-age=0";
               await fetch("/api/auth/login", { method: "DELETE" });
             } catch (e) {}
             window.location.href = "/login";

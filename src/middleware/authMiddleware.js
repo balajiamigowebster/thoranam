@@ -7,11 +7,16 @@ export const JWT_SECRET = process.env.JWT_SECRET || "thoranam_luxury_boutique_se
  * Parses and verifies basic token existence or expiration
  */
 export function verifyAdminToken(token) {
-  if (!token) return null;
+  if (!token || typeof token !== "string") return null;
   try {
-    const [headerB64, payloadB64] = token.split(".");
-    if (!payloadB64) return null;
-    const decoded = JSON.parse(Buffer.from(payloadB64, "base64").toString("utf-8"));
+    const parts = token.split(".");
+    if (parts.length < 2) return null;
+    const payloadB64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const jsonStr =
+      typeof Buffer !== "undefined"
+        ? Buffer.from(payloadB64, "base64").toString("utf-8")
+        : atob(payloadB64);
+    const decoded = JSON.parse(jsonStr);
     if (decoded.exp && Date.now() >= decoded.exp * 1000) {
       return null;
     }

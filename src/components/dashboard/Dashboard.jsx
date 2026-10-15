@@ -1,15 +1,42 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardHeader from "./DashboardHeader";
 import DashboardOverview from "./DashboardOverview";
 import DashboardProducts from "./DashboardProducts";
 import DashboardCategories from "./DashboardCategories";
 import DashboardStoreSettings from "./DashboardStoreSettings";
+import { Loader2 } from "lucide-react";
 
 export default function Dashboard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("overview");
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Verify authentication on mount (handles localStorage / cookie authentication across Vercel)
+  useEffect(() => {
+    const hasLocalToken = typeof window !== "undefined" && localStorage.getItem("thoranam_admin_token");
+    const hasCookie = typeof document !== "undefined" && document.cookie.includes("thoranam_admin_token=");
+
+    if (!hasLocalToken && !hasCookie) {
+      router.replace("/login?from=/dashboard");
+    } else {
+      setIsCheckingAuth(false);
+    }
+  }, [router]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white space-y-4">
+        <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+        <p className="text-xs uppercase tracking-widest text-slate-400 font-semibold">
+          Authenticating Dashboard Session...
+        </p>
+      </div>
+    );
+  }
 
   const getPageTitle = () => {
     switch (activeTab) {
