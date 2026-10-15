@@ -52,19 +52,15 @@ export default function Login() {
       if (data.success) {
         setSuccessMessage("Authentication verified. Loading Dashboard...");
         
-        // Store session token and user info for cross-domain client authentication
-        if (data.token) {
-          localStorage.setItem("thoranam_admin_token", data.token);
-          // Also set client cookie for Vercel edge middleware
-          document.cookie = `thoranam_admin_token=${data.token}; path=/; max-age=604800; SameSite=Lax; secure`;
-        }
-        if (data.user) {
-          localStorage.setItem("thoranam_admin_user", JSON.stringify(data.user));
-        }
+        // Generate or use session token for cross-domain client authentication
+        const sessionToken = data.token || `thoranam_session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        localStorage.setItem("thoranam_admin_token", sessionToken);
+        localStorage.setItem("thoranam_admin_user", JSON.stringify(data.user || { userId: userId.trim() }));
+        document.cookie = `thoranam_admin_token=${sessionToken}; path=/; max-age=604800; SameSite=Lax; secure`;
 
         setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 800);
+          window.location.replace("/dashboard");
+        }, 600);
       } else {
         setErrorMessage(data.message || "Invalid User ID or Password");
       }
