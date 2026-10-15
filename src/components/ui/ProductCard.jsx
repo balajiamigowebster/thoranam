@@ -4,22 +4,16 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Check, Heart, Eye } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { getAssetUrl } from "@/config";
 
-/**
- * ProductCard - Unified Luxury Saree Card Component for Thoranam Boutique
- *
- * @param {Object} props
- * @param {string|number} props.id - Product ID
- * @param {string} props.title - Saree title
- * @param {string} props.price - Price string (e.g., "₹ 2,450" or "Rs. 2,450.00")
- * @param {string} [props.originalPrice] - Optional strikethrough original price
- * @param {string} [props.image] - Saree image URL
- * @param {string} [props.tag] - Optional badge tag (e.g. "TRENDING", "BESTSELLER", "NEW", "HANDCRAFTED")
- * @param {string} [props.category] - Category name
- * @param {string|number} [props.stock] - Stock count or stock text
- * @param {string} [props.href] - Link to product page (defaults to /products/[id])
- * @param {string} [props.className] - Additional wrapper class
- */
+// Global Rupee Formatter to fix ? or corrupted currency strings
+function formatRupee(priceStr) {
+  if (!priceStr) return "₹ 0";
+  const str = String(priceStr).trim();
+  const cleaned = str.replace(/^[?]|Rs\.?|₹|\s+/gi, "").trim();
+  return `₹ ${cleaned}`;
+}
+
 export default function ProductCard({
   id,
   title,
@@ -37,8 +31,10 @@ export default function ProductCard({
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const productHref = href || `/products/${id}`;
-  const displayImage = image || "/images/product-1.jpg";
+  const displayImage = getAssetUrl(image) || "/images/product-1.jpg";
   const displayTag = tag || category;
+  const displayPrice = formatRupee(price);
+  const displayOriginalPrice = originalPrice ? formatRupee(originalPrice) : null;
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -154,11 +150,11 @@ export default function ProductCard({
         <div className="flex items-center justify-between pt-1">
           <div className="flex items-baseline gap-2">
             <span className="text-sm sm:text-base font-extrabold text-[#800F17] dark:text-rose-400 tracking-tight">
-              {price}
+              {displayPrice}
             </span>
-            {originalPrice && (
+            {displayOriginalPrice && (
               <span className="text-xs text-stone-400 line-through">
-                {originalPrice}
+                {displayOriginalPrice}
               </span>
             )}
           </div>

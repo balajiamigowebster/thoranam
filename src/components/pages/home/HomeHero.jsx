@@ -19,7 +19,7 @@ const DEFAULT_SLIDES = [
   },
 ];
 
-import { getApiUrl } from "@/config";
+import { getApiUrl, getAssetUrl } from "@/config";
 
 export default function HomeHero() {
   const [slides, setSlides] = useState(DEFAULT_SLIDES);
@@ -86,7 +86,7 @@ export default function HomeHero() {
             >
               {/* Desktop / Tablet Image */}
               <img
-                src={slide.imageSrc}
+                src={getAssetUrl(slide.imageSrc)}
                 alt={slide.imageAlt || "Thoranam Saree Banner"}
                 className={`w-full h-full object-contain md:object-cover object-center ${
                   slide.mobileImageSrc ? "hidden sm:block" : "block"
@@ -99,11 +99,11 @@ export default function HomeHero() {
               {/* Dedicated Mobile View Image (active only on mobile screens if uploaded) */}
               {slide.mobileImageSrc && (
                 <img
-                  src={slide.mobileImageSrc}
+                  src={getAssetUrl(slide.mobileImageSrc)}
                   alt={slide.imageAlt || "Thoranam Saree Mobile Banner"}
                   className="sm:hidden w-full h-full object-cover object-center"
                   onError={(e) => {
-                    e.target.src = slide.imageSrc || "/images/hero-1.webp";
+                    e.target.src = getAssetUrl(slide.imageSrc) || "/images/hero-1.webp";
                   }}
                 />
               )}

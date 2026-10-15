@@ -23,6 +23,15 @@ import {
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { useCart } from "@/context/CartContext";
+import { getAssetUrl } from "@/config";
+
+// Global Rupee Formatter to fix ? or corrupted currency strings
+function formatRupee(priceStr) {
+  if (!priceStr) return "₹ 0";
+  const str = String(priceStr).trim();
+  const cleaned = str.replace(/^[?]|Rs\.?|₹|\s+/gi, "").trim();
+  return `₹ ${cleaned}`;
+}
 
 export default function ProductDetailView({ productId }) {
   const { triggerAddToCartAnimation } = useCart();
@@ -172,7 +181,7 @@ export default function ProductDetailView({ productId }) {
             {/* Big Main Image Container */}
             <div className="relative aspect-[3/4] w-full rounded-3xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-xs group">
               <img
-                src={selectedImage || product.mainImage || "/images/product-1.jpg"}
+                src={getAssetUrl(selectedImage || product.mainImage)}
                 alt={product.title}
                 className="w-full h-full object-cover object-center transition-all duration-300"
                 onError={(e) => {
@@ -204,7 +213,7 @@ export default function ProductDetailView({ productId }) {
                       }`}
                     >
                       <img
-                        src={img}
+                        src={getAssetUrl(img)}
                         alt={`Thumbnail ${idx + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
@@ -265,7 +274,7 @@ export default function ProductDetailView({ productId }) {
             {/* Price & Offer badge */}
             <div className="space-y-2 border-y border-slate-100 py-4">
               <div className="text-3xl sm:text-4xl font-bold text-[#800F17]">
-                {product.price}
+                {formatRupee(product.price)}
               </div>
               <div className="inline-block">
                 <span className="bg-[#800F17] text-white text-xs font-semibold px-3 py-1 rounded-md">
