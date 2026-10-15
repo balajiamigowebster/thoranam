@@ -172,10 +172,11 @@ export default function ProductModal({
       // Only keep existing ID if editing an existing product; for new products leave undefined so MySQL auto-increments
       id: editingProduct?.id ? editingProduct.id : undefined,
       stock: Number(formData.stock) || 0,
-      price:
-        formData.price.startsWith("₹") || formData.price.startsWith("Rs.")
-          ? formData.price
-          : `₹ ${formData.price}`,
+      price: (() => {
+        const raw = String(formData.price || "").trim();
+        const num = raw.replace(/^[?]|Rs\.?|₹|\s+/gi, "").trim();
+        return `₹ ${num}`;
+      })(),
     };
 
     onSave(cleanedData);

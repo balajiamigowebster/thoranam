@@ -20,7 +20,23 @@ export function getApiUrl(path) {
   return `${API_BASE_URL.replace(/\/$/, "")}${cleanPath}`;
 }
 
+/**
+ * Helper to resolve uploaded images or static assets
+ * If image is /uploads/filename.jpg, loads from backend where it was stored!
+ */
+export function getAssetUrl(src) {
+  if (!src) return "/images/placeholder.jpg";
+  if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
+    return src;
+  }
+  if (src.startsWith("/uploads/")) {
+    return `${LIVE_BACKEND_URL.replace(/\/$/, "")}${src}`;
+  }
+  return src;
+}
+
 export default {
   API_BASE_URL,
   getApiUrl,
+  getAssetUrl,
 };

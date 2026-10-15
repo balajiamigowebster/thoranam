@@ -10,6 +10,19 @@ import {
   deleteProductFromDb,
 } from "@/lib/products";
 import { getStoredCategories } from "@/lib/categories";
+import { getAssetUrl } from "@/config";
+
+// Helper to format price with proper Indian Rupee symbol
+export function formatRupeePrice(priceStr) {
+  if (!priceStr) return "₹ 0";
+  // Replace corrupted encoding like '?' or 'Rs.' or missing spaces
+  const cleaned = String(priceStr).replace(/^[?]|Rs\.?|\s+/gi, "").trim();
+  // If already starts with ₹
+  if (String(priceStr).trim().startsWith("₹")) {
+    return priceStr;
+  }
+  return `₹ ${cleaned}`;
+}
 
 export default function DashboardProducts() {
   const [products, setProducts] = useState(getStoredProducts);
@@ -164,7 +177,7 @@ export default function DashboardProducts() {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-12 rounded-lg bg-stone-100 border border-slate-200 overflow-hidden shrink-0">
                         <img
-                          src={item.mainImage || "/images/product-1.jpg"}
+                          src={getAssetUrl(item.mainImage)}
                           alt={item.title}
                           className="w-full h-full object-cover"
                           onError={(e) => {
@@ -183,7 +196,9 @@ export default function DashboardProducts() {
                     </div>
                   </td>
                   <td className="py-3 px-3 text-slate-600 whitespace-nowrap">{item.category}</td>
-                  <td className="py-3 px-3 font-semibold text-slate-900 whitespace-nowrap">{item.price}</td>
+                  <td className="py-3 px-3 font-semibold text-slate-900 whitespace-nowrap">
+                    {formatRupeePrice(item.price)}
+                  </td>
                   <td className="py-3 px-3 whitespace-nowrap">
                     <span
                       className={`font-medium ${
@@ -283,7 +298,7 @@ export default function DashboardProducts() {
             <div className="space-y-3">
               <div className="rounded-2xl overflow-hidden border border-slate-200 aspect-[3/4] bg-stone-100">
                 <img
-                  src={viewProduct.mainImage || "/images/product-1.jpg"}
+                  src={getAssetUrl(viewProduct.mainImage)}
                   alt={viewProduct.title}
                   className="w-full h-full object-cover"
                 />
@@ -297,7 +312,7 @@ export default function DashboardProducts() {
                         key={i}
                         className="w-14 h-16 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-stone-100"
                       >
-                        <img src={g} alt="" className="w-full h-full object-cover" />
+                        <img src={getAssetUrl(g)} alt="" className="w-full h-full object-cover" />
                       </div>
                     ))}
                   </div>

@@ -20,7 +20,7 @@ import {
   Smartphone,
   Monitor,
 } from "lucide-react";
-import { getApiUrl } from "@/config";
+import { getApiUrl, getAssetUrl } from "@/config";
 
 export default function DashboardStoreSettings() {
   const [activeSubTab, setActiveSubTab] = useState("hero"); // 'hero' | 'seo'
@@ -343,7 +343,7 @@ export default function DashboardStoreSettings() {
                         </span>
                         <div className="relative w-full sm:w-60 lg:w-64 aspect-[1920/700] rounded-xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-2xs group">
                           <img
-                            src={slide.imageSrc}
+                            src={getAssetUrl(slide.imageSrc)}
                             alt={slide.imageAlt || `Banner ${index + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
@@ -369,11 +369,11 @@ export default function DashboardStoreSettings() {
                           {slide.mobileImageSrc ? (
                             <>
                               <img
-                                src={slide.mobileImageSrc}
+                                src={getAssetUrl(slide.mobileImageSrc)}
                                 alt="Mobile Banner"
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  e.target.src = slide.imageSrc || "/images/hero-1.webp";
+                                  e.target.src = getAssetUrl(slide.imageSrc) || "/images/hero-1.webp";
                                 }}
                               />
                               <div className="absolute inset-0 bg-black/50 text-white text-[10px] font-semibold opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity backdrop-blur-2xs">
