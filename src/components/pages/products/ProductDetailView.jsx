@@ -56,9 +56,27 @@ export default function ProductDetailView({ productId }) {
         const json = await res.json();
         const allJson = await allRes.json();
 
-        if (mounted && json.success && json.data) {
-          setProduct(json.data);
-          setSelectedImage(json.data.mainImage || "/images/product-1.jpg");
+        let foundProduct = null;
+        if (json.success && json.data) {
+          foundProduct = json.data;
+        } else if (allJson.success && Array.isArray(allJson.data)) {
+          foundProduct = allJson.data.find((p) => String(p.id) === String(productId));
+        }
+
+        // Offline / localStorage fallback
+        if (!foundProduct && typeof window !== "undefined") {
+          try {
+            const saved = localStorage.getItem("thoranam_products");
+            if (saved) {
+              const localList = JSON.parse(saved);
+              foundProduct = localList.find((p) => String(p.id) === String(productId));
+            }
+          } catch (err) {}
+        }
+
+        if (mounted && foundProduct) {
+          setProduct(foundProduct);
+          setSelectedImage(foundProduct.mainImage || "/images/product-1.jpg");
         }
 
         if (mounted && allJson.success && Array.isArray(allJson.data)) {
