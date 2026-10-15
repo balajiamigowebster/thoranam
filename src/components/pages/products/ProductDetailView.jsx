@@ -49,12 +49,23 @@ export default function ProductDetailView({ productId }) {
     async function fetchProduct() {
       try {
         setIsLoading(true);
-        const [res, allRes] = await Promise.all([
-          fetch(getApiUrl(`/api/products/${productId}`)),
-          fetch(getApiUrl("/api/products")),
-        ]);
-        const json = await res.json();
-        const allJson = await allRes.json();
+        
+        let json = { success: false };
+        let allJson = { success: false, data: [] };
+
+        try {
+          const res = await fetch(getApiUrl(`/api/products/${productId}`));
+          if (res.ok) json = await res.json();
+        } catch (e) {
+          console.warn("Single product endpoint error:", e);
+        }
+
+        try {
+          const allRes = await fetch(getApiUrl("/api/products"));
+          if (allRes.ok) allJson = await allRes.json();
+        } catch (e) {
+          console.warn("Catalog endpoint error:", e);
+        }
 
         let foundProduct = null;
         if (json.success && json.data) {
