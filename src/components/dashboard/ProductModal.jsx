@@ -15,6 +15,7 @@ import {
   Search,
   Globe,
 } from "lucide-react";
+import { getApiUrl } from "@/config";
 
 export default function ProductModal({
   isOpen,
@@ -99,7 +100,7 @@ export default function ProductModal({
       const data = new FormData();
       data.append("files", file);
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch(getApiUrl("/api/upload"), {
         method: "POST",
         body: data,
       });
@@ -130,7 +131,7 @@ export default function ProductModal({
         data.append("files", files[i]);
       }
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch(getApiUrl("/api/upload"), {
         method: "POST",
         body: data,
       });

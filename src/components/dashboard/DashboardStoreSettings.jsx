@@ -20,6 +20,7 @@ import {
   Smartphone,
   Monitor,
 } from "lucide-react";
+import { getApiUrl } from "@/config";
 
 export default function DashboardStoreSettings() {
   const [activeSubTab, setActiveSubTab] = useState("hero"); // 'hero' | 'seo'
@@ -72,7 +73,7 @@ export default function DashboardStoreSettings() {
     async function loadSettings() {
       try {
         setIsLoading(true);
-        const res = await fetch("/api/settings");
+        const res = await fetch(getApiUrl("/api/settings"));
         const json = await res.json();
         if (json.success && json.data) {
           if (Array.isArray(json.data.hero_slides) && json.data.hero_slides.length > 0) {
@@ -95,7 +96,7 @@ export default function DashboardStoreSettings() {
     try {
       setIsSaving(true);
       setSaveSuccess(false);
-      const res = await fetch("/api/settings", {
+      const res = await fetch(getApiUrl("/api/settings"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -128,7 +129,7 @@ export default function DashboardStoreSettings() {
       const formData = new FormData();
       formData.append("files", file);
 
-      const res = await fetch("/api/upload", {
+      const res = await fetch(getApiUrl("/api/upload"), {
         method: "POST",
         body: formData,
       });
