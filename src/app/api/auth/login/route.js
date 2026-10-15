@@ -37,11 +37,12 @@ export async function POST(request) {
       { expiresIn: "7d" }
     );
 
-    // Set secure HTTP-only cookie
+    // Set secure cookie
     const response = NextResponse.json({
       success: true,
       message: "Login successful. Redirecting to Dashboard...",
       user: result.user,
+      token,
     });
 
     response.cookies.set({
