@@ -17,14 +17,18 @@ export default function Dashboard() {
 
   // Verify authentication on mount (handles localStorage / cookie authentication across Vercel)
   useEffect(() => {
-    const hasLocalToken = typeof window !== "undefined" && localStorage.getItem("thoranam_admin_token");
-    const hasCookie = typeof document !== "undefined" && document.cookie.includes("thoranam_admin_token=");
+    const checkAuth = () => {
+      const hasLocalToken = typeof window !== "undefined" && Boolean(localStorage.getItem("thoranam_admin_token"));
+      const hasCookie = typeof document !== "undefined" && document.cookie.includes("thoranam_admin_token=");
 
-    if (!hasLocalToken && !hasCookie) {
-      router.replace("/login?from=/dashboard");
-    } else {
-      setIsCheckingAuth(false);
-    }
+      if (!hasLocalToken && !hasCookie) {
+        router.replace("/login?from=/dashboard");
+      } else {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
   if (isCheckingAuth) {
