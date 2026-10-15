@@ -70,13 +70,13 @@ export default function HomeHero() {
       aria-label="Hero Slideshow"
     >
       {/* 
-        Full width banner matching the exact native 1920x700 (~2.74:1) banner ratio.
-        This fits the entire image without vertical cropping and keeps the height compact.
+        Responsive banner container:
+        - Mobile: vertical portrait aspect ratio (aspect-[4/5] or min-h-[460px]) so mobile banners display vertically with full height & proper spacing
+        - Tablet/Desktop: widescreen aspect ratio (sm:aspect-[16/7] md:aspect-[1920/700])
       */}
-      <div className="relative w-full aspect-[1920/700]">
+      <div className="relative w-full aspect-[4/5] sm:aspect-[16/7] md:aspect-[1920/700]">
         {slides.map((slide, index) => {
           const isActive = currentSlide === index;
-          const mobileSrc = slide.mobileImageSrc || slide.imageSrc;
           const content = (
             <div
               key={slide.id || index}
@@ -88,7 +88,7 @@ export default function HomeHero() {
               <img
                 src={getAssetUrl(slide.imageSrc)}
                 alt={slide.imageAlt || "Thoranam Saree Banner"}
-                className={`w-full h-full object-contain md:object-cover object-center ${
+                className={`w-full h-full object-cover object-center ${
                   slide.mobileImageSrc ? "hidden sm:block" : "block"
                 }`}
                 onError={(e) => {
