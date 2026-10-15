@@ -38,14 +38,9 @@ export function middleware(request) {
     return response;
   }
 
-  // Protect /dashboard routes with authMiddleware
-  if (pathname.startsWith("/dashboard")) {
-    return authMiddleware(request);
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/:path*"],
+  matcher: ["/api/:path*"],
 };
