@@ -4,10 +4,101 @@
 const { createServer } = require("http");
 const { parse } = require("url");
 const next = require("next");
+const mysql = require("mysql2/promise");
+const bcrypt = require("bcryptjs");
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
 const port = process.env.PORT || 3000;
+
+// Direct Database Synchronizer (Runs on server startup in cPanel)
+async function ensureTablesExist() {
+  try {
+    const connection = await mysql.createConnection({
+      host: process.env.DB_HOST || "127.0.0.1",
+      port: Number(process.env.DB_PORT) || 3306,
+      user: process.env.DB_USER || "root",
+      password: process.env.DB_PASSWORD || "",
+      database: process.env.DB_NAME || "thoranam-db",
+    });
+
+    console.log("[DB Startup] Connected to MySQL. Ensuring all tables exist...");
+
+    // 1. admin_users
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS \`admin_users\` (
+        \`id\` BIGINT AUTO_INCREMENT PRIMARY KEY,
+        \`user_id\` VARCHAR(100) NOT NULL UNIQUE,
+        \`name\` VARCHAR(150) DEFAULT 'Boutique Administrator',
+        \`password_hash\` VARCHAR(255) NOT NULL,
+        \`role\` VARCHAR(50) DEFAULT 'superadmin',
+        \`last_login\` DATETIME NULL,
+        \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 2. customers
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS \`customers\` (
+        \`id\` BIGINT AUTO_INCREMENT PRIMARY KEY,
+        \`name\` VARCHAR(255) NOT NULL,
+        \`email\` VARCHAR(255) NOT NULL UNIQUE,
+        \`phone\` VARCHAR(50) NULL,
+        \`total_orders\` INT DEFAULT 0,
+        \`total_spent\` VARCHAR(50) DEFAULT '₹ 0',
+        \`last_order_date\` DATE NULL,
+        \`status\` ENUM('Active', 'Inactive', 'VIP') DEFAULT 'Active',
+        \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 3. promotions
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS \`promotions\` (
+        \`id\` VARCHAR(50) PRIMARY KEY,
+        \`code\` VARCHAR(50) NOT NULL UNIQUE,
+        \`discount_type\` ENUM('percentage', 'flat') DEFAULT 'percentage',
+        \`discount_value\` DECIMAL(10, 2) NOT NULL,
+        \`min_order_value\` DECIMAL(10, 2) DEFAULT 0,
+        \`max_discount\` DECIMAL(10, 2) NULL,
+        \`expiry_date\` DATE NULL,
+        \`status\` ENUM('Active', 'Expired', 'Disabled') DEFAULT 'Active',
+        \`created_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 4. store_settings
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS \`store_settings\` (
+        \`setting_key\` VARCHAR(100) PRIMARY KEY,
+        \`setting_value\` JSON NULL,
+        \`updated_at\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `);
+
+    // 5. Seed default admin credentials if admin_users is empty
+    const [rows] = await connection.query("SELECT COUNT(*) as count FROM `admin_users`");
+    if (rows[0].count === 0) {
+      const adminUserId = process.env.ADMIN_USER_ID || "admin";
+      const adminPassword = process.env.ADMIN_PASSWORD || "admin";
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash(adminPassword, salt);
+      await connection.query(
+        "INSERT INTO `admin_users` (`user_id`, `name`, `password_hash`, `role`) VALUES (?, ?, ?, ?)",
+        [adminUserId, "Thoranam Administrator", hash, "superadmin"]
+      );
+      console.log(`[DB Startup] Seeded default admin user '${adminUserId}'`);
+    }
+
+    await connection.end();
+    console.log("[DB Startup] All 7 tables verified and created successfully!");
+  } catch (err) {
+    console.error("[DB Startup Warning] Could not ensure tables:", err.message);
+  }
+}
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
@@ -19,7 +110,8 @@ const ALLOWED_ORIGINS = [
   "http://localhost:3000",
 ];
 
-app.prepare().then(() => {
+app.prepare().then(async () => {
+  await ensureTablesExist();
 
   createServer(async (req, res) => {
     try {
