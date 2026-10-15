@@ -19,21 +19,7 @@ const ALLOWED_ORIGINS = [
   "http://localhost:3000",
 ];
 
-app.prepare().then(async () => {
-  // Automatically synchronize all 7 tables in MySQL and seed admin credentials
-  try {
-    const { syncDatabase } = require("./src/models");
-    const { authController } = require("./src/controllers");
-    if (syncDatabase) {
-      await syncDatabase({ alter: true });
-      if (authController && authController.seedAdminUserIfNeeded) {
-        await authController.seedAdminUserIfNeeded();
-      }
-      console.log("MySQL: Automatic startup sync completed. All 7 tables verified.");
-    }
-  } catch (syncErr) {
-    console.error("Auto DB Sync on startup warning:", syncErr.message);
-  }
+app.prepare().then(() => {
 
   createServer(async (req, res) => {
     try {
