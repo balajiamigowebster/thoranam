@@ -12,19 +12,31 @@ let isSynced = false;
 // Sync all models with MySQL database
 export async function syncDatabase(options = {}) {
   const sequelize = getSequelize();
-  if (!isSynced) {
+  
+  // Explicitly reference all models so Sequelize registers their schemas
+  const models = {
+    Product,
+    Category,
+    Order,
+    Customer,
+    Promotion,
+    StoreSetting,
+    AdminUser,
+  };
+
+  if (!isSynced || options.force) {
     try {
       await sequelize.authenticate();
-      // alter: true safely modifies tables to match models without dropping data
+      // Synchronize all registered models with database (creates non-existent tables)
       await sequelize.sync({ alter: false, ...options });
       isSynced = true;
-      console.log("Sequelize: All models synchronized with MySQL successfully.");
+      console.log("Sequelize: All 7 models synchronized with MySQL successfully.");
     } catch (error) {
       console.error("Sequelize sync error:", error);
       throw error;
     }
   }
-  return { sequelize, Product, Category, Order, Customer, Promotion, StoreSetting, AdminUser };
+  return { sequelize, ...models };
 }
 
 export {
