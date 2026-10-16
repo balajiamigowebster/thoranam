@@ -106,6 +106,9 @@ export default function DashboardStoreSettings() {
       });
       const json = await res.json();
       if (json.success) {
+        try {
+          localStorage.setItem("thoranam_hero_slides_cache", JSON.stringify(slides));
+        } catch (err) {}
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {

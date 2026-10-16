@@ -21,8 +21,22 @@ const DEFAULT_SLIDES = [
 
 import { getApiUrl, getAssetUrl } from "@/config";
 
-export default function HomeHero() {
-  const [slides, setSlides] = useState(DEFAULT_SLIDES);
+const CACHE_KEY = "thoranam_hero_slides_cache";
+
+function getCachedSlides() {
+  if (typeof window === "undefined") return DEFAULT_SLIDES;
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return DEFAULT_SLIDES;
+}
+
+export default function HomeHero({ initialSlides = null }) {
+  const [slides, setSlides] = useState(() => initialSlides || getCachedSlides());
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
@@ -34,6 +48,9 @@ export default function HomeHero() {
         const json = await res.json();
         if (mounted && json.success && json.data?.hero_slides?.length > 0) {
           setSlides(json.data.hero_slides);
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify(json.data.hero_slides));
+          } catch (err) {}
         }
       } catch (e) {
         console.warn("Could not load dynamic hero slides:", e);
@@ -77,6 +94,9 @@ export default function HomeHero() {
       <div className="relative w-full aspect-[4/5] sm:aspect-[16/7] md:aspect-[1920/700]">
         {slides.map((slide, index) => {
           const isActive = currentSlide === index;
+          const desktopSrc = getAssetUrl(slide.imageSrc);
+          const mobileSrc = slide.mobileImageSrc ? getAssetUrl(slide.mobileImageSrc) : desktopSrc;
+
           const content = (
             <div
               key={slide.id || index}
@@ -84,29 +104,25 @@ export default function HomeHero() {
                 isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
               }`}
             >
-              {/* Desktop / Tablet Image */}
-              <img
-                src={getAssetUrl(slide.imageSrc)}
-                alt={slide.imageAlt || "Thoranam Saree Banner"}
-                className={`w-full h-full object-cover object-center ${
-                  slide.mobileImageSrc ? "hidden sm:block" : "block"
-                }`}
-                onError={(e) => {
-                  e.target.src = "/images/hero-1.webp";
-                }}
-              />
-
-              {/* Dedicated Mobile View Image (active only on mobile screens if uploaded) */}
-              {slide.mobileImageSrc && (
+              {/* Native responsive picture tag: downloads & renders the mobile image instantly on mobile without layout shift or lag */}
+              <picture className="block w-full h-full">
+                {slide.mobileImageSrc && (
+                  <source
+                    media="(max-width: 639px)"
+                    srcSet={mobileSrc}
+                  />
+                )}
                 <img
-                  src={getAssetUrl(slide.mobileImageSrc)}
-                  alt={slide.imageAlt || "Thoranam Saree Mobile Banner"}
-                  className="sm:hidden w-full h-full object-cover object-center"
+                  src={desktopSrc}
+                  alt={slide.imageAlt || "Thoranam Saree Banner"}
+                  fetchPriority={index === 0 ? "high" : "auto"}
+                  loading={index === 0 ? "eager" : "lazy"}
+                  className="w-full h-full object-cover object-center"
                   onError={(e) => {
-                    e.target.src = getAssetUrl(slide.imageSrc) || "/images/hero-1.webp";
+                    e.currentTarget.src = "/images/hero-1.webp";
                   }}
                 />
-              )}
+              </picture>
             </div>
           );
 
