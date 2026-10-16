@@ -26,6 +26,14 @@ export const Customer = sequelize.isDefined("Customer")
           type: DataTypes.STRING(50),
           allowNull: true,
         },
+        password_hash: {
+          type: DataTypes.STRING(255),
+          allowNull: true,
+        },
+        auth_provider: {
+          type: DataTypes.STRING(50),
+          defaultValue: "email",
+        },
         total_orders: {
           type: DataTypes.INTEGER,
           defaultValue: 0,

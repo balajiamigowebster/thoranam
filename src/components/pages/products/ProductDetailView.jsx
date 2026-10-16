@@ -384,6 +384,16 @@ export default function ProductDetailView({ productId }) {
 
               <button
                 type="button"
+                onClick={() => {
+                  triggerAddToCartAnimation({
+                    image: selectedImage || product?.mainImage || "/images/product-1.jpg",
+                    item: product,
+                    quantity: quantity || 1,
+                  });
+                  setTimeout(() => {
+                    window.location.href = "/checkout";
+                  }, 300);
+                }}
                 className="w-full py-3.5 px-6 rounded-xl bg-white border border-slate-800 text-slate-900 font-bold text-sm hover:bg-slate-50 transition-colors uppercase cursor-pointer"
               >
                 BUY IT NOW
@@ -541,7 +551,7 @@ export default function ProductDetailView({ productId }) {
               You may also like
             </h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-7">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7">
               {relatedProducts.map((item) => (
                 <ProductCard
                   key={item.id}

@@ -24,13 +24,13 @@ export async function syncDatabase(options = {}) {
     AdminUser,
   };
 
-  if (!isSynced || options.force) {
+  if (!isSynced || options.force || options.alter) {
     try {
       await sequelize.authenticate();
-      // Synchronize all registered models with database (creates non-existent tables)
-      await sequelize.sync({ alter: false, ...options });
+      // Synchronize all registered models with database
+      await sequelize.sync({ ...options });
       isSynced = true;
-      console.log("Sequelize: All 7 models synchronized with MySQL successfully.");
+      console.log("Sequelize: All models synchronized with MySQL successfully.");
     } catch (error) {
       console.error("Sequelize sync error:", error);
       throw error;

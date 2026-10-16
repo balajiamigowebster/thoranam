@@ -11,10 +11,10 @@ export default function ThoranamLogo({ className = "" }) {
       <Image
         src="/images/desktop-logo.png"
         alt="Thoranam Luxury Saree Boutique"
-        width={246}
-        height={70}
+        width={320}
+        height={90}
         priority
-        className="h-10 sm:h-12 md:h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-102"
+        className="h-12 sm:h-14 md:h-16 lg:h-17 w-auto object-contain transition-transform duration-200 group-hover:scale-103"
       />
     </Link>
   );

@@ -1,11 +1,14 @@
 // Shared Categories Store / Configuration
-// Connects Admin Dashboard Category Management with the Frontend Header / Navbar
+// Connects Admin Dashboard Category Management with the Frontend Header / Navbar and Browse Categories
 
 export const INITIAL_CATEGORIES = [
   {
     id: "new-arrivals",
     label: "New Arrivals",
+    name: "New Arrivals",
     href: "/products?cat=new-arrivals",
+    image: "/images/product-1.jpg",
+    sort_order: 1,
     featured: true,
     subcategories: [
       { label: "Latest Weekly Drops", href: "/products?cat=new-arrivals&sub=latest-drops" },
@@ -33,7 +36,10 @@ export const INITIAL_CATEGORIES = [
   {
     id: "exotic-cotton",
     label: "Exotic Cotton Sarees",
+    name: "Exotic Cotton Sarees",
     href: "/products?cat=exotic-cotton",
+    image: "/images/product-2.jpg",
+    sort_order: 2,
     subcategories: [
       { label: "Chettinad Cotton", href: "/products?cat=exotic-cotton&sub=chettinad" },
       { label: "Handloom cotton sarees", href: "/products?cat=exotic-cotton&sub=handloom-cotton" },
@@ -64,7 +70,10 @@ export const INITIAL_CATEGORIES = [
   {
     id: "silk-sarees",
     label: "Silk Sarees",
+    name: "Silk Sarees",
     href: "/products?cat=silk-sarees",
+    image: "/images/product-3.jpg",
+    sort_order: 3,
     subcategories: [
       { label: "Banarasi silk cotton", href: "/products?cat=silk-sarees&sub=banarasi-silk" },
       { label: "Simple silk cottons", href: "/products?cat=silk-sarees&sub=simple-silk-cottons" },
@@ -72,65 +81,90 @@ export const INITIAL_CATEGORIES = [
     ],
     showcase: [
       {
-        title: "Kanchipuram Brocade Pure Silk",
-        price: "Rs. 8,900.00",
+        title: "Aqua Bloom – Pure Kota French Knot Saree",
+        price: "Rs. 3,100.00",
         image: "/images/product-1.jpg",
       },
       {
-        title: "Golden Banarasi Zari Silk Saree",
-        price: "Rs. 7,450.00",
+        title: "Aqua Blossom – Neem Silk Saree",
+        price: "Rs. 2,100.00",
         image: "/images/product-2.jpg",
       },
       {
-        title: "Mysore Traditional Crepe Silk",
-        price: "Rs. 4,800.00",
-        image: "/images/product-4.jpg",
+        title: "Aqua Blush – Semi Kanchipuram Silk Saree",
+        price: "Rs. 2,100.00",
+        image: "/images/product-3.jpg",
       },
     ],
   },
   {
     id: "semi-silk",
     label: "Semi Silk Sarees",
+    name: "Semi Silk Sarees",
     href: "/products?cat=semi-silk",
+    image: "/images/product-4.jpg",
+    sort_order: 4,
     subcategories: [
+      { label: "Chettinad Cotton", href: "/products?cat=semi-silk&sub=chettinad" },
       { label: "Semi Mangalagiri Pattu", href: "/products?cat=semi-silk&sub=semi-mangalagiri" },
       { label: "Semi Kanchipuram Brocade", href: "/products?cat=semi-silk&sub=semi-kanchipuram" },
-      { label: "Soft Silk Weaves", href: "/products?cat=semi-silk&sub=soft-silk" },
     ],
     showcase: [
+      {
+        title: "Aqua Bloom – Pure Kota French Knot Saree",
+        price: "Rs. 3,100.00",
+        image: "/images/product-1.jpg",
+      },
+      {
+        title: "Aqua Blossom – Neem Silk Saree",
+        price: "Rs. 2,100.00",
+        image: "/images/product-2.jpg",
+      },
       {
         title: "Aqua Blush – Semi Kanchipuram Silk Saree",
         price: "Rs. 2,100.00",
         image: "/images/product-3.jpg",
       },
-      {
-        title: "Semi Mangalagiri Zari Border",
-        price: "Rs. 2,899.00",
-        image: "/images/product-2.jpg",
-      },
     ],
   },
   {
-    id: "thoranam-exclusive",
+    id: "thoranam-collection",
     label: "Thoranam Collection",
-    href: "/products?cat=thoranam-exclusive",
+    name: "Thoranam Collection",
+    href: "/products?cat=thoranam-collection",
+    image: "/images/bestseller-1.jpg",
+    sort_order: 5,
     subcategories: [
-      { label: "Heritage Bridal Edit", href: "/products?cat=thoranam-exclusive&sub=bridal" },
-      { label: "Artisan Handcrafted Sarees", href: "/products?cat=thoranam-exclusive&sub=handcrafted" },
-      { label: "Designer Festive Boutique", href: "/products?cat=thoranam-exclusive&sub=designer" },
+      { label: "Banarasi silk cotton", href: "/products?cat=thoranam-collection&sub=banarasi-silk" },
+      { label: "Chettinad Cotton", href: "/products?cat=thoranam-collection&sub=chettinad" },
+      { label: "Coimbatore Cotton", href: "/products?cat=thoranam-collection&sub=coimbatore-cotton" },
+      { label: "cotton printed sarees", href: "/products?cat=thoranam-collection&sub=cotton-printed" },
     ],
     showcase: [
       {
-        title: "Thoranam Royal Signature Silk",
-        price: "Rs. 12,500.00",
-        image: "/images/bestseller-1.jpg",
+        title: "Aqua Bloom – Pure Kota French Knot Saree",
+        price: "Rs. 3,100.00",
+        image: "/images/product-1.jpg",
+      },
+      {
+        title: "Aqua Blossom – Neem Silk Saree",
+        price: "Rs. 2,100.00",
+        image: "/images/product-2.jpg",
+      },
+      {
+        title: "Aqua Blush – Semi Kanchipuram Silk Saree",
+        price: "Rs. 2,100.00",
+        image: "/images/product-3.jpg",
       },
     ],
   },
   {
     id: "pure-cotton",
     label: "Pure Cotton",
+    name: "Pure Cotton",
     href: "/products?cat=pure-cotton",
+    image: "/images/bestseller-2.jpg",
+    sort_order: 6,
     subcategories: [
       { label: "Handloom cotton sarees", href: "/products?cat=pure-cotton&sub=handloom-cotton" },
       { label: "Chettinad Cotton", href: "/products?cat=pure-cotton&sub=chettinad" },
@@ -143,21 +177,87 @@ export const INITIAL_CATEGORIES = [
         image: "/images/product-1.jpg",
       },
       {
-        title: "Natural Organic Handspun Cotton",
-        price: "Rs. 1,850.00",
-        image: "/images/product-4.jpg",
+        title: "Aqua Blossom – Neem Silk Saree",
+        price: "Rs. 2,100.00",
+        image: "/images/product-2.jpg",
+      },
+      {
+        title: "Aqua Blush – Semi Kanchipuram Silk Saree",
+        price: "Rs. 2,100.00",
+        image: "/images/product-3.jpg",
       },
     ],
   },
 ];
 
-// Helper to get active categories from localStorage (with fallback to INITIAL_CATEGORIES)
+// 8 Saree Categories for Homepage "Browse Our Categories" Circles
+export const HOMEPAGE_BROWSE_CATEGORIES = [
+  {
+    id: "handloom-cotton",
+    name: "Handloom cotton sarees",
+    label: "Handloom cotton sarees",
+    href: "/products?cat=exotic-cotton&sub=handloom-cotton",
+    image: "/images/product-1.jpg",
+  },
+  {
+    id: "banarasi-silk",
+    name: "Banarasi silk cotton",
+    label: "Banarasi silk cotton",
+    href: "/products?cat=silk-sarees&sub=banarasi-silk",
+    image: "/images/product-2.jpg",
+  },
+  {
+    id: "illampillai-cotton",
+    name: "Illampillai Cotton",
+    label: "Illampillai Cotton",
+    href: "/products?cat=exotic-cotton&sub=illampillai",
+    image: "/images/product-3.jpg",
+  },
+  {
+    id: "pure-cotton",
+    name: "Pure cotton",
+    label: "Pure cotton",
+    href: "/products?cat=pure-cotton",
+    image: "/images/product-4.jpg",
+  },
+  {
+    id: "chettinad-cotton",
+    name: "Chettinad Cotton",
+    label: "Chettinad Cotton",
+    href: "/products?cat=exotic-cotton&sub=chettinad",
+    image: "/images/bestseller-1.jpg",
+  },
+  {
+    id: "cotton-printed",
+    name: "cotton printed sarees",
+    label: "cotton printed sarees",
+    href: "/products?cat=thoranam-collection&sub=cotton-printed",
+    image: "/images/bestseller-2.jpg",
+  },
+  {
+    id: "coimbatore-cotton",
+    name: "Coimbatore Cotton",
+    label: "Coimbatore Cotton",
+    href: "/products?cat=thoranam-collection&sub=coimbatore-cotton",
+    image: "/images/product-1.jpg",
+  },
+  {
+    id: "mul-cotton",
+    name: "MUL Cotton sarees",
+    label: "MUL Cotton sarees",
+    href: "/products?cat=exotic-cotton&sub=mul-cotton",
+    image: "/images/product-2.jpg",
+  },
+];
+
+// Helper to get active categories from localStorage or API (with fallback to INITIAL_CATEGORIES)
 export function getStoredCategories() {
   if (typeof window === "undefined") return INITIAL_CATEGORIES;
   try {
     const saved = localStorage.getItem("thoranam_categories");
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch (e) {
     console.error("Error reading categories from localStorage", e);

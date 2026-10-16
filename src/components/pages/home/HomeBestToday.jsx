@@ -81,7 +81,7 @@ export default function HomeBestToday() {
         </div>
 
         {/* 4 Column Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7">
           {products.map((item) => (
             <ProductCard
               key={item.id}

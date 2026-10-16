@@ -10,6 +10,7 @@ const poppins = Poppins({
 });
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://thoranam.co"),
   title: "Thoranam | Luxury Saree Boutique",
   description: "Crafting premium saree collections and digital experiences.",
 };

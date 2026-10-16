@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useSyncExternalStore,
+} from "react";
 
 const CartContext = createContext(null);
 
@@ -14,22 +20,47 @@ const DEFAULT_INITIAL_ITEM = [
   },
 ];
 
+const emptySubscribe = () => () => {};
+
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("thoranam_cart");
-        if (stored) {
-          return JSON.parse(stored);
-        }
-      } catch (e) {
-        console.error("Cart localStorage error:", e);
-      }
-    }
-    return DEFAULT_INITIAL_ITEM;
-  });
+  const [cartItems, setCartItems] = useState(DEFAULT_INITIAL_ITEM);
   const [animatingFlyers, setAnimatingFlyers] = useState([]);
   const [badgeBump, setBadgeBump] = useState(false);
+  const isMounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("thoranam_cart");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setCartItems(parsed);
+        }
+      }
+    } catch (e) {
+      console.error("Cart localStorage error:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === "thoranam_cart" && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setCartItems(parsed);
+          }
+        } catch (err) {}
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const saveCart = (items) => {
     setCartItems(items);
@@ -193,6 +224,7 @@ export function CartProvider({ children }) {
       value={{
         cartItems,
         totalCartCount,
+        isMounted,
         triggerAddToCartAnimation,
         badgeBump,
         isCartOpen,

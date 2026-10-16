@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import {
   INITIAL_CATEGORIES,
   getStoredCategories,
@@ -15,7 +16,26 @@ export default function Navbar({ className = "" }) {
   const [hoveredCategory, setHoveredCategory] = useState(null);
 
   useEffect(() => {
-    // Listen for live updates when modified in Admin Dashboard
+    // 1. Fetch live categories directly from Database
+    async function fetchDbCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setCategories(json.data);
+          try {
+            localStorage.setItem("thoranam_categories", JSON.stringify(json.data));
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    }
+    fetchDbCategories();
+
+    // 2. Listen for live updates when modified in Admin Dashboard
     const handleSync = () => {
       setCategories(getStoredCategories());
     };
@@ -33,8 +53,13 @@ export default function Navbar({ className = "" }) {
       className={`w-full bg-white border-b border-rose-100/70 shadow-xs relative ${className}`}
       onMouseLeave={() => setHoveredCategory(null)}
     >
-      <div className="max-w-7xl mx-auto px-4 overflow-x-auto no-scrollbar">
-        <ul className="flex items-center justify-start md:justify-center gap-6 sm:gap-8 lg:gap-10 py-3 whitespace-nowrap min-w-max md:min-w-0">
+      {/* 
+        Container:
+        - Mobile/Tablet: Horizontal smooth swipe with scrollbar hidden
+        - Desktop: Centered, auto-fitting flex layout with compact gaps so every category (first to last) is 100% fully visible without clipping
+      */}
+      <div className="w-full max-w-[1400px] mx-auto px-2 sm:px-4">
+        <ul className="flex items-center justify-start lg:justify-center gap-1 sm:gap-2 md:gap-3 lg:gap-3.5 xl:gap-5 py-2.5 sm:py-3 overflow-x-auto no-scrollbar scroll-smooth">
           {categories.map((item) => {
             const currentCat = searchParams.get("cat");
             const itemCat = item.href?.split("cat=")[1];
@@ -45,19 +70,19 @@ export default function Navbar({ className = "" }) {
               <li
                 key={item.id || item.label}
                 onMouseEnter={() => setHoveredCategory(item)}
-                className="relative py-1"
+                className="shrink-0 relative py-0.5"
               >
                 <Link
                   href={item.href}
-                  className={`text-xs sm:text-sm font-medium tracking-wide transition-colors relative py-1 flex items-center gap-1 ${
+                  className={`text-[11px] sm:text-xs lg:text-[11.5px] xl:text-[12.5px] font-medium tracking-normal transition-all relative py-1 px-1 sm:px-1.5 md:px-2 rounded-md whitespace-nowrap flex items-center capitalize ${
                     isActive || isHovered
-                      ? "text-rose-900 font-semibold"
-                      : "text-rose-800/90 hover:text-rose-950"
+                      ? "text-[#890e0e] font-bold bg-rose-50/80"
+                      : "text-stone-700 hover:text-[#890e0e] hover:bg-stone-50"
                   }`}
                 >
                   {item.label}
                   {(isActive || isHovered) && (
-                    <span className="absolute -bottom-1 left-0 right-0 h-0.5 bg-rose-800 rounded-full" />
+                    <span className="absolute -bottom-1 left-1.5 right-1.5 h-[2px] bg-[#890e0e] rounded-full" />
                   )}
                 </Link>
               </li>
@@ -78,12 +103,12 @@ export default function Navbar({ className = "" }) {
               {/* Left Column: Subcategories List */}
               <div className="col-span-4 border-r border-rose-100/70 pr-6 space-y-3">
                 <div className="border-b border-rose-100 pb-2 flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-[#800F17]">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-[#890e0e]">
                     {hoveredCategory.label}
                   </h4>
                   <Link
                     href={hoveredCategory.href}
-                    className="text-[11px] text-rose-800 hover:text-rose-950 font-medium underline"
+                    className="text-[11px] text-[#890e0e] hover:underline font-semibold"
                   >
                     View All
                   </Link>
@@ -94,8 +119,9 @@ export default function Navbar({ className = "" }) {
                     <li key={idx}>
                       <Link
                         href={sub.href || `${hoveredCategory.href}&sub=${sub.label.toLowerCase().replace(/\s+/g, "-")}`}
-                        className="text-xs sm:text-sm font-normal text-rose-900/80 hover:text-rose-950 hover:font-semibold hover:translate-x-1 transition-all inline-block py-0.5"
+                        className="text-xs sm:text-sm font-normal text-rose-950/80 hover:text-[#890e0e] hover:font-semibold hover:translate-x-1 transition-all inline-flex items-center gap-1.5 py-0.5"
                       >
+                        <ChevronRight className="w-3 h-3 text-[#890e0e]/50" />
                         {sub.label}
                       </Link>
                     </li>
@@ -109,7 +135,7 @@ export default function Navbar({ className = "" }) {
                   <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
                     Featured Handpicked Sarees
                   </span>
-                  <span className="text-[11px] text-amber-700 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                  <span className="text-[11px] text-amber-800 font-semibold bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
                     Boutique Exclusives
                   </span>
                 </div>
@@ -128,10 +154,10 @@ export default function Navbar({ className = "" }) {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                       </div>
-                      <h5 className="text-xs font-medium text-slate-800 line-clamp-2 leading-snug group-hover:text-[#800F17] transition-colors">
+                      <h5 className="text-xs font-medium text-slate-800 line-clamp-2 leading-snug group-hover:text-[#890e0e] transition-colors">
                         {item.title}
                       </h5>
-                      <p className="text-xs font-bold text-[#800F17] mt-1">
+                      <p className="text-xs font-bold text-[#890e0e] mt-1">
                         {item.price}
                       </p>
                     </Link>

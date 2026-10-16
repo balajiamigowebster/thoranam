@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Login from "@/components/pages/login/Login";
 
 export const metadata = {
@@ -6,5 +7,10 @@ export const metadata = {
 };
 
 export default function LoginPage() {
-  return <Login />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-stone-50" />}>
+      <Login />
+    </Suspense>
+  );
 }
+

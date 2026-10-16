@@ -50,7 +50,7 @@ export default function HomeShop() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-8">
             {bestsellers.map((item) => (
               <ProductCard
                 key={item.id}
@@ -89,7 +89,7 @@ export default function HomeShop() {
 
           {/* Product Carousel / Cards Layout matching screenshot */}
           <div className="relative">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-7">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7">
               {bambooCottonProducts.map((p) => (
                 <ProductCard
                   key={p.id}

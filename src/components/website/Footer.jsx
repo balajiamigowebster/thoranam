@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import Container from "@/components/ui/Container";
@@ -179,10 +181,21 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Copyright strip matching exact screenshot text */}
-        <div className="mt-10 pt-6 border-t border-amber-200/10 text-center">
-          <p className="text-[11px] sm:text-xs text-stone-300/80 tracking-wide">
-            © now Thoranam Luxury Saree Boutique. All Rights Reserved.
+        {/* Copyright strip */}
+        <div className="mt-10 pt-6 border-t border-amber-200/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left text-[11px] sm:text-xs text-stone-300/80 tracking-wide">
+          <p>
+            © 2026 Thoranam Luxury Saree Boutique. All Rights Reserved.
+          </p>
+          <p>
+            Designed by{" "}
+            <a
+              href="https://amigowebster.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-amber-200 hover:text-white font-medium underline underline-offset-4 decoration-amber-200/40 hover:decoration-white transition-colors"
+            >
+              Amigowebster
+            </a>
           </p>
         </div>
       </Container>
