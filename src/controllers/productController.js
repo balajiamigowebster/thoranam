@@ -23,9 +23,11 @@ export const productController = {
       order: [["id", "DESC"]],
     });
 
-    // Seed defaults if empty
-    if (products.length === 0 && !query.search && !query.category) {
-      for (const item of INITIAL_PRODUCTS) {
+    // Check if new initial items need seeding
+    const existingTitles = new Set(products.map((p) => p.title));
+    const missing = INITIAL_PRODUCTS.filter((item) => !existingTitles.has(item.title));
+    if (missing.length > 0 && !query.search && !query.category) {
+      for (const item of missing) {
         await Product.create({
           title: item.title,
           category: item.category,

@@ -11,25 +11,21 @@ export default function HomeCategory() {
 
   useEffect(() => {
     // Keep 8 saree circular categories synchronized from localStorage if edited in dashboard
-    try {
-      const stored = localStorage.getItem("thoranam_browse_categories");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) setCategories(parsed);
-      }
-    } catch (e) {}
-
-    const handleSync = () => {
+    const syncCategories = () => {
       try {
         const stored = localStorage.getItem("thoranam_browse_categories");
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) setCategories(parsed);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCategories(parsed);
+          }
         }
       } catch (e) {}
     };
-    window.addEventListener("thoranam_browse_categories_updated", handleSync);
-    return () => window.removeEventListener("thoranam_browse_categories_updated", handleSync);
+
+    syncCategories();
+    window.addEventListener("thoranam_browse_categories_updated", syncCategories);
+    return () => window.removeEventListener("thoranam_browse_categories_updated", syncCategories);
   }, []);
 
   return (

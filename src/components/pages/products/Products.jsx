@@ -2,15 +2,20 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter } from "next/navigation";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 
 import { getApiUrl } from "@/config";
 
 export default function Products() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlCat = searchParams.get("cat");
+
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCat, setSelectedCat] = useState("all");
+  const [customSelectedCat, setCustomSelectedCat] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -45,9 +50,50 @@ export default function Products() {
     };
   }, []);
 
+  // Derive active category from URL search parameter or user clicks
+  const selectedCat = (() => {
+    if (customSelectedCat !== null) return customSelectedCat;
+    if (!urlCat) return "all";
+    const found = categories.find(
+      (c) =>
+        c.id?.toLowerCase() === urlCat.toLowerCase() ||
+        c.label?.toLowerCase() === urlCat.toLowerCase() ||
+        c.name?.toLowerCase() === urlCat.toLowerCase()
+    );
+    return found ? (found.label || found.name || found.id) : urlCat;
+  })();
+
+  const handleSelectCat = (catValue) => {
+    setCustomSelectedCat(null);
+    if (catValue === "all") {
+      router.push("/products", { scroll: false });
+    } else {
+      const catObj = categories.find((c) => c.label === catValue || c.id === catValue || c.name === catValue);
+      const queryId = catObj?.id || catValue;
+      router.push(`/products?cat=${encodeURIComponent(queryId)}`, { scroll: false });
+    }
+  };
+
   const filtered = products.filter((p) => {
     if (selectedCat === "all") return true;
-    return p.category === selectedCat;
+    const catLow = selectedCat.toLowerCase();
+    const pCatLow = (p.category || "").toLowerCase();
+    // Check direct equality or match against category id/label
+    if (pCatLow === catLow) return true;
+    const matchedCategory = categories.find(
+      (c) =>
+        c.id?.toLowerCase() === catLow ||
+        c.label?.toLowerCase() === catLow ||
+        c.name?.toLowerCase() === catLow
+    );
+    if (matchedCategory) {
+      return (
+        pCatLow === (matchedCategory.label || "").toLowerCase() ||
+        pCatLow === (matchedCategory.id || "").toLowerCase() ||
+        pCatLow === (matchedCategory.name || "").toLowerCase()
+      );
+    }
+    return false;
   });
 
   return (
@@ -70,7 +116,7 @@ export default function Products() {
         <div className="flex items-center justify-center gap-2 flex-wrap mb-10">
           <button
             type="button"
-            onClick={() => setSelectedCat("all")}
+            onClick={() => handleSelectCat("all")}
             className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
               selectedCat === "all"
                 ? "bg-[#800F17] text-white shadow-xs"
@@ -79,20 +125,26 @@ export default function Products() {
           >
             All Sarees ({products.length})
           </button>
-          {categories.map((c) => (
-            <button
-              key={c.id || c.label}
-              type="button"
-              onClick={() => setSelectedCat(c.label)}
-              className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                selectedCat === c.label
-                  ? "bg-[#800F17] text-white shadow-xs"
-                  : "bg-white text-slate-700 border border-slate-200 hover:border-slate-400"
-              }`}
-            >
-              {c.label}
-            </button>
-          ))}
+          {categories.map((c) => {
+            const isCatSelected =
+              selectedCat === c.label ||
+              selectedCat === c.id ||
+              selectedCat === c.name;
+            return (
+              <button
+                key={c.id || c.label}
+                type="button"
+                onClick={() => handleSelectCat(c.label || c.name || c.id)}
+                className={`px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                  isCatSelected
+                    ? "bg-[#800F17] text-white shadow-xs"
+                    : "bg-white text-slate-700 border border-slate-200 hover:border-slate-400"
+                }`}
+              >
+                {c.label || c.name}
+              </button>
+            );
+          })}
         </div>
 
         {/* Saree Grid */}
@@ -122,7 +174,7 @@ export default function Products() {
               <div className="py-20 text-center space-y-2">
                 <p className="text-base font-bold text-slate-700">No sarees found in this category.</p>
                 <button
-                  onClick={() => setSelectedCat("all")}
+                  onClick={() => handleSelectCat("all")}
                   className="text-xs font-semibold text-[#800F17] hover:underline cursor-pointer"
                 >
                   View All Sarees
