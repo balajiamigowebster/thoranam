@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, User, ShoppingBag, Menu, X } from "lucide-react";
+import { Search, User, ShoppingBag, Menu, X, ChevronDown, LogOut } from "lucide-react";
 import AnnouncementBar from "./AnnouncementBar";
 import Navbar from "./Navbar";
 import ThoranamLogo from "@/components/ui/ThoranamLogo";
@@ -13,6 +13,9 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [customer, setCustomer] = useState(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
   const { totalCartCount, badgeBump, openCart, isMounted } = useCart();
 
   useEffect(() => {
@@ -37,13 +40,53 @@ export default function Header() {
     const handleSync = () => {
       setCategories(getStoredCategories());
     };
+
+    const syncCustomer = () => {
+      try {
+        const stored = localStorage.getItem("thoranam_customer_user");
+        if (stored) {
+          setCustomer(JSON.parse(stored));
+        } else {
+          setCustomer(null);
+        }
+      } catch (err) {
+        setCustomer(null);
+      }
+    };
+
+    syncCustomer();
+
     window.addEventListener("thoranam_categories_updated", handleSync);
+    window.addEventListener("thoranam_customer_auth_changed", syncCustomer);
     window.addEventListener("storage", handleSync);
+    window.addEventListener("storage", syncCustomer);
+
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       window.removeEventListener("thoranam_categories_updated", handleSync);
+      window.removeEventListener("thoranam_customer_auth_changed", syncCustomer);
       window.removeEventListener("storage", handleSync);
+      window.removeEventListener("storage", syncCustomer);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  const handleSignOut = () => {
+    try {
+      localStorage.removeItem("thoranam_customer_token");
+      localStorage.removeItem("thoranam_customer_user");
+      document.cookie = "thoranam_customer_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    } catch (e) {}
+    setCustomer(null);
+    setUserMenuOpen(false);
+    window.dispatchEvent(new Event("thoranam_customer_auth_changed"));
+  };
 
   return (
     <header className="w-full sticky top-0 z-40 bg-white shadow-xs">
@@ -79,14 +122,62 @@ export default function Header() {
 
           {/* Right: Account & Cart Icons */}
           <div className="flex items-center justify-end gap-3 sm:gap-4 w-1/3">
-            <Link
-              href="/login"
-              className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-stone-900 font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
-              aria-label="Customer Login"
-            >
-              <User className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">LOGIN</span>
-            </Link>
+            {isMounted && customer ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="px-3 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-stone-900 font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer max-w-[140px] sm:max-w-[180px]"
+                  title={customer.name || customer.email}
+                >
+                  <User className="w-3.5 h-3.5 shrink-0" />
+                  <span className="truncate">
+                    {customer.name?.trim().split(" ")[0] || "MY ACCOUNT"}
+                  </span>
+                  <ChevronDown className={`w-3 h-3 shrink-0 transition-transform duration-200 ${userMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-stone-200 py-2 z-50 animate-in fade-in slide-in-from-top-1 text-stone-800">
+                    <div className="px-3.5 py-2 border-b border-stone-100">
+                      <p className="text-xs font-bold text-stone-900 truncate">
+                        {customer.name || "Customer"}
+                      </p>
+                      <p className="text-[11px] text-stone-500 truncate">
+                        {customer.email}
+                      </p>
+                    </div>
+
+                    <Link
+                      href="/checkout"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full px-3.5 py-2 text-xs text-stone-700 hover:bg-rose-50 hover:text-[#890e0e] flex items-center gap-2 transition-colors"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5 text-stone-400" />
+                      <span>My Cart / Checkout</span>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={handleSignOut}
+                      className="w-full px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700 flex items-center gap-2 transition-colors cursor-pointer text-left border-t border-stone-100 mt-1"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span className="font-semibold">Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="px-3.5 py-1.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-stone-900 font-bold text-xs uppercase tracking-wider shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                aria-label="Customer Login"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">LOGIN</span>
+              </Link>
+            )}
 
             <button
               id="header-cart-icon-btn"
@@ -179,7 +270,35 @@ export default function Header() {
               </ul>
             </div>
 
-            <div className="pt-4 mt-4 border-t border-slate-100">
+            <div className="pt-4 mt-4 border-t border-slate-100 space-y-2">
+              {isMounted && customer ? (
+                <div className="p-3 bg-amber-50 rounded-xl border border-amber-200">
+                  <p className="text-xs font-bold text-stone-900 truncate">
+                    Hi, {customer.name || "Customer"}
+                  </p>
+                  <p className="text-[11px] text-stone-500 truncate mb-2">
+                    {customer.email}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleSignOut();
+                    }}
+                    className="w-full py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer text-center"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-center w-full py-2.5 rounded-xl bg-amber-400 hover:bg-amber-500 text-stone-900 text-xs font-bold uppercase tracking-wider shadow-sm transition-colors"
+                >
+                  Sign In / Register
+                </Link>
+              )}
               <p className="text-[11px] text-slate-500 mb-2">Need boutique assistance?</p>
               <Link
                 href="/contact"

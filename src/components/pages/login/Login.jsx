@@ -78,14 +78,15 @@ export default function Login() {
         setSuccessMessage(data.message || "Welcome to Thoranam!");
         localStorage.setItem("thoranam_customer_token", data.token);
         localStorage.setItem("thoranam_customer_user", JSON.stringify(data.customer));
+        window.dispatchEvent(new Event("thoranam_customer_auth_changed"));
 
         setTimeout(() => {
           if (redirectUrl) {
             router.push(redirectUrl);
           } else {
-            router.push("/checkout");
+            router.push("/");
           }
-        }, 600);
+        }, 500);
       } else {
         setErrorMessage(data.message || "Authentication failed.");
       }
@@ -146,37 +147,106 @@ export default function Login() {
     }
   }, [redirectUrl, router]);
 
-  // Load and initialize Google Identity Services
+  // Load Google Identity Services script
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) return;
+    if (!clientId) {
+      console.warn("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured.");
+      return;
+    }
 
-    const script = document.createElement("script");
-    script.src = "https://accounts.google.com/gsi/client";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (window.google?.accounts?.id) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleCredentialResponse,
-        });
-      }
-    };
-    document.body.appendChild(script);
-
-    return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
-    };
-  }, [handleGoogleCredentialResponse]);
+    const existingScript = document.getElementById("google-gsi-script");
+    if (!existingScript) {
+      const script = document.createElement("script");
+      script.id = "google-gsi-script";
+      script.src = "https://accounts.google.com/gsi/client";
+      script.async = true;
+      script.defer = true;
+      document.body.appendChild(script);
+    }
+  }, []);
 
   const handleGoogleLogin = () => {
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt();
-    } else {
-      setErrorMessage("Google Sign-in is initializing, please try again in a moment.");
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      setErrorMessage("Google Sign-In is not configured. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in environment variables.");
+      return;
+    }
+
+    if (!window.google?.accounts?.oauth2) {
+      setErrorMessage("Google services are loading. Please try again in a few seconds.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      // Use modern OAuth2 token client popup flow - immune to FedCM, iframe, and One-Tap browser abort errors
+      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: "openid profile email",
+        callback: async (tokenResponse) => {
+          if (tokenResponse.error) {
+            setIsLoading(false);
+            setErrorMessage(tokenResponse.error_description || "Google sign-in was cancelled or encountered an error.");
+            return;
+          }
+
+          if (tokenResponse.access_token) {
+            try {
+              // Retrieve user profile from Google's userinfo endpoint
+              const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+                headers: {
+                  Authorization: `Bearer ${tokenResponse.access_token}`,
+                },
+              });
+              const googleUser = await userInfoRes.json();
+
+              // Send to our backend authentication endpoint
+              const res = await fetch(getApiUrl("/api/auth/customer"), {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  action: "google",
+                  email: googleUser.email,
+                  name: googleUser.name,
+                  googleId: googleUser.sub,
+                }),
+              });
+
+              const data = await res.json();
+              if (data.success) {
+                setSuccessMessage("Signed in with Google!");
+                localStorage.setItem("thoranam_customer_token", data.token);
+                localStorage.setItem("thoranam_customer_user", JSON.stringify(data.customer));
+                window.dispatchEvent(new Event("thoranam_customer_auth_changed"));
+
+                setTimeout(() => {
+                  if (redirectUrl) {
+                    router.push(redirectUrl);
+                  } else {
+                    router.push("/");
+                  }
+                }, 500);
+              } else {
+                setErrorMessage(data.message || "Google sign-in failed on server.");
+              }
+            } catch (err) {
+              console.error("Google authentication error:", err);
+              setErrorMessage("Could not complete Google authentication.");
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        },
+      });
+
+      tokenClient.requestAccessToken();
+    } catch (err) {
+      console.error("OAuth client launch error:", err);
+      setIsLoading(false);
+      setErrorMessage("Failed to open Google sign-in window.");
     }
   };
 

@@ -23,25 +23,28 @@ import { getApiUrl, getAssetUrl } from "@/config";
 
 const CACHE_KEY = "thoranam_hero_slides_cache";
 
-function getCachedSlides() {
-  if (typeof window === "undefined") return DEFAULT_SLIDES;
-  try {
-    const cached = localStorage.getItem(CACHE_KEY);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch (e) {}
-  return DEFAULT_SLIDES;
-}
-
 export default function HomeHero({ initialSlides = null }) {
-  const [slides, setSlides] = useState(() => initialSlides || getCachedSlides());
+  const [slides, setSlides] = useState(() => initialSlides || DEFAULT_SLIDES);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+
+    // Load cached slides on client mount without causing SSR hydration mismatch
+    if (!initialSlides) {
+      try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSlides(parsed);
+          }
+        }
+      } catch (e) {}
+    }
+
     async function loadHeroSlides() {
       try {
         const res = await fetch(getApiUrl("/api/settings"));
@@ -60,7 +63,7 @@ export default function HomeHero({ initialSlides = null }) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [initialSlides]);
 
   // Auto advance slides every 5 seconds
   useEffect(() => {
