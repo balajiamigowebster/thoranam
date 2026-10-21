@@ -147,13 +147,13 @@ export default function Login() {
     }
   }, [redirectUrl, router]);
 
+  const GOOGLE_CLIENT_ID =
+    process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
+    "206287316625-f30t1qbt5l4l67b38qad3lpi1l9004up.apps.googleusercontent.com";
+
   // Load Google Identity Services script
   useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      console.warn("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not configured.");
-      return;
-    }
+    if (!GOOGLE_CLIENT_ID) return;
 
     const existingScript = document.getElementById("google-gsi-script");
     if (!existingScript) {
@@ -164,10 +164,10 @@ export default function Login() {
       script.defer = true;
       document.body.appendChild(script);
     }
-  }, []);
+  }, [GOOGLE_CLIENT_ID]);
 
   const handleGoogleLogin = () => {
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    const clientId = GOOGLE_CLIENT_ID;
     if (!clientId) {
       setErrorMessage("Google Sign-In is not configured. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in environment variables.");
       return;
