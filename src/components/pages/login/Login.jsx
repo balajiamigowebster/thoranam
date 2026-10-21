@@ -151,9 +151,38 @@ export default function Login() {
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
     "206287316625-f30t1qbt5l4l67b38qad3lpi1l9004up.apps.googleusercontent.com";
 
-  // Load Google Identity Services script
+  // Load and render official Google Identity Services button
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
+
+    const renderGoogleBtn = () => {
+      if (!window.google?.accounts?.id) return;
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCredentialResponse,
+        auto_select: false,
+      });
+
+      const container = document.getElementById("google-button-container");
+      if (container) {
+        container.innerHTML = "";
+        window.google.accounts.id.renderButton(container, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "continue_with",
+          shape: "rectangular",
+          logo_alignment: "center",
+          width: 320,
+        });
+      }
+    };
+
+    if (window.google?.accounts?.id) {
+      renderGoogleBtn();
+      return;
+    }
 
     const existingScript = document.getElementById("google-gsi-script");
     if (!existingScript) {
@@ -162,93 +191,12 @@ export default function Login() {
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
       script.defer = true;
+      script.onload = renderGoogleBtn;
       document.body.appendChild(script);
+    } else {
+      existingScript.addEventListener("load", renderGoogleBtn);
     }
-  }, [GOOGLE_CLIENT_ID]);
-
-  const handleGoogleLogin = () => {
-    const clientId = GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      setErrorMessage("Google Sign-In is not configured. Please set NEXT_PUBLIC_GOOGLE_CLIENT_ID in environment variables.");
-      return;
-    }
-
-    if (!window.google?.accounts?.oauth2) {
-      setErrorMessage("Google services are loading. Please try again in a few seconds.");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setErrorMessage("");
-
-      // Use modern OAuth2 token client popup flow - immune to FedCM, iframe, and One-Tap browser abort errors
-      const tokenClient = window.google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: "openid profile email",
-        callback: async (tokenResponse) => {
-          if (tokenResponse.error) {
-            setIsLoading(false);
-            setErrorMessage(tokenResponse.error_description || "Google sign-in was cancelled or encountered an error.");
-            return;
-          }
-
-          if (tokenResponse.access_token) {
-            try {
-              // Retrieve user profile from Google's userinfo endpoint
-              const userInfoRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-                headers: {
-                  Authorization: `Bearer ${tokenResponse.access_token}`,
-                },
-              });
-              const googleUser = await userInfoRes.json();
-
-              // Send to our backend authentication endpoint
-              const res = await fetch(getApiUrl("/api/auth/customer"), {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  action: "google",
-                  email: googleUser.email,
-                  name: googleUser.name,
-                  googleId: googleUser.sub,
-                }),
-              });
-
-              const data = await res.json();
-              if (data.success) {
-                setSuccessMessage("Signed in with Google!");
-                localStorage.setItem("thoranam_customer_token", data.token);
-                localStorage.setItem("thoranam_customer_user", JSON.stringify(data.customer));
-                window.dispatchEvent(new Event("thoranam_customer_auth_changed"));
-
-                setTimeout(() => {
-                  if (redirectUrl) {
-                    router.push(redirectUrl);
-                  } else {
-                    router.push("/");
-                  }
-                }, 500);
-              } else {
-                setErrorMessage(data.message || "Google sign-in failed on server.");
-              }
-            } catch (err) {
-              console.error("Google authentication error:", err);
-              setErrorMessage("Could not complete Google authentication.");
-            } finally {
-              setIsLoading(false);
-            }
-          }
-        },
-      });
-
-      tokenClient.requestAccessToken();
-    } catch (err) {
-      console.error("OAuth client launch error:", err);
-      setIsLoading(false);
-      setErrorMessage("Failed to open Google sign-in window.");
-    }
-  };
+  }, [GOOGLE_CLIENT_ID, handleGoogleCredentialResponse, authRole]);
 
   const handleAdminSubmit = async (e) => {
     e.preventDefault();
@@ -371,32 +319,10 @@ export default function Login() {
                 </button>
               </div>
 
-              {/* Continue with Google Button */}
-              <button
-                type="button"
-                onClick={handleGoogleLogin}
-                className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium text-xs flex items-center justify-center gap-2.5 transition-all active:scale-[0.99] mb-5 shadow-xs cursor-pointer"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24">
-                  <path
-                    fill="#EA4335"
-                    d="M12 5c1.57 0 2.98.54 4.09 1.6l3.07-3.07C17.3 1.76 14.85 1 12 1 7.43 1 3.55 3.59 1.64 7.36l3.77 2.93C6.31 7.23 8.92 5 12 5z"
-                  />
-                  <path
-                    fill="#4285F4"
-                    d="M23.49 12.27c0-.79-.07-1.54-.19-2.27H12v4.51h6.47c-.29 1.48-1.14 2.73-2.4 3.58l3.72 2.89c2.18-2.01 3.7-4.97 3.7-8.71z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.41 14.71c-.24-.71-.38-1.47-.38-2.26s.14-1.55.38-2.26L1.64 7.26C.6 9.33 0 11.6 0 14.05s.6 4.72 1.64 6.79l3.77-2.93z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 23c3.24 0 5.95-1.08 7.93-2.91l-3.72-2.89c-1.07.72-2.45 1.16-4.21 1.16-3.08 0-5.69-2.23-6.59-5.29L1.64 16.05C3.55 19.82 7.43 23 12 23z"
-                  />
-                </svg>
-                <span>Continue with Google</span>
-              </button>
+              {/* Official Google Sign-In Button */}
+              <div className="w-full flex justify-center mb-5 min-h-[44px]">
+                <div id="google-button-container" className="w-full flex justify-center overflow-hidden rounded-xl shadow-xs" />
+              </div>
 
               {/* Divider */}
               <div className="relative flex items-center justify-center mb-5">
