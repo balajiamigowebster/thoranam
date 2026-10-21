@@ -128,12 +128,13 @@ export default function Login() {
         setSuccessMessage("Signed in with Google!");
         localStorage.setItem("thoranam_customer_token", data.token);
         localStorage.setItem("thoranam_customer_user", JSON.stringify(data.customer));
+        window.dispatchEvent(new Event("thoranam_customer_auth_changed"));
 
         setTimeout(() => {
           if (redirectUrl) {
             router.push(redirectUrl);
           } else {
-            router.push("/checkout");
+            router.push("/");
           }
         }, 500);
       } else {
