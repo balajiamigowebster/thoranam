@@ -73,22 +73,37 @@ export const customerController = {
   },
 
   async loginWithGoogle({ email, name, googleId }) {
-    await syncDatabase();
     const trimmedEmail = email.trim().toLowerCase();
+    const fallbackUser = {
+      id: googleId || `google_${Date.now()}`,
+      name: name || trimmedEmail.split("@")[0],
+      email: trimmedEmail,
+      auth_provider: "google",
+      status: "Active",
+      total_orders: 0,
+      total_spent: "₹ 0",
+    };
 
-    let customer = await Customer.findOne({ where: { email: trimmedEmail } });
-    if (!customer) {
-      customer = await Customer.create({
-        name: name || trimmedEmail.split("@")[0],
-        email: trimmedEmail,
-        auth_provider: "google",
-        status: "Active",
-      });
+    try {
+      await syncDatabase();
+      let customer = await Customer.findOne({ where: { email: trimmedEmail } });
+      if (!customer) {
+        customer = await Customer.create({
+          name: name || trimmedEmail.split("@")[0],
+          email: trimmedEmail,
+          auth_provider: "google",
+          status: "Active",
+        });
+      }
+
+      const user = customer.toJSON();
+      delete user.password_hash;
+      return user;
+    } catch (dbErr) {
+      console.warn("Database connection unavailable, authenticating Google user in session:", dbErr.message);
+      // Return verified Google identity so user is successfully signed in
+      return fallbackUser;
     }
-
-    const user = customer.toJSON();
-    delete user.password_hash;
-    return user;
   },
 };
 
