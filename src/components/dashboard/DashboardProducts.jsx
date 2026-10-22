@@ -379,13 +379,19 @@ export default function DashboardProducts() {
       )}
 
       {/* Product Popup Modal Form */}
-      <ProductModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveProduct}
-        editingProduct={editingProduct}
-        categories={categories}
-      />
+      {isModalOpen && (
+        <ProductModal
+          key={editingProduct ? `edit-${editingProduct.id}` : "create-new"}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingProduct(null);
+          }}
+          onSave={handleSaveProduct}
+          editingProduct={editingProduct}
+          categories={categories}
+        />
+      )}
     </div>
   );
 }

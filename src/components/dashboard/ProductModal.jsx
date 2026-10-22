@@ -17,6 +17,42 @@ import {
 } from "lucide-react";
 import { getApiUrl } from "@/config";
 
+const getInitialFormData = (product, categories = []) => {
+  if (product) {
+    return {
+      ...product,
+      highlights: product.highlights || [],
+      galleryImages: product.galleryImages || [],
+      seoTitle: product.seoTitle || "",
+      seoDescription: product.seoDescription || "",
+      seoKeywords: product.seoKeywords || "",
+      ogImage: product.ogImage || product.mainImage || "",
+    };
+  }
+  return {
+    title: "",
+    category: categories[0]?.label || "Semi Silk Sarees",
+    price: "",
+    stock: 10,
+    status: "Published",
+    mainImage: "/images/product-1.jpg",
+    galleryImages: ["/images/product-2.jpg"],
+    description: "",
+    highlights: [
+      "Handloom woven with premium natural yarns",
+      "Includes coordinated unstitched blouse fabric",
+    ],
+    closingDescription: "",
+    material: "Satin Crepe",
+    size: "Saree Size – Free Size\nBlouse Size 38 – Fit up to size 40\nBlouse Size 42 – Fit up to size 44",
+    washCare: "Dry clean only",
+    seoTitle: "",
+    seoDescription: "",
+    seoKeywords: "",
+    ogImage: "",
+  };
+};
+
 export default function ProductModal({
   isOpen,
   onClose,
@@ -24,41 +60,9 @@ export default function ProductModal({
   editingProduct = null,
   categories = [],
 }) {
-  const [formData, setFormData] = useState(() => {
-    if (editingProduct) {
-      return {
-        ...editingProduct,
-        highlights: editingProduct.highlights || [""],
-        galleryImages: editingProduct.galleryImages || [],
-        seoTitle: editingProduct.seoTitle || "",
-        seoDescription: editingProduct.seoDescription || "",
-        seoKeywords: editingProduct.seoKeywords || "",
-        ogImage: editingProduct.ogImage || editingProduct.mainImage || "",
-      };
-    }
-    return {
-      title: "",
-      category: categories[0]?.label || "Semi Silk Sarees",
-      price: "",
-      stock: 10,
-      status: "Published",
-      mainImage: "/images/product-1.jpg",
-      galleryImages: ["/images/product-2.jpg"],
-      description: "",
-      highlights: [
-        "Handloom woven with premium natural yarns",
-        "Includes coordinated unstitched blouse fabric",
-      ],
-      closingDescription: "",
-      material: "Satin Crepe",
-      size: "Saree Size – Free Size\nBlouse Size 38 – Fit up to size 40\nBlouse Size 42 – Fit up to size 44",
-      washCare: "Dry clean only",
-      seoTitle: "",
-      seoDescription: "",
-      seoKeywords: "",
-      ogImage: "",
-    };
-  });
+  const [formData, setFormData] = useState(() =>
+    getInitialFormData(editingProduct, categories)
+  );
 
   const [activeTab, setActiveTab] = useState("details"); // 'details' | 'description' | 'media' | 'specs'
   const [newHighlightInput, setNewHighlightInput] = useState("");
