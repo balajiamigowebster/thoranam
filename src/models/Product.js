@@ -61,7 +61,7 @@ export const Product = sequelize.isDefined("Product")
           allowNull: true,
         },
         size: {
-          type: DataTypes.STRING(150),
+          type: DataTypes.TEXT,
           allowNull: true,
         },
         wash_care: {

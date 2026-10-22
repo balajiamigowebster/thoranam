@@ -50,9 +50,9 @@ export default function ProductModal({
         "Includes coordinated unstitched blouse fabric",
       ],
       closingDescription: "",
-      material: "",
-      size: "6.3 Meters (including 0.8m blouse piece)",
-      washCare: "Dry Clean Only",
+      material: "Satin Crepe",
+      size: "Saree Size – Free Size\nBlouse Size 38 – Fit up to size 40\nBlouse Size 42 – Fit up to size 44",
+      washCare: "Dry clean only",
       seoTitle: "",
       seoDescription: "",
       seoKeywords: "",
@@ -628,14 +628,33 @@ export default function ProductModal({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-800">Size & Dimensions</label>
-                <input
-                  type="text"
-                  placeholder="e.g. 6.3 Meters (includes 0.8m running blouse piece)"
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800">
+                    Size & Dimensions (One per line for bullet points)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleChange(
+                        "size",
+                        "Saree Size – Free Size\nBlouse Size 38 – Fit up to size 40\nBlouse Size 42 – Fit up to size 44"
+                      )
+                    }
+                    className="text-[11px] font-semibold text-[#800F17] hover:underline cursor-pointer"
+                  >
+                    + Use Saree & Blouse Template
+                  </button>
+                </div>
+                <textarea
+                  rows={4}
+                  placeholder={`Saree Size – Free Size\nBlouse Size 38 – Fit up to size 40\nBlouse Size 42 – Fit up to size 44`}
                   value={formData.size}
                   onChange={(e) => handleChange("size", e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17]"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17] font-mono text-xs leading-relaxed"
                 />
+                <p className="text-[11px] text-slate-400">
+                  Tip: Put each size item on a new line. They will render as clean bullet points under Size on the product details page.
+                </p>
               </div>
 
               <div className="space-y-1.5">

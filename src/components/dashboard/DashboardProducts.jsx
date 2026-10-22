@@ -363,8 +363,10 @@ export default function DashboardProducts() {
                   {viewProduct.material || "Silk / Cotton blend"}
                 </div>
                 <div className="bg-stone-50 p-2.5 rounded-xl">
-                  <span className="font-bold text-slate-800 block">Size</span>
-                  {viewProduct.size || "Standard Saree 6.3m"}
+                  <span className="font-bold text-slate-800 block mb-1">Size</span>
+                  <div className="text-xs whitespace-pre-line text-slate-700">
+                    {viewProduct.size || "Saree Size – Free Size"}
+                  </div>
                 </div>
                 <div className="bg-stone-50 p-2.5 rounded-xl">
                   <span className="font-bold text-slate-800 block">Wash & Care</span>

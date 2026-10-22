@@ -19,6 +19,7 @@ import {
   Copy,
   Info,
   ArrowRight,
+  FileText,
 } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
@@ -479,26 +480,52 @@ export default function ProductDetailView({ productId }) {
                 </Link>
               </div>
 
-              <div className="border border-slate-200/90 rounded-2xl p-5 space-y-3 bg-stone-50/40 text-xs text-slate-700">
-                <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-slate-800">
-                  <Sparkles className="w-4 h-4 text-[#800F17]" />
+              <div className="border border-slate-200/90 rounded-2xl p-5 space-y-3 bg-white text-xs text-slate-700 shadow-2xs">
+                <div className="flex items-center gap-2 font-bold uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100">
+                  <FileText className="w-4 h-4 text-[#800F17]" />
                   SPECIFICATIONS
                 </div>
 
-                <div className="space-y-2 pt-2 border-t border-slate-100">
+                <div className="space-y-3 pt-1">
                   <div>
                     <strong className="text-slate-900">• Material: </strong>
-                    <span>{product.material || "Pure Silk / Cotton Handloom Blend"}</span>
+                    <span className="text-slate-700">{product.material || "Satin Crepe"}</span>
                   </div>
 
                   <div>
-                    <strong className="text-slate-900">• Size: </strong>
-                    <span>{product.size || "Saree Size – Free Size (6.3 Meters with Blouse Piece)"}</span>
+                    <strong className="text-slate-900">• Size:</strong>
+                    {(() => {
+                      const rawSize = product.size || "Saree Size – Free Size\nBlouse Size 38 – Fit up to size 40\nBlouse Size 42 – Fit up to size 44";
+                      // Check if multi-line or delimited with newline or bullet or comma
+                      let lines = [];
+                      if (rawSize.includes("\n")) {
+                        lines = rawSize.split("\n").map(s => s.trim().replace(/^[•\-*]\s*/, "")).filter(Boolean);
+                      } else if (rawSize.includes("Blouse Size") && rawSize.includes("Saree Size")) {
+                        // Split intelligent by "Blouse Size" or "Saree Size"
+                        lines = rawSize
+                          .split(/(?=(?:Saree Size|Blouse Size))/i)
+                          .map(s => s.trim().replace(/^[•\-*]\s*/, ""))
+                          .filter(Boolean);
+                      } else {
+                        lines = [rawSize.trim()];
+                      }
+
+                      return (
+                        <ul className="mt-1.5 ml-4 space-y-1.5 text-slate-600">
+                          {lines.map((line, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-[#800F17] font-bold">•</span>
+                              <span>{line}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
                   </div>
 
                   <div>
                     <strong className="text-slate-900">• Wash & Care: </strong>
-                    <span>{product.washCare || "Dry clean strictly recommended"}</span>
+                    <span className="text-slate-700">{product.washCare || "Dry clean only"}</span>
                   </div>
                 </div>
 
