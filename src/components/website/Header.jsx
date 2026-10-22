@@ -8,6 +8,7 @@ import Navbar from "./Navbar";
 import ThoranamLogo from "@/components/ui/ThoranamLogo";
 import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
 import { useCart } from "@/context/CartContext";
+import { getApiUrl } from "@/config";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -21,7 +22,7 @@ export default function Header() {
   useEffect(() => {
     async function loadCats() {
       try {
-        const res = await fetch("/api/categories");
+        const res = await fetch(getApiUrl("/api/categories"));
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           setCategories(json.data);

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/ui/Container";
 import { HOMEPAGE_BROWSE_CATEGORIES, getStoredBrowseCategories } from "@/lib/categories";
+import { getApiUrl } from "@/config";
 
 export default function HomeCategory() {
   const [categories, setCategories] = useState(getStoredBrowseCategories);
@@ -13,7 +14,7 @@ export default function HomeCategory() {
     // 1. Fetch live categories from database
     async function loadBrowseCategories() {
       try {
-        const res = await fetch("/api/categories/browse");
+        const res = await fetch(getApiUrl("/api/categories/browse"));
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           setCategories(json.data);

@@ -10,6 +10,7 @@ import {
   getStoredBrowseCategories,
   saveStoredBrowseCategories,
 } from "@/lib/categories";
+import { getApiUrl } from "@/config";
 
 export default function DashboardCategories() {
   const [activeTab, setActiveTab] = useState("browse"); // "browse" or "menu"
@@ -45,8 +46,8 @@ export default function DashboardCategories() {
     async function loadFromDB() {
       try {
         const [catRes, browseRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/categories/browse"),
+          fetch(getApiUrl("/api/categories")),
+          fetch(getApiUrl("/api/categories/browse")),
         ]);
         const catJson = await catRes.json();
         if (catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
@@ -104,7 +105,7 @@ export default function DashboardCategories() {
 
     setIsSaving(true);
     try {
-      await fetch("/api/categories", {
+      await fetch(getApiUrl("/api/categories"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedList),
@@ -300,7 +301,7 @@ export default function DashboardCategories() {
 
     setIsSaving(true);
     try {
-      await fetch("/api/categories/browse", {
+      await fetch(getApiUrl("/api/categories/browse"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedList),

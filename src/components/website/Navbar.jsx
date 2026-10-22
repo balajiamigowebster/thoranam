@@ -8,6 +8,7 @@ import {
   INITIAL_CATEGORIES,
   getStoredCategories,
 } from "@/lib/categories";
+import { getApiUrl } from "@/config";
 
 export default function Navbar({ className = "" }) {
   const pathname = usePathname();
@@ -19,7 +20,7 @@ export default function Navbar({ className = "" }) {
     // 1. Fetch live categories directly from Database
     async function fetchDbCategories() {
       try {
-        const res = await fetch("/api/categories");
+        const res = await fetch(getApiUrl("/api/categories"));
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           setCategories(json.data);
