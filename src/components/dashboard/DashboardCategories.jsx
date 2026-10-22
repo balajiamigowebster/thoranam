@@ -130,11 +130,23 @@ export default function DashboardCategories() {
       const data = await res.json();
       if (data.success && data.url) {
         onUploaded(data.url);
-      } else {
-        alert(data.message || "Failed to upload image");
+        return;
       }
     } catch (err) {
-      console.error("Upload error:", err);
+      console.warn("Upload API error, falling back to local base64 reader:", err);
+    }
+
+    // Direct client-side FileReader fallback (works seamlessly on Vercel read-only serverless environments)
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          onUploaded(e.target.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (readErr) {
+      console.error("FileReader fallback error:", readErr);
       alert("Error uploading image");
     } finally {
       setIsUploading(false);

@@ -21,7 +21,7 @@ export const Category = sequelize.isDefined("Category")
           allowNull: false,
         },
         image: {
-          type: DataTypes.STRING(500),
+          type: DataTypes.TEXT,
           allowNull: true,
           defaultValue: "",
         },

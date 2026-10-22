@@ -22,7 +22,6 @@ export async function POST(request) {
     }
 
     const uploadDir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(uploadDir, { recursive: true });
 
     const uploadedUrls = [];
 
@@ -30,22 +29,30 @@ export async function POST(request) {
       if (typeof file === "string") continue;
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
+      const mime = file.type || "image/jpeg";
 
-      // Clean filename and add timestamp prefix to avoid name collisions
-      const rawName = file.name || "saree-image.jpg";
-      const sanitizedName = rawName.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const filename = `${Date.now()}-${sanitizedName}`;
-      const filePath = path.join(uploadDir, filename);
+      try {
+        await mkdir(uploadDir, { recursive: true });
+        const rawName = file.name || "saree-image.jpg";
+        const sanitizedName = rawName.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const filename = `${Date.now()}-${sanitizedName}`;
+        const filePath = path.join(uploadDir, filename);
 
-      await writeFile(filePath, buffer);
-      uploadedUrls.push(`/uploads/${filename}`);
+        await writeFile(filePath, buffer);
+        uploadedUrls.push(`/uploads/${filename}`);
+      } catch (fsErr) {
+        // If running in a read-only serverless environment (e.g. Vercel), fallback to optimized data URL
+        console.warn("[Upload API] Read-only filesystem detected, converting file to base64 data URL:", fsErr.message);
+        const base64 = buffer.toString("base64");
+        uploadedUrls.push(`data:${mime};base64,${base64}`);
+      }
     }
 
     return NextResponse.json({
       success: true,
       urls: uploadedUrls,
       url: uploadedUrls[0] || null,
-      message: `${uploadedUrls.length} image(s) uploaded successfully to /public/uploads`,
+      message: `${uploadedUrls.length} image(s) processed successfully`,
     });
   } catch (error) {
     console.error("Upload API Error:", error);
