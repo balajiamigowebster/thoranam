@@ -144,16 +144,20 @@ export default function DashboardOverview({ setActiveTab }) {
   ];
 
   // Map recent orders
-  const displayOrders = orders.slice(0, 5).map((o) => ({
-    id: o.id,
-    customer: o.customer_name || "Guest Customer",
-    item:
-      o.items_details && o.items_details.length > 0
-        ? o.items_details[0].title
-        : `${o.items_count || 1} Item(s)`,
-    amount: o.total_amount || "₹ 0",
-    status: o.order_status || "Processing",
-  }));
+  const displayOrders = orders.slice(0, 5).map((o) => {
+    let details = o.items_details;
+    if (typeof details === "string") {
+      try { details = JSON.parse(details); } catch { details = []; }
+    }
+    const firstTitle = Array.isArray(details) && details.length > 0 ? details[0]?.title : null;
+    return {
+      id: o.id,
+      customer: o.customer_name || "Guest Customer",
+      item: firstTitle || `${o.items_count || 1} Item(s)`,
+      amount: o.total_amount || "₹ 0",
+      status: o.order_status || "Processing",
+    };
+  });
 
   // Map real products to trending / demand list
   const trendingList = products.slice(0, 4).map((p) => ({
