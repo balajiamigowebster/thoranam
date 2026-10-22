@@ -162,8 +162,8 @@ export const categoryController = {
       }
       return { success: true };
     } catch (e) {
-      console.warn("[BrowseCategories] Database sync warning (falling back to storage):", e.message);
-      return { success: true, warning: e.message };
+      console.warn("[BrowseCategories] Database sync error:", e);
+      return { success: false, error: e.message };
     }
   },
 };

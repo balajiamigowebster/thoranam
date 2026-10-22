@@ -23,8 +23,8 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    await categoryController.syncBrowseCategories(body);
-    return NextResponse.json({ success: true, message: "Homepage browse categories synced successfully" });
+    const result = await categoryController.syncBrowseCategories(body);
+    return NextResponse.json({ success: true, message: "Homepage browse categories synced successfully", ...result });
   } catch (error) {
     console.error("API POST /api/categories/browse error:", error);
     return NextResponse.json(
