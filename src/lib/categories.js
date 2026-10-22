@@ -275,3 +275,30 @@ export function saveStoredCategories(categories) {
     console.error("Error saving categories to localStorage", e);
   }
 }
+
+// Helper to get active homepage browse categories
+export function getStoredBrowseCategories() {
+  if (typeof window === "undefined") return HOMEPAGE_BROWSE_CATEGORIES;
+  try {
+    const saved = localStorage.getItem("thoranam_browse_categories");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.error("Error reading browse categories from localStorage", e);
+  }
+  return HOMEPAGE_BROWSE_CATEGORIES;
+}
+
+// Helper to save active homepage browse categories
+export function saveStoredBrowseCategories(browseCategories) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("thoranam_browse_categories", JSON.stringify(browseCategories));
+    window.dispatchEvent(new Event("thoranam_browse_categories_updated"));
+  } catch (e) {
+    console.error("Error saving browse categories to localStorage", e);
+  }
+}
+

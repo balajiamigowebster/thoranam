@@ -39,15 +39,16 @@ export const categoryController = {
           if (typeof v !== "string") return v || [];
           try { return JSON.parse(v || "[]"); } catch { return []; }
         };
+        const item = c.toJSON ? c.toJSON() : c;
         return {
-          id: data.id,
-          label: data.label,
-          href: data.href,
-          image: data.image || "",
-          sort_order: data.sort_order || 0,
-          featured: Boolean(data.featured),
-          subcategories: safeParse(data.subcategories),
-          showcase: safeParse(data.showcase),
+          id: item.id,
+          label: item.label,
+          href: item.href,
+          image: item.image || "",
+          sort_order: item.sort_order || 0,
+          featured: Boolean(item.featured),
+          subcategories: safeParse(item.subcategories),
+          showcase: safeParse(item.showcase),
         };
       });
     } catch (dbErr) {
@@ -113,6 +114,42 @@ export const categoryController = {
     if (!cat) throw new Error("Category not found");
     await cat.destroy();
     return { success: true };
+  },
+
+  async getBrowseCategories() {
+    try {
+      const { StoreSetting } = await syncDatabase();
+      const setting = await StoreSetting.findByPk("homepage_browse_categories");
+      if (setting && setting.setting_value) {
+        const val = typeof setting.setting_value === "string"
+          ? JSON.parse(setting.setting_value)
+          : setting.setting_value;
+        if (Array.isArray(val) && val.length > 0) return val;
+      }
+    } catch (e) {
+      console.warn("[BrowseCategories] Error getting browse categories from DB:", e.message);
+    }
+    const { HOMEPAGE_BROWSE_CATEGORIES } = await import("@/lib/categories");
+    return HOMEPAGE_BROWSE_CATEGORIES;
+  },
+
+  async syncBrowseCategories(list) {
+    try {
+      const { StoreSetting } = await syncDatabase();
+      const existing = await StoreSetting.findByPk("homepage_browse_categories");
+      if (existing) {
+        await existing.update({ setting_value: list });
+      } else {
+        await StoreSetting.create({
+          setting_key: "homepage_browse_categories",
+          setting_value: list,
+        });
+      }
+      return { success: true };
+    } catch (e) {
+      console.error("[BrowseCategories] Error saving browse categories to DB:", e);
+      throw e;
+    }
   },
 };
 
