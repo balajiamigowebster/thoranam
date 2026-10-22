@@ -27,13 +27,20 @@ export async function syncDatabase(options = {}) {
   if (!isSynced || options.force || options.alter) {
     try {
       await sequelize.authenticate();
-      // Synchronize all registered models with database
-      await sequelize.sync({ ...options });
+      // Synchronize all registered models with database and safely update column types
+      await sequelize.sync({ alter: true, ...options });
       isSynced = true;
       console.log("Sequelize: All models synchronized with MySQL successfully.");
     } catch (error) {
       console.error("Sequelize sync error:", error);
-      throw error;
+      // Fallback without alter if alter is restricted by DB user permissions
+      try {
+        await sequelize.sync();
+        isSynced = true;
+      } catch (innerErr) {
+        console.error("Sequelize fallback sync error:", innerErr);
+        throw error;
+      }
     }
   }
   return { sequelize, ...models };

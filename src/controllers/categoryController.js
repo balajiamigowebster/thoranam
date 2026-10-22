@@ -1,5 +1,5 @@
 import { Category, syncDatabase } from "@/models";
-import { INITIAL_CATEGORIES } from "@/lib/categories";
+import { INITIAL_CATEGORIES, HOMEPAGE_BROWSE_CATEGORIES } from "@/lib/categories";
 
 export const categoryController = {
   async getAllCategories() {
@@ -126,15 +126,24 @@ export const categoryController = {
       const { StoreSetting } = await syncDatabase();
       const setting = await StoreSetting.findByPk("homepage_browse_categories");
       if (setting && setting.setting_value) {
-        const val = typeof setting.setting_value === "string"
-          ? JSON.parse(setting.setting_value)
-          : setting.setting_value;
+        let val = setting.setting_value;
+        if (typeof val === "string") {
+          try {
+            val = JSON.parse(val);
+          } catch {
+            val = null;
+          }
+        }
+        if (typeof val === "string") {
+          try {
+            val = JSON.parse(val);
+          } catch {}
+        }
         if (Array.isArray(val) && val.length > 0) return val;
       }
     } catch (e) {
       console.warn("[BrowseCategories] Error getting browse categories from DB:", e.message);
     }
-    const { HOMEPAGE_BROWSE_CATEGORIES } = await import("@/lib/categories");
     return HOMEPAGE_BROWSE_CATEGORIES;
   },
 
