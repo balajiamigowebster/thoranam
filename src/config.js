@@ -19,7 +19,11 @@ export function getApiUrl(path) {
   if (API_BASE_URL) {
     return `${API_BASE_URL.replace(/\/$/, "")}${cleanPath}`;
   }
-  // Auto-detect Vercel preview/production and connect directly to live cPanel backend
+  // Auth endpoints (customer auth, admin auth) should stay on the Next.js host
+  if (cleanPath.startsWith("/api/auth/")) {
+    return cleanPath;
+  }
+  // Auto-detect Vercel preview/production and connect directly to live cPanel backend for data
   if (typeof window !== "undefined") {
     const host = window.location.hostname || "";
     if (host.includes("vercel.app") || host.includes("thoranam")) {
