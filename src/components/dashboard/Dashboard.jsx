@@ -5,8 +5,11 @@ import { useRouter } from "next/navigation";
 import DashboardSidebar from "./DashboardSidebar";
 import DashboardHeader from "./DashboardHeader";
 import DashboardOverview from "./DashboardOverview";
+import DashboardOrders from "./DashboardOrders";
 import DashboardProducts from "./DashboardProducts";
 import DashboardCategories from "./DashboardCategories";
+import DashboardCustomers from "./DashboardCustomers";
+import DashboardPromotions from "./DashboardPromotions";
 import DashboardStoreSettings from "./DashboardStoreSettings";
 import { Loader2 } from "lucide-react";
 
@@ -73,21 +76,13 @@ export default function Dashboard() {
         <DashboardHeader title={getPageTitle()} />
 
         <main className="p-6 md:p-8 flex-1 overflow-y-auto">
-          {activeTab === "overview" && <DashboardOverview />}
+          {activeTab === "overview" && <DashboardOverview setActiveTab={setActiveTab} />}
+          {activeTab === "orders" && <DashboardOrders />}
           {activeTab === "products" && <DashboardProducts />}
           {activeTab === "categories" && <DashboardCategories />}
+          {activeTab === "customers" && <DashboardCustomers />}
+          {activeTab === "promotions" && <DashboardPromotions />}
           {activeTab === "settings" && <DashboardStoreSettings />}
-          {activeTab !== "overview" &&
-            activeTab !== "products" &&
-            activeTab !== "categories" &&
-            activeTab !== "settings" && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center space-y-3">
-                <h3 className="text-base font-bold text-slate-800">{getPageTitle()}</h3>
-                <p className="text-xs text-slate-500 max-w-md mx-auto">
-                  This section is configured and ready for additional modules and database connections.
-                </p>
-              </div>
-            )}
         </main>
       </div>
     </div>
