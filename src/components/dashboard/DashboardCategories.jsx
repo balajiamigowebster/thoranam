@@ -159,28 +159,31 @@ export default function DashboardCategories() {
     };
 
     try {
-      const compressedDataUrl = await compressImage(file);
-      if (compressedDataUrl) {
-        onUploaded(compressedDataUrl);
-        return;
+      try {
+        const compressedDataUrl = await compressImage(file);
+        if (compressedDataUrl) {
+          setIsUploading(false);
+          onUploaded(compressedDataUrl);
+          return;
+        }
+      } catch (err) {
+        console.warn("Client compression error, trying server upload:", err);
       }
-    } catch (err) {
-      console.warn("Client compression error, trying server upload:", err);
-    }
 
-    try {
-      const formData = new FormData();
-      formData.append("files", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success && data.url) {
-        onUploaded(data.url);
+      try {
+        const formData = new FormData();
+        formData.append("files", file);
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.success && data.url) {
+          onUploaded(data.url);
+        }
+      } catch (err) {
+        console.warn("Upload API error:", err);
       }
-    } catch (err) {
-      console.warn("Upload API error:", err);
     } finally {
       setIsUploading(false);
     }
@@ -681,9 +684,11 @@ export default function DashboardCategories() {
                               accept="image/*"
                               className="hidden"
                               onChange={(e) => {
-                                if (e.target.files?.[0]) {
-                                  handleFileUpload(e.target.files[0], (url) => handleUpdateSelectedBrowseImage(url));
+                                const f = e.target.files?.[0];
+                                if (f) {
+                                  handleFileUpload(f, (url) => handleUpdateSelectedBrowseImage(url));
                                 }
+                                e.target.value = "";
                               }}
                             />
                             <button
@@ -954,9 +959,11 @@ export default function DashboardCategories() {
                               accept="image/*"
                               className="hidden"
                               onChange={(e) => {
-                                if (e.target.files?.[0]) {
-                                  handleFileUpload(e.target.files[0], (url) => handleUpdateSelectedImage(url));
+                                const f = e.target.files?.[0];
+                                if (f) {
+                                  handleFileUpload(f, (url) => handleUpdateSelectedImage(url));
                                 }
+                                e.target.value = "";
                               }}
                             />
                             <button
