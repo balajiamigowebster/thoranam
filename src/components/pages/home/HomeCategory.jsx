@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/ui/Container";
 import { HOMEPAGE_BROWSE_CATEGORIES, getStoredBrowseCategories } from "@/lib/categories";
-import { getApiUrl } from "@/config";
+import { getApiUrl, getAssetUrl } from "@/config";
 
 export default function HomeCategory() {
   const [categories, setCategories] = useState(getStoredBrowseCategories);
@@ -86,7 +86,8 @@ export default function HomeCategory() {
         <div className="w-full overflow-x-auto no-scrollbar scroll-smooth pb-3 px-1">
           <div className="flex lg:grid lg:grid-cols-8 items-start justify-start lg:justify-items-center gap-4 sm:gap-6 lg:gap-3 min-w-max lg:min-w-0">
             {categories.map((cat, idx) => {
-              const categoryImage = cat.image || `/images/product-${(idx % 4) + 1}.jpg`;
+              const rawImage = cat.image || `/images/product-${(idx % 4) + 1}.jpg`;
+              const categoryImage = getAssetUrl(rawImage);
               const label = cat.label || cat.name;
 
               return (
@@ -102,6 +103,7 @@ export default function HomeCategory() {
                         src={categoryImage}
                         alt={label}
                         fill
+                        unoptimized={categoryImage.startsWith("http") || categoryImage.startsWith("data:")}
                         sizes="(max-width: 640px) 80px, (max-width: 1024px) 96px, 110px"
                         className="object-cover object-center group-hover:scale-110 transition-transform duration-500 ease-out"
                         priority={idx < 4}

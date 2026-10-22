@@ -10,7 +10,7 @@ import {
   getStoredBrowseCategories,
   saveStoredBrowseCategories,
 } from "@/lib/categories";
-import { getApiUrl } from "@/config";
+import { getApiUrl, getAssetUrl } from "@/config";
 
 export default function DashboardCategories() {
   const [activeTab, setActiveTab] = useState("browse"); // "browse" or "menu"
@@ -176,29 +176,30 @@ export default function DashboardCategories() {
 
     try {
       try {
-        const compressedDataUrl = await compressImage(file);
-        if (compressedDataUrl) {
-          setIsUploading(false);
-          onUploaded(compressedDataUrl);
-          return;
-        }
-      } catch (err) {
-        console.warn("Client compression error, trying server upload:", err);
-      }
-
-      try {
         const formData = new FormData();
         formData.append("files", file);
-        const res = await fetch("/api/upload", {
+        const res = await fetch(getApiUrl("/api/upload"), {
           method: "POST",
           body: formData,
         });
         const data = await res.json();
         if (data.success && data.url) {
           onUploaded(data.url);
+          return;
         }
       } catch (err) {
         console.warn("Upload API error:", err);
+      }
+
+      // If network upload failed, fallback to local compressedDataUrl
+      try {
+        const compressedDataUrl = await compressImage(file);
+        if (compressedDataUrl) {
+          onUploaded(compressedDataUrl);
+          return;
+        }
+      } catch (err) {
+        console.warn("Client compression error:", err);
       }
     } finally {
       setIsUploading(false);
@@ -593,7 +594,7 @@ export default function DashboardCategories() {
                         {/* Circle Image Preview */}
                         <div className="relative w-9 h-9 rounded-full overflow-hidden shrink-0 border border-amber-300 bg-amber-50">
                           <img
-                            src={cat.image || "/images/product-1.jpg"}
+                            src={getAssetUrl(cat.image) || "/images/product-1.jpg"}
                             alt={label}
                             className="w-full h-full object-cover"
                           />
@@ -657,7 +658,7 @@ export default function DashboardCategories() {
                       <div className="relative w-28 h-28 rounded-full p-[3px] bg-gradient-to-tr from-[#D4AF37] via-[#F3E5AB] to-[#AA771C] shadow-md shrink-0">
                         <div className="w-full h-full rounded-full overflow-hidden relative bg-amber-50/50 flex items-center justify-center">
                           <img
-                            src={selectedBrowseCat.image || "/images/product-1.jpg"}
+                            src={getAssetUrl(selectedBrowseCat.image) || "/images/product-1.jpg"}
                             alt={selectedBrowseCat.label || selectedBrowseCat.name}
                             className="w-full h-full object-cover"
                           />
