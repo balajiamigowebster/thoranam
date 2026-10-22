@@ -6,56 +6,77 @@ import { Op } from "sequelize";
 export const productController = {
   // Get all products with optional filters
   async getAllProducts(query = {}) {
-    await syncDatabase();
-    const where = {};
-    if (query.category && query.category !== "all") {
-      where.category = query.category;
-    }
-    if (query.search) {
-      where[Op.or] = [
-        { title: { [Op.like]: `%${query.search}%` } },
-        { category: { [Op.like]: `%${query.search}%` } },
-      ];
-    }
-
-    let products = await Product.findAll({
-      where,
-      order: [["id", "DESC"]],
-    });
-
-    // Check if new initial items need seeding
-    const existingTitles = new Set(products.map((p) => p.title));
-    const missing = INITIAL_PRODUCTS.filter((item) => !existingTitles.has(item.title));
-    if (missing.length > 0 && !query.search && !query.category) {
-      for (const item of missing) {
-        await Product.create({
-          title: item.title,
-          category: item.category,
-          price: item.price,
-          stock: item.stock,
-          status: item.status,
-          main_image: item.mainImage,
-          gallery_images: item.galleryImages,
-          description: item.description,
-          highlights: item.highlights,
-          closing_description: item.closingDescription,
-          material: item.material,
-          size: item.size,
-          wash_care: item.washCare,
-        });
+    try {
+      await syncDatabase();
+      const where = {};
+      if (query.category && query.category !== "all") {
+        where.category = query.category;
       }
-      products = await Product.findAll({ order: [["id", "DESC"]] });
-    }
+      if (query.search) {
+        where[Op.or] = [
+          { title: { [Op.like]: `%${query.search}%` } },
+          { category: { [Op.like]: `%${query.search}%` } },
+        ];
+      }
 
-    return products.map((p) => formatProduct(p.toJSON()));
+      let products = await Product.findAll({
+        where,
+        order: [["id", "DESC"]],
+      });
+
+      // Check if new initial items need seeding
+      const existingTitles = new Set(products.map((p) => p.title));
+      const missing = INITIAL_PRODUCTS.filter((item) => !existingTitles.has(item.title));
+      if (missing.length > 0 && !query.search && !query.category) {
+        for (const item of missing) {
+          await Product.create({
+            title: item.title,
+            category: item.category,
+            price: item.price,
+            stock: item.stock,
+            status: item.status,
+            main_image: item.mainImage,
+            gallery_images: item.galleryImages,
+            description: item.description,
+            highlights: item.highlights,
+            closing_description: item.closingDescription,
+            material: item.material,
+            size: item.size,
+            wash_care: item.washCare,
+          });
+        }
+        products = await Product.findAll({ order: [["id", "DESC"]] });
+      }
+
+      return products.map((p) => formatProduct(p.toJSON()));
+    } catch (dbErr) {
+      console.warn("[Products] DB query error, falling back to INITIAL_PRODUCTS:", dbErr.message);
+      let list = [...INITIAL_PRODUCTS];
+      if (query.category && query.category !== "all") {
+        list = list.filter((p) => p.category?.toLowerCase() === query.category.toLowerCase());
+      }
+      if (query.search) {
+        const q = query.search.toLowerCase();
+        list = list.filter(
+          (p) => p.title?.toLowerCase().includes(q) || p.category?.toLowerCase().includes(q)
+        );
+      }
+      return list;
+    }
   },
 
   // Get single product by ID
   async getProductById(id) {
-    await syncDatabase();
-    const product = await Product.findByPk(id);
-    if (!product) return null;
-    return formatProduct(product.toJSON());
+    try {
+      await syncDatabase();
+      const product = await Product.findByPk(id);
+      if (!product) return null;
+      return formatProduct(product.toJSON());
+    } catch (dbErr) {
+      console.warn("[Products] DB getProductById error, fallback to initial items:", dbErr.message);
+      const found = INITIAL_PRODUCTS.find((p) => String(p.id) === String(id));
+      return found || null;
+    }
   },
 
   // Create a new product
