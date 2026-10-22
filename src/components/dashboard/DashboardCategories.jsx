@@ -120,6 +120,54 @@ export default function DashboardCategories() {
   const handleFileUpload = async (file, onUploaded) => {
     if (!file) return;
     setIsUploading(true);
+
+    // Compress image to a high-quality lightweight JPEG/WebP (300x300 max for circular avatars)
+    const compressImage = (imageFile) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        reader.onload = (event) => {
+          const img = new Image();
+          img.src = event.target.result;
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const maxDim = 400; // ample for category circle icons
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+              if (width > maxDim) {
+                height = Math.round((height * maxDim) / width);
+                width = maxDim;
+              }
+            } else {
+              if (height > maxDim) {
+                width = Math.round((width * maxDim) / height);
+                height = maxDim;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedDataUrl = canvas.toDataURL("image/jpeg", 0.85);
+            resolve(compressedDataUrl);
+          };
+          img.onerror = () => resolve(event.target.result);
+        };
+        reader.onerror = () => resolve(null);
+      });
+    };
+
+    try {
+      const compressedDataUrl = await compressImage(file);
+      if (compressedDataUrl) {
+        onUploaded(compressedDataUrl);
+        return;
+      }
+    } catch (err) {
+      console.warn("Client compression error, trying server upload:", err);
+    }
+
     try {
       const formData = new FormData();
       formData.append("files", file);
@@ -130,24 +178,9 @@ export default function DashboardCategories() {
       const data = await res.json();
       if (data.success && data.url) {
         onUploaded(data.url);
-        return;
       }
     } catch (err) {
-      console.warn("Upload API error, falling back to local base64 reader:", err);
-    }
-
-    // Direct client-side FileReader fallback (works seamlessly on Vercel read-only serverless environments)
-    try {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) {
-          onUploaded(e.target.result);
-        }
-      };
-      reader.readAsDataURL(file);
-    } catch (readErr) {
-      console.error("FileReader fallback error:", readErr);
-      alert("Error uploading image");
+      console.warn("Upload API error:", err);
     } finally {
       setIsUploading(false);
     }

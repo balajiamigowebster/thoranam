@@ -13,7 +13,7 @@ export const StoreSetting = sequelize.isDefined("StoreSetting")
           primaryKey: true,
         },
         setting_value: {
-          type: DataTypes.JSON,
+          type: DataTypes.TEXT("long"),
           allowNull: true,
         },
       },
