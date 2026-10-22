@@ -10,13 +10,23 @@ export const API_BASE_URL =
 
 /**
  * Helper to construct full API URLs
+ * When deployed on Vercel or live domain, forwards API calls to the cPanel Node.js backend where MySQL runs.
  * @param {string} path e.g. "/api/products" or "api/products"
  * @returns {string} full URL e.g. "https://amigowebster.in/thoranam/api/products"
  */
 export function getApiUrl(path) {
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
-  if (!API_BASE_URL) return cleanPath;
-  return `${API_BASE_URL.replace(/\/$/, "")}${cleanPath}`;
+  if (API_BASE_URL) {
+    return `${API_BASE_URL.replace(/\/$/, "")}${cleanPath}`;
+  }
+  // Auto-detect Vercel preview/production and connect directly to live cPanel backend
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname || "";
+    if (host.includes("vercel.app") || host.includes("thoranam")) {
+      return `${LIVE_BACKEND_URL.replace(/\/$/, "")}${cleanPath}`;
+    }
+  }
+  return cleanPath;
 }
 
 /**
