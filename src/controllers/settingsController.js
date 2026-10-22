@@ -8,10 +8,14 @@ export const settingsController = {
       const settings = {};
       rows.forEach((r) => {
         const data = r.toJSON();
-        settings[data.setting_key] =
-          typeof data.setting_value === "string"
-            ? JSON.parse(data.setting_value)
-            : data.setting_value;
+        try {
+          settings[data.setting_key] =
+            typeof data.setting_value === "string"
+              ? JSON.parse(data.setting_value)
+              : data.setting_value;
+        } catch {
+          settings[data.setting_key] = data.setting_value;
+        }
       });
       return settings;
     } catch (dbErr) {

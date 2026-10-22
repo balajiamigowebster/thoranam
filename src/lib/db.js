@@ -231,29 +231,8 @@ export async function initDatabase() {
     }
   }
 
-  // Seed default sample orders if empty
-  const [orderCount] = await db.query(`SELECT COUNT(*) as count FROM \`orders\``);
-  if (orderCount[0].count === 0) {
-    await db.query(`
-      INSERT INTO \`orders\` (id, customer_name, customer_email, customer_phone, total_amount, items_count, payment_status, order_status, shipping_address)
-      VALUES 
-        ('ORD-8821', 'Ananya Sharma', 'ananya.s@gmail.com', '+91 98450 12345', '₹ 14,250', 1, 'Paid', 'New', '12, 4th Main, Indiranagar, Bengaluru, Karnataka 560038'),
-        ('ORD-8820', 'Priya Sundaram', 'priya.sundar@yahoo.com', '+91 98840 98765', '₹ 4,899', 1, 'Paid', 'Processing', '84, TTK Road, Alwarpet, Chennai, Tamil Nadu 600018'),
-        ('ORD-8819', 'Meenakshi Iyer', 'meenakshi@gmail.com', '+91 99401 54321', '₹ 8,990', 1, 'Paid', 'Delivered', 'Plot 45, Banjara Hills, Hyderabad, Telangana 500034')
-    `);
-  }
-
-  // Seed default sample customers if empty
-  const [custCount] = await db.query(`SELECT COUNT(*) as count FROM \`customers\``);
-  if (custCount[0].count === 0) {
-    await db.query(`
-      INSERT INTO \`customers\` (name, email, phone, total_orders, total_spent, last_order_date, status)
-      VALUES 
-        ('Ananya Sharma', 'ananya.s@gmail.com', '+91 98450 12345', 3, '₹ 32,500', '2026-10-12', 'VIP'),
-        ('Priya Sundaram', 'priya.sundar@yahoo.com', '+91 98840 98765', 1, '₹ 4,899', '2026-10-10', 'Active'),
-        ('Meenakshi Iyer', 'meenakshi@gmail.com', '+91 99401 54321', 2, '₹ 17,980', '2026-10-05', 'Active')
-    `);
-  }
+  // Note: Orders and customers start empty and populate only when real orders/purchases are placed
+  // Seed default sample discounts if empty
 
   // Seed default sample discounts if empty
   const [promoCount] = await db.query(`SELECT COUNT(*) as count FROM \`promotions\``);

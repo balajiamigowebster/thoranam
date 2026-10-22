@@ -35,7 +35,10 @@ export const categoryController = {
       }
 
       return categories.map((c) => {
-        const data = c.toJSON();
+        const safeParse = (v) => {
+          if (typeof v !== "string") return v || [];
+          try { return JSON.parse(v || "[]"); } catch { return []; }
+        };
         return {
           id: data.id,
           label: data.label,
@@ -43,8 +46,8 @@ export const categoryController = {
           image: data.image || "",
           sort_order: data.sort_order || 0,
           featured: Boolean(data.featured),
-          subcategories: typeof data.subcategories === "string" ? JSON.parse(data.subcategories || "[]") : (data.subcategories || []),
-          showcase: typeof data.showcase === "string" ? JSON.parse(data.showcase || "[]") : (data.showcase || []),
+          subcategories: safeParse(data.subcategories),
+          showcase: safeParse(data.showcase),
         };
       });
     } catch (dbErr) {

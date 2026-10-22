@@ -15,41 +15,7 @@ import {
 import { getApiUrl } from "@/config";
 import { INITIAL_PRODUCTS } from "@/lib/initial-products";
 
-// Fallback seed data if APIs or DB are loading
-const defaultOrders = [
-  {
-    id: "#TH-9021",
-    customer: "Priya Sundaram",
-    item: "Semi Mangalagiri Saree - Royal Maroon",
-    amount: "₹ 4,899",
-    status: "Delivered",
-    date: "Recent",
-  },
-  {
-    id: "#TH-9020",
-    customer: "Ananya Sharma",
-    item: "Kanchipuram Silk Saree - Golden Mustard",
-    amount: "₹ 14,250",
-    status: "Processing",
-    date: "Recent",
-  },
-  {
-    id: "#TH-9019",
-    customer: "Meenakshi Raman",
-    item: "Pure Cotton Handloom Saree",
-    amount: "₹ 2,450",
-    status: "Shipped",
-    date: "Recent",
-  },
-  {
-    id: "#TH-9018",
-    customer: "Kavitha Rajan",
-    item: "Thoranam Exclusive Semi Silk Zari",
-    amount: "₹ 6,100",
-    status: "New",
-    date: "Recent",
-  },
-];
+
 
 export default function DashboardOverview({ setActiveTab }) {
   const [products, setProducts] = useState(INITIAL_PRODUCTS);
@@ -57,8 +23,8 @@ export default function DashboardOverview({ setActiveTab }) {
   const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchDashboardData = async () => {
-    setIsLoading(true);
+  const fetchDashboardData = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       // 1. Fetch real products
       const pRes = await fetch(getApiUrl("/api/products"));
@@ -70,14 +36,14 @@ export default function DashboardOverview({ setActiveTab }) {
       // 2. Fetch real orders
       const oRes = await fetch(getApiUrl("/api/orders"));
       const oJson = await oRes.json();
-      if (oJson.success && Array.isArray(oJson.data) && oJson.data.length > 0) {
+      if (oJson.success && Array.isArray(oJson.data)) {
         setOrders(oJson.data);
       }
 
       // 3. Fetch real customers
       const cRes = await fetch(getApiUrl("/api/customers"));
       const cJson = await cRes.json();
-      if (cJson.success && Array.isArray(cJson.data) && cJson.data.length > 0) {
+      if (cJson.success && Array.isArray(cJson.data)) {
         setCustomers(cJson.data);
       }
     } catch (err) {
@@ -88,17 +54,51 @@ export default function DashboardOverview({ setActiveTab }) {
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    let ignore = false;
+    const load = async () => {
+      try {
+        const [pRes, oRes, cRes] = await Promise.all([
+          fetch(getApiUrl("/api/products")),
+          fetch(getApiUrl("/api/orders")),
+          fetch(getApiUrl("/api/customers")),
+        ]);
+        const [pJson, oJson, cJson] = await Promise.all([
+          pRes.json(),
+          oRes.json(),
+          cRes.json(),
+        ]);
+        if (!ignore) {
+          if (pJson.success && Array.isArray(pJson.data) && pJson.data.length > 0) {
+            setProducts(pJson.data);
+          }
+          if (oJson.success && Array.isArray(oJson.data)) {
+            setOrders(oJson.data);
+          }
+          if (cJson.success && Array.isArray(cJson.data)) {
+            setCustomers(cJson.data);
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load full dashboard metrics from API:", err);
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   // Compute Live Metrics from real loaded data
   const totalStockCount = products.reduce((acc, p) => acc + (Number(p.stock) || 0), 0);
   const lowStockCount = products.filter((p) => (Number(p.stock) || 0) <= 5).length;
 
-  const totalOrdersCount = orders.length > 0 ? orders.length : 154;
+  const totalOrdersCount = orders.length;
   const newOrdersCount = orders.filter((o) => (o.order_status || "").toLowerCase() === "new").length;
 
-  const totalRegisteredClients = customers.length > 0 ? customers.length : 1240;
+  const totalRegisteredClients = customers.length;
 
   // Calculate live revenue from orders if available
   const revenueTotalNumber = orders.reduce((acc, o) => {
@@ -106,31 +106,28 @@ export default function DashboardOverview({ setActiveTab }) {
     return acc + numeric;
   }, 0);
 
-  const displayRevenue =
-    revenueTotalNumber > 0
-      ? `₹ ${revenueTotalNumber.toLocaleString("en-IN")}`
-      : "₹ 4,82,900";
+  const displayRevenue = `₹ ${revenueTotalNumber.toLocaleString("en-IN")}`;
 
   const stats = [
     {
       title: "Total Sales Revenue",
       value: displayRevenue,
-      change: "+18.2%",
-      isPositive: true,
-      subtitle: "vs last month",
+      change: orders.length > 0 ? "+100%" : "₹ 0",
+      isPositive: revenueTotalNumber > 0,
+      subtitle: "Lifetime revenue",
       icon: CreditCard,
     },
     {
       title: "Orders Placed",
       value: String(totalOrdersCount),
-      change: `+${orders.length > 0 ? orders.length : 8.4}%`,
-      isPositive: true,
-      subtitle: `${newOrdersCount > 0 ? newOrdersCount : 12} pending dispatch`,
+      change: orders.length > 0 ? `${orders.length} orders` : "0 orders",
+      isPositive: totalOrdersCount > 0,
+      subtitle: `${newOrdersCount} pending dispatch`,
       icon: ShoppingBag,
     },
     {
       title: "Active Saree Inventory",
-      value: String(totalStockCount > 0 ? totalStockCount : products.length * 12),
+      value: String(totalStockCount),
       change: `${products.length} saree models`,
       isPositive: lowStockCount === 0,
       subtitle: `${lowStockCount} items in low stock`,
@@ -138,33 +135,30 @@ export default function DashboardOverview({ setActiveTab }) {
     },
     {
       title: "Registered Customers",
-      value: totalRegisteredClients.toLocaleString("en-IN"),
-      change: "+24.5%",
-      isPositive: true,
+      value: String(totalRegisteredClients),
+      change: customers.length > 0 ? `${customers.length} users` : "0 users",
+      isPositive: totalRegisteredClients > 0,
       subtitle: "Verified boutique accounts",
       icon: Users,
     },
   ];
 
   // Map recent orders
-  const displayOrders =
-    orders.length > 0
-      ? orders.slice(0, 5).map((o) => ({
-          id: o.id,
-          customer: o.customer_name || "Guest Customer",
-          item:
-            o.items_details && o.items_details.length > 0
-              ? o.items_details[0].title
-              : `${o.items_count || 1} Item(s)`,
-          amount: o.total_amount || "₹ 0",
-          status: o.order_status || "Processing",
-        }))
-      : defaultOrders;
+  const displayOrders = orders.slice(0, 5).map((o) => ({
+    id: o.id,
+    customer: o.customer_name || "Guest Customer",
+    item:
+      o.items_details && o.items_details.length > 0
+        ? o.items_details[0].title
+        : `${o.items_count || 1} Item(s)`,
+    amount: o.total_amount || "₹ 0",
+    status: o.order_status || "Processing",
+  }));
 
   // Map real products to trending / demand list
-  const trendingList = products.slice(0, 4).map((p, idx) => ({
+  const trendingList = products.slice(0, 4).map((p) => ({
     name: p.title,
-    sales: `${48 - idx * 10} sold this week`,
+    sales: orders.length > 0 ? "Catalog favorite" : "Available in catalog",
     stock: `${p.stock || 12} in stock`,
     status: (Number(p.stock) || 10) > 5 ? "In Stock" : "Low Stock",
   }));
@@ -242,31 +236,39 @@ export default function DashboardOverview({ setActiveTab }) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {displayOrders.map((order, i) => (
-                  <tr key={order.id || i} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="py-3 px-3 font-semibold text-slate-800">{order.id}</td>
-                    <td className="py-3 px-3 text-slate-600">{order.customer}</td>
-                    <td className="py-3 px-3 text-slate-700 max-w-[200px] truncate">
-                      {order.item}
-                    </td>
-                    <td className="py-3 px-3 font-semibold text-slate-900">{order.amount}</td>
-                    <td className="py-3 px-3">
-                      <span
-                        className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          order.status === "Delivered"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : order.status === "Processing"
-                            ? "bg-blue-50 text-blue-700"
-                            : order.status === "Shipped"
-                            ? "bg-purple-50 text-purple-700"
-                            : "bg-amber-50 text-amber-700"
-                        }`}
-                      >
-                        {order.status}
-                      </span>
+                {displayOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-slate-400">
+                      No orders placed yet. Orders will appear here in real-time when customers purchase.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  displayOrders.map((order, i) => (
+                    <tr key={order.id || i} className="hover:bg-slate-50/60 transition-colors">
+                      <td className="py-3 px-3 font-semibold text-slate-800">{order.id}</td>
+                      <td className="py-3 px-3 text-slate-600">{order.customer}</td>
+                      <td className="py-3 px-3 text-slate-700 max-w-[200px] truncate">
+                        {order.item}
+                      </td>
+                      <td className="py-3 px-3 font-semibold text-slate-900">{order.amount}</td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            order.status === "Delivered"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : order.status === "Processing"
+                              ? "bg-blue-50 text-blue-700"
+                              : order.status === "Shipped"
+                              ? "bg-purple-50 text-purple-700"
+                              : "bg-amber-50 text-amber-700"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

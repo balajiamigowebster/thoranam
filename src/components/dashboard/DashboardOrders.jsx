@@ -14,53 +14,7 @@ import {
 } from "lucide-react";
 import { getApiUrl } from "@/config";
 
-const sampleOrders = [
-  {
-    id: "ORD-8821",
-    customer_name: "Ananya Sharma",
-    customer_email: "ananya.s@gmail.com",
-    customer_phone: "+91 98450 12345",
-    total_amount: "₹ 14,250",
-    items_count: 1,
-    payment_status: "Paid",
-    order_status: "New",
-    shipping_address: "12, 4th Main, Indiranagar, Bengaluru, Karnataka 560038",
-    created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
-    items_details: [
-      { title: "Kanchipuram Silk Saree", price: "₹ 14,250", quantity: 1 },
-    ],
-  },
-  {
-    id: "ORD-8820",
-    customer_name: "Priya Sundaram",
-    customer_email: "priya.sundar@yahoo.com",
-    customer_phone: "+91 98840 98765",
-    total_amount: "₹ 4,899",
-    items_count: 1,
-    payment_status: "Paid",
-    order_status: "Processing",
-    shipping_address: "84, TTK Road, Alwarpet, Chennai, Tamil Nadu 600018",
-    created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
-    items_details: [
-      { title: "Semi Mangalagiri Saree", price: "₹ 4,899", quantity: 1 },
-    ],
-  },
-  {
-    id: "ORD-8819",
-    customer_name: "Meenakshi Iyer",
-    customer_email: "meenakshi@gmail.com",
-    customer_phone: "+91 99401 54321",
-    total_amount: "₹ 8,990",
-    items_count: 1,
-    payment_status: "Paid",
-    order_status: "Delivered",
-    shipping_address: "Plot 45, Banjara Hills, Hyderabad, Telangana 500034",
-    created_at: new Date(Date.now() - 3600000 * 26).toISOString(),
-    items_details: [
-      { title: "Thoranam Exclusive Zari Weave", price: "₹ 8,990", quantity: 1 },
-    ],
-  },
-];
+
 
 export default function DashboardOrders() {
   const [orders, setOrders] = useState([]);
@@ -69,25 +23,47 @@ export default function DashboardOrders() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const fetchOrders = async () => {
-    setIsLoading(true);
+  const fetchOrders = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const res = await fetch(getApiUrl("/api/orders"));
       const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      if (json.success && Array.isArray(json.data)) {
         setOrders(json.data);
       } else {
-        setOrders(sampleOrders);
+        setOrders([]);
       }
     } catch (e) {
-      setOrders(sampleOrders);
+      setOrders([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
+    let ignore = false;
+    const load = async () => {
+      try {
+        const res = await fetch(getApiUrl("/api/orders"));
+        const json = await res.json();
+        if (!ignore) {
+          if (json.success && Array.isArray(json.data)) {
+            setOrders(json.data);
+          } else {
+            setOrders([]);
+          }
+        }
+      } catch (e) {
+        if (!ignore) setOrders([]);
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const filteredOrders = orders.filter((o) => {

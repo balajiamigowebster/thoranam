@@ -16,7 +16,7 @@ import {
 
 const navigationItems = [
   { id: "overview", label: "Dashboard", icon: LayoutDashboard },
-  { id: "orders", label: "Orders", icon: ShoppingBag, badge: "12 New" },
+  { id: "orders", label: "Orders", icon: ShoppingBag },
   { id: "products", label: "Products Catalog", icon: Package },
   { id: "categories", label: "Categories", icon: Layers },
   { id: "customers", label: "Customers", icon: Users },

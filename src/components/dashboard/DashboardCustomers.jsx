@@ -4,60 +4,54 @@ import React, { useState, useEffect } from "react";
 import { Users, Search, RefreshCw, Mail, Phone, ShoppingBag, ShieldCheck } from "lucide-react";
 import { getApiUrl } from "@/config";
 
-const sampleCustomers = [
-  {
-    id: 1,
-    name: "Ananya Sharma",
-    email: "ananya.s@gmail.com",
-    phone: "+91 98450 12345",
-    total_orders: 3,
-    total_spent: "₹ 32,500",
-    status: "VIP",
-  },
-  {
-    id: 2,
-    name: "Priya Sundaram",
-    email: "priya.sundar@yahoo.com",
-    phone: "+91 98840 98765",
-    total_orders: 1,
-    total_spent: "₹ 4,899",
-    status: "Active",
-  },
-  {
-    id: 3,
-    name: "Meenakshi Iyer",
-    email: "meenakshi@gmail.com",
-    phone: "+91 99401 54321",
-    total_orders: 2,
-    total_spent: "₹ 17,980",
-    status: "Active",
-  },
-];
+
 
 export default function DashboardCustomers() {
   const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchCustomers = async () => {
-    setIsLoading(true);
+  const fetchCustomers = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const res = await fetch(getApiUrl("/api/customers"));
       const json = await res.json();
-      if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      if (json.success && Array.isArray(json.data)) {
         setCustomers(json.data);
       } else {
-        setCustomers(sampleCustomers);
+        setCustomers([]);
       }
     } catch (e) {
-      setCustomers(sampleCustomers);
+      setCustomers([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchCustomers();
+    let ignore = false;
+    const load = async () => {
+      try {
+        const res = await fetch(getApiUrl("/api/customers"));
+        const json = await res.json();
+        if (!ignore) {
+          if (json.success && Array.isArray(json.data)) {
+            setCustomers(json.data);
+          } else {
+            setCustomers([]);
+          }
+        }
+      } catch (e) {
+        if (!ignore) setCustomers([]);
+      } finally {
+        if (!ignore) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   const filtered = customers.filter((c) => {

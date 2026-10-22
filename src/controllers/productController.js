@@ -148,6 +148,15 @@ export const productController = {
   },
 };
 
+function safeJsonParse(val, fallback = []) {
+  if (typeof val !== "string") return val || fallback;
+  try {
+    return JSON.parse(val);
+  } catch {
+    return fallback;
+  }
+}
+
 // Formatter to match frontend props
 function formatProduct(r) {
   return {
@@ -158,9 +167,9 @@ function formatProduct(r) {
     stock: r.stock,
     status: r.status,
     mainImage: r.main_image || "/images/product-1.jpg",
-    galleryImages: typeof r.gallery_images === "string" ? JSON.parse(r.gallery_images || "[]") : (r.gallery_images || []),
+    galleryImages: safeJsonParse(r.gallery_images, []),
     description: r.description || "",
-    highlights: typeof r.highlights === "string" ? JSON.parse(r.highlights || "[]") : (r.highlights || []),
+    highlights: safeJsonParse(r.highlights, []),
     closingDescription: r.closing_description || "",
     material: r.material || "",
     size: r.size || "",
