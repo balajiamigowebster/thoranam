@@ -149,7 +149,10 @@ export default function DashboardCustomers() {
                       {c.total_orders || 0} orders
                     </td>
                     <td className="py-3.5 px-4 font-bold text-slate-900">
-                      {c.total_spent || "₹ 0"}
+                      {(() => {
+                        const cleaned = String(c.total_spent || "").replace(/^[?Rs.\s]+/, "").trim();
+                        return cleaned ? `₹ ${cleaned}` : "₹ 0";
+                      })()}
                     </td>
                     <td className="py-3.5 px-4">
                       <span

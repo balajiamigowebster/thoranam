@@ -189,7 +189,12 @@ export default function DashboardOrders() {
                       <p className="text-[11px] text-slate-400">{o.customer_phone || o.customer_email}</p>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="font-bold text-slate-900">{o.total_amount}</span>
+                      <span className="font-bold text-slate-900">
+                        {(() => {
+                          const cleaned = String(o.total_amount || "").replace(/^[?Rs.\s]+/, "").trim();
+                          return cleaned ? `₹ ${cleaned}` : "₹ 0";
+                        })()}
+                      </span>
                       <span className="text-[11px] text-slate-400 block">
                         {o.items_count || 1} {o.items_count === 1 ? "item" : "items"}
                       </span>
@@ -254,7 +259,10 @@ export default function DashboardOrders() {
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase">Order Amount</span>
                   <span className="font-bold text-slate-900 text-sm">
-                    {selectedOrder.total_amount}
+                    {(() => {
+                      const cleaned = String(selectedOrder.total_amount || "").replace(/^[?Rs.\s]+/, "").trim();
+                      return cleaned ? `₹ ${cleaned}` : "₹ 0";
+                    })()}
                   </span>
                   <span className="text-emerald-600 block font-medium">
                     {selectedOrder.payment_status || "Paid"}

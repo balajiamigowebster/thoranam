@@ -143,6 +143,13 @@ export default function DashboardOverview({ setActiveTab }) {
     },
   ];
 
+  const formatCurrency = (val) => {
+    if (!val) return "₹ 0";
+    const cleaned = String(val).replace(/^[?Rs.\s]+/, "").trim();
+    if (!cleaned) return "₹ 0";
+    return `₹ ${cleaned}`;
+  };
+
   // Map recent orders
   const displayOrders = orders.slice(0, 5).map((o) => {
     let details = o.items_details;
@@ -154,7 +161,7 @@ export default function DashboardOverview({ setActiveTab }) {
       id: o.id,
       customer: o.customer_name || "Guest Customer",
       item: firstTitle || `${o.items_count || 1} Item(s)`,
-      amount: o.total_amount || "₹ 0",
+      amount: formatCurrency(o.total_amount),
       status: o.order_status || "Processing",
     };
   });
