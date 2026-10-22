@@ -58,14 +58,29 @@ export default function DashboardCategories() {
             return catJson.data.find((c) => c.id === prev.id) || catJson.data[0];
           });
         }
-        const browseJson = await browseRes.json();
-        if (browseJson.success && Array.isArray(browseJson.data) && browseJson.data.length > 0) {
+        const browseJson = await browseRes.json().catch(() => null);
+        if (browseJson && browseJson.success && Array.isArray(browseJson.data) && browseJson.data.length > 0) {
           setBrowseCategories(browseJson.data);
           saveStoredBrowseCategories(browseJson.data);
           setSelectedBrowseCat((prev) => {
             if (!prev) return browseJson.data[0];
             return browseJson.data.find((c) => c.id === prev.id) || browseJson.data[0];
           });
+        } else {
+          // Fallback to settings endpoint where store_settings is hosted on cPanel
+          try {
+            const settingsRes = await fetch(getApiUrl("/api/settings"));
+            const settingsJson = await settingsRes.json();
+            const list = settingsJson?.data?.homepage_browse_categories;
+            if (Array.isArray(list) && list.length > 0) {
+              setBrowseCategories(list);
+              saveStoredBrowseCategories(list);
+              setSelectedBrowseCat((prev) => {
+                if (!prev) return list[0];
+                return list.find((c) => c.id === prev.id) || list[0];
+              });
+            }
+          } catch (settErr) {}
         }
       } catch (e) {
         console.error("Failed to load categories from API:", e);
@@ -301,13 +316,34 @@ export default function DashboardCategories() {
 
     setIsSaving(true);
     try {
-      await fetch(getApiUrl("/api/categories/browse"), {
+      // 1. Send to /api/categories/browse
+      const res = await fetch(getApiUrl("/api/categories/browse"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedList),
       });
+
+      // 2. Also sync to /api/settings (store_settings on cPanel) so it's guaranteed saved
+      if (!res.ok || res.status === 404) {
+        await fetch(getApiUrl("/api/settings"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            homepage_browse_categories: JSON.stringify(updatedList),
+          }),
+        });
+      }
     } catch (e) {
       console.error("Failed to sync browse categories to database:", e);
+      try {
+        await fetch(getApiUrl("/api/settings"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            homepage_browse_categories: JSON.stringify(updatedList),
+          }),
+        });
+      } catch (innerE) {}
     } finally {
       setIsSaving(false);
     }

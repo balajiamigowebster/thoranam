@@ -15,12 +15,28 @@ export default function HomeCategory() {
     async function loadBrowseCategories() {
       try {
         const res = await fetch(getApiUrl("/api/categories/browse"));
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+        const json = await res.json().catch(() => null);
+        if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
           setCategories(json.data);
           try {
             localStorage.setItem("thoranam_browse_categories", JSON.stringify(json.data));
           } catch (e) {}
+        } else {
+          // Fallback to /api/settings where store_settings resides on live cPanel backend
+          try {
+            const settRes = await fetch(getApiUrl("/api/settings"));
+            const settJson = await settRes.json();
+            let list = settJson?.data?.homepage_browse_categories;
+            if (typeof list === "string") {
+              try { list = JSON.parse(list); } catch {}
+            }
+            if (Array.isArray(list) && list.length > 0) {
+              setCategories(list);
+              try {
+                localStorage.setItem("thoranam_browse_categories", JSON.stringify(list));
+              } catch (e) {}
+            }
+          } catch (innerErr) {}
         }
       } catch (e) {
         console.error("Failed to load browse categories from API:", e);
