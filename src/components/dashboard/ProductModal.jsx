@@ -15,7 +15,7 @@ import {
   Search,
   Globe,
 } from "lucide-react";
-import { getApiUrl } from "@/config";
+import { getApiUrl, getAssetUrl } from "@/config";
 
 const getInitialFormData = (product, categories = []) => {
   if (product) {
@@ -457,7 +457,7 @@ export default function ProductModal({
                 <div className="flex flex-col sm:flex-row gap-4 items-start bg-stone-50/70 p-4 rounded-2xl border border-slate-200">
                   <div className="relative w-36 h-48 rounded-2xl overflow-hidden border-2 border-[#800F17]/40 bg-white shadow-xs shrink-0 group">
                     <img
-                      src={formData.mainImage || "/images/product-1.jpg"}
+                      src={getAssetUrl(formData.mainImage) || "/images/product-1.jpg"}
                       alt="Main Preview"
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -584,7 +584,7 @@ export default function ProductModal({
                       className="relative group rounded-xl overflow-hidden border border-slate-200 aspect-[3/4] bg-stone-100 shadow-2xs"
                     >
                       <img
-                        src={url}
+                        src={getAssetUrl(url)}
                         alt={`Gallery ${idx + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
