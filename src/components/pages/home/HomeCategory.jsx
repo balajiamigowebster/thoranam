@@ -8,10 +8,26 @@ import { HOMEPAGE_BROWSE_CATEGORIES, getStoredBrowseCategories } from "@/lib/cat
 import { getApiUrl, getAssetUrl } from "@/config";
 
 export default function HomeCategory() {
-  const [categories, setCategories] = useState(getStoredBrowseCategories);
+  const [categories, setCategories] = useState(HOMEPAGE_BROWSE_CATEGORIES);
 
   useEffect(() => {
-    // 1. Fetch live categories from database
+    // 1. Keep 8 saree circular categories synchronized from localStorage if edited in dashboard
+    const syncCategories = () => {
+      try {
+        const stored = localStorage.getItem("thoranam_browse_categories");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCategories(parsed);
+          }
+        }
+      } catch (e) {}
+    };
+
+    // Read cached categories client-side after mount to prevent hydration mismatch
+    syncCategories();
+
+    // 2. Fetch live categories from database
     async function loadBrowseCategories() {
       try {
         const res = await fetch(getApiUrl("/api/categories/browse"));
@@ -43,19 +59,6 @@ export default function HomeCategory() {
       }
     }
     loadBrowseCategories();
-
-    // 2. Keep 8 saree circular categories synchronized from localStorage if edited in dashboard
-    const syncCategories = () => {
-      try {
-        const stored = localStorage.getItem("thoranam_browse_categories");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setCategories(parsed);
-          }
-        }
-      } catch (e) {}
-    };
 
     window.addEventListener("thoranam_browse_categories_updated", syncCategories);
     window.addEventListener("storage", syncCategories);
