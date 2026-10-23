@@ -1,8 +1,8 @@
 import HomeHero from "./HomeHero";
 import HomeBestToday from "./HomeBestToday";
 import HomeCategory from "./HomeCategory";
-import HomeCategoryProducts from "./HomeCategoryProducts";
 import HomeShop from "./HomeShop";
+import HomeCategoryProducts from "./HomeCategoryProducts";
 
 export default function Home() {
   return (
@@ -16,11 +16,11 @@ export default function Home() {
       {/* 3. Browse Our Categories (Circle icons) */}
       <HomeCategory />
 
-      {/* 4. Category Showcase (Each category one by one with 3-4 products and View More button) */}
-      <HomeCategoryProducts />
-
-      {/* 5. Shop Our Bestsellers */}
+      {/* 4. Shop Our Bestsellers (Moved right after Browse Our Categories) */}
       <HomeShop />
+
+      {/* 5. Category Showcase: all 17 menu categories one by one */}
+      <HomeCategoryProducts />
     </div>
   );
 }

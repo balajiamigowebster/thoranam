@@ -108,7 +108,7 @@ export default function HomeCategoryProducts() {
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#800F17] bg-rose-50 dark:bg-rose-950/40 px-2.5 py-0.5 rounded-full border border-rose-100/80 dark:border-rose-900/50">
                       <Sparkles className="w-3 h-3 text-[#AA771C]" />
-                      Collection 0{idx + 1}
+                      Collection {String(idx + 1).padStart(2, "0")}
                     </span>
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#800F17] dark:text-rose-100 uppercase font-serif">

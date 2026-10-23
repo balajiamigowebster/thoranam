@@ -43,6 +43,7 @@ export const productController = {
             material: item.material,
             size: item.size,
             wash_care: item.washCare,
+            is_featured: Boolean(item.isFeatured),
           });
         }
         products = await Product.findAll({ order: [["id", "DESC"]] });
@@ -51,7 +52,7 @@ export const productController = {
       return products.map((p) => formatProduct(p.toJSON()));
     } catch (dbErr) {
       console.warn("[Products] DB query error, falling back to INITIAL_PRODUCTS:", dbErr.message);
-      let list = [...INITIAL_PRODUCTS];
+      let list = INITIAL_PRODUCTS.map((p) => ({ ...p, isFeatured: Boolean(p.isFeatured) }));
       if (query.category && query.category !== "all") {
         list = list.filter((p) => p.category?.toLowerCase() === query.category.toLowerCase());
       }
@@ -100,6 +101,7 @@ export const productController = {
       seo_description: data.seoDescription || "",
       seo_keywords: data.seoKeywords || "",
       og_image: data.ogImage || "",
+      is_featured: Boolean(data.isFeatured),
     });
 
     return formatProduct(created.toJSON());
@@ -131,6 +133,7 @@ export const productController = {
       seo_description: data.seoDescription !== undefined ? data.seoDescription : product.seo_description,
       seo_keywords: data.seoKeywords !== undefined ? data.seoKeywords : product.seo_keywords,
       og_image: data.ogImage !== undefined ? data.ogImage : product.og_image,
+      is_featured: data.isFeatured !== undefined ? Boolean(data.isFeatured) : product.is_featured,
     });
 
     return formatProduct(product.toJSON());
@@ -178,6 +181,7 @@ function formatProduct(r) {
     seoDescription: r.seo_description || "",
     seoKeywords: r.seo_keywords || "",
     ogImage: r.og_image || "",
+    isFeatured: Boolean(r.is_featured),
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };

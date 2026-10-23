@@ -3,16 +3,18 @@ import getSequelize from "@/lib/sequelize";
 
 const sequelize = getSequelize();
 
-export const Product = sequelize.isDefined("Product")
-  ? sequelize.model("Product")
-  : sequelize.define(
-      "Product",
-      {
-        id: {
-          type: DataTypes.BIGINT,
-          autoIncrement: true,
-          primaryKey: true,
-        },
+if (sequelize.isDefined("Product")) {
+  delete sequelize.models.Product;
+}
+
+export const Product = sequelize.define(
+  "Product",
+  {
+    id: {
+      type: DataTypes.BIGINT,
+      autoIncrement: true,
+      primaryKey: true,
+    },
         title: {
           type: DataTypes.STRING(255),
           allowNull: false,
@@ -83,6 +85,11 @@ export const Product = sequelize.isDefined("Product")
         og_image: {
           type: DataTypes.STRING(500),
           allowNull: true,
+        },
+        is_featured: {
+          type: DataTypes.BOOLEAN,
+          allowNull: false,
+          defaultValue: false,
         },
       },
       {

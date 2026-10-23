@@ -16,25 +16,30 @@ import {
   Globe,
 } from "lucide-react";
 import { getApiUrl, getAssetUrl } from "@/config";
+import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
 
 const getInitialFormData = (product, categories = []) => {
+  const catList = categories && categories.length >= 10 ? categories : INITIAL_CATEGORIES;
   if (product) {
     return {
       ...product,
+      category: product.category || catList[0]?.label || catList[0]?.name || "Bamboo Cotton Silk",
       highlights: product.highlights || [],
       galleryImages: product.galleryImages || [],
       seoTitle: product.seoTitle || "",
       seoDescription: product.seoDescription || "",
       seoKeywords: product.seoKeywords || "",
       ogImage: product.ogImage || product.mainImage || "",
+      isFeatured: Boolean(product.isFeatured),
     };
   }
   return {
     title: "",
-    category: categories[0]?.label || "Semi Silk Sarees",
+    category: catList[0]?.label || catList[0]?.name || "Bamboo Cotton Silk",
     price: "",
     stock: 10,
     status: "Published",
+    isFeatured: false,
     mainImage: "/images/product-1.jpg",
     galleryImages: ["/images/product-2.jpg"],
     description: "",
@@ -261,28 +266,34 @@ export default function ProductModal({
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-800">Category</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => handleChange("category", e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17] bg-white"
-                  >
-                    {categories.length > 0 ? (
-                      categories.map((c) => (
-                        <option key={c.id || c.label} value={c.label}>
-                          {c.label}
-                        </option>
-                      ))
-                    ) : (
-                      <>
-                        <option value="Silk Sarees">Silk Sarees</option>
-                        <option value="Semi Silk Sarees">Semi Silk Sarees</option>
-                        <option value="Exotic Cotton Sarees">Exotic Cotton Sarees</option>
-                        <option value="Pure Cotton">Pure Cotton</option>
-                        <option value="Thoranam Collection">Thoranam Collection</option>
-                        <option value="New Arrivals">New Arrivals</option>
-                      </>
-                    )}
-                  </select>
+                  {(() => {
+                    const categoryOptions =
+                      categories && categories.length >= 10
+                        ? categories
+                        : getStoredCategories();
+                    return (
+                      <select
+                        value={formData.category}
+                        onChange={(e) => handleChange("category", e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17] bg-white"
+                      >
+                        {formData.category &&
+                          !categoryOptions.some(
+                            (c) => (c.label || c.name) === formData.category
+                          ) && (
+                            <option value={formData.category}>{formData.category}</option>
+                          )}
+                        {categoryOptions.map((c) => {
+                          const name = c.label || c.name;
+                          return (
+                            <option key={c.id || name} value={name}>
+                              {name}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    );
+                  })()}
                 </div>
 
                 <div className="space-y-1.5">
@@ -330,6 +341,26 @@ export default function ProductModal({
                     <option value="Low Stock">Low Stock</option>
                     <option value="Draft">Draft (Hidden)</option>
                   </select>
+                </div>
+
+                {/* Handpicked Favorites / Best of the Bunch Checkbox */}
+                <div className="md:col-span-2 pt-2 border-t border-slate-100">
+                  <label className="flex items-start gap-3 p-3.5 rounded-xl border border-rose-100 bg-rose-50/40 hover:bg-rose-50/80 cursor-pointer transition-colors group">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.isFeatured)}
+                      onChange={(e) => handleChange("isFeatured", e.target.checked)}
+                      className="mt-0.5 w-4 h-4 text-[#800F17] rounded border-slate-300 focus:ring-[#800F17] cursor-pointer accent-[#800F17]"
+                    />
+                    <div className="flex-1">
+                      <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5 group-hover:text-[#800F17] transition-colors">
+                        ⭐ Show in &quot;Discover the Best of the Bunch – Shop Our Handpicked Favorites Today!&quot;
+                      </span>
+                      <p className="text-[11px] text-slate-500 mt-0.5 leading-normal">
+                        Check this box to highlight this saree on the homepage in the handpicked favorites showcase section.
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
             </div>

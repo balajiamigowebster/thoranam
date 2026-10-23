@@ -42,8 +42,8 @@ export default function DashboardPromotions() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchPromotions = async () => {
-    setIsLoading(true);
+  const fetchPromotions = async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     try {
       const res = await fetch(getApiUrl("/api/promotions"));
       const json = await res.json();
@@ -60,7 +60,28 @@ export default function DashboardPromotions() {
   };
 
   useEffect(() => {
-    fetchPromotions();
+    let mounted = true;
+    async function loadData() {
+      try {
+        const res = await fetch(getApiUrl("/api/promotions"));
+        const json = await res.json();
+        if (mounted) {
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            setPromotions(json.data);
+          } else {
+            setPromotions(samplePromotions);
+          }
+        }
+      } catch (e) {
+        if (mounted) setPromotions(samplePromotions);
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    }
+    loadData();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const filtered = promotions.filter((p) =>

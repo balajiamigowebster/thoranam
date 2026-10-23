@@ -48,7 +48,10 @@ export default function HomeBestToday() {
         const res = await fetch(getApiUrl("/api/products"));
         const json = await res.json();
         if (active && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const mapped = json.data.slice(0, 4).map((p, idx) => ({
+          // Prioritize products marked with isFeatured (handpicked favorites)
+          const featured = json.data.filter((p) => Boolean(p.isFeatured));
+          const displayList = (featured.length > 0 ? featured : json.data).slice(0, 8);
+          const mapped = displayList.map((p, idx) => ({
             id: p.id,
             title: p.title,
             price: p.price,

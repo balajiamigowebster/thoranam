@@ -10,7 +10,7 @@ export async function fetchProductsFromDb() {
     if (!res.ok) throw new Error("Network response was not ok");
     const json = await res.json();
     if (json.success && Array.isArray(json.data)) {
-      saveLocalProducts(json.data);
+      saveLocalProducts(json.data, false);
       return json.data;
     }
   } catch (err) {
@@ -83,11 +83,13 @@ function getLocalProducts() {
   return INITIAL_PRODUCTS;
 }
 
-function saveLocalProducts(products) {
+function saveLocalProducts(products, notify = true) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem("thoranam_products", JSON.stringify(products));
-    window.dispatchEvent(new Event("thoranam_products_updated"));
+    if (notify) {
+      window.dispatchEvent(new Event("thoranam_products_updated"));
+    }
   } catch (e) {
     console.error(e);
   }

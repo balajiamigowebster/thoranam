@@ -10,7 +10,7 @@ import {
   deleteProductFromDb,
 } from "@/lib/products";
 import { getStoredCategories } from "@/lib/categories";
-import { getAssetUrl } from "@/config";
+import { getApiUrl, getAssetUrl } from "@/config";
 
 // Helper to format price with proper Indian Rupee symbol
 export function formatRupeePrice(priceStr) {
@@ -36,18 +36,29 @@ export default function DashboardProducts() {
 
   useEffect(() => {
     let active = true;
-    async function loadProducts() {
+    async function loadData() {
       const data = await fetchProductsFromDb();
       if (active && data) {
         setProducts(data);
         setIsDbLive(true);
       }
+      try {
+        const catRes = await fetch(getApiUrl("/api/categories"));
+        const catJson = await catRes.json();
+        if (active && catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
+          setCategories(catJson.data);
+          if (typeof window !== "undefined") {
+            localStorage.setItem("thoranam_categories", JSON.stringify(catJson.data));
+          }
+        }
+      } catch (err) {
+        console.warn("Could not fetch categories in DashboardProducts:", err);
+      }
     }
-    loadProducts();
+    loadData();
 
-    const handleProductSync = async () => {
-      const data = await fetchProductsFromDb();
-      if (active && data) setProducts(data);
+    const handleProductSync = () => {
+      if (active) setProducts(getStoredProducts());
     };
     const handleCategorySync = () => {
       if (active) setCategories(getStoredCategories());
@@ -186,8 +197,13 @@ export default function DashboardProducts() {
                         />
                       </div>
                       <div className="max-w-[220px]">
-                        <p className="font-semibold text-slate-800 truncate" title={item.title}>
-                          {item.title}
+                        <p className="font-semibold text-slate-800 truncate flex items-center gap-1.5" title={item.title}>
+                          <span>{item.title}</span>
+                          {item.isFeatured && (
+                            <span className="shrink-0 inline-flex items-center text-[10px] bg-amber-50 text-amber-700 border border-amber-200/60 font-semibold px-1.5 py-0.2 rounded-full" title="Featured in Handpicked Favorites">
+                              ★ Handpicked
+                            </span>
+                          )}
                         </p>
                         <p className="text-[10px] text-slate-400 truncate">
                           {item.galleryImages?.length || 0} gallery photos • {item.material || "Silk blend"}
