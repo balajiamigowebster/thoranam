@@ -10,20 +10,11 @@ import React, {
 
 const CartContext = createContext(null);
 
-const DEFAULT_INITIAL_ITEM = [
-  {
-    id: "default-item",
-    title: "Verdant Ikat – Bamboo Cotton Silk Saree",
-    price: "Rs. 1,500.00",
-    quantity: 1,
-    mainImage: "/images/product-1.jpg",
-  },
-];
 
 const emptySubscribe = () => () => {};
 
 export function CartProvider({ children }) {
-  const [cartItems, setCartItems] = useState(DEFAULT_INITIAL_ITEM);
+  const [cartItems, setCartItems] = useState([]);
   const [animatingFlyers, setAnimatingFlyers] = useState([]);
   const [badgeBump, setBadgeBump] = useState(false);
   const isMounted = useSyncExternalStore(
@@ -38,8 +29,13 @@ export function CartProvider({ children }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
+          // Filter out any previously cached default test item
+          const filtered = parsed.filter((item) => item.id !== "default-item");
+          if (filtered.length !== parsed.length) {
+            localStorage.setItem("thoranam_cart", JSON.stringify(filtered));
+          }
           // eslint-disable-next-line react-hooks/set-state-in-effect
-          setCartItems(parsed);
+          setCartItems(filtered);
         }
       }
     } catch (e) {
