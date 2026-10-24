@@ -25,23 +25,34 @@ export function formatRupeePrice(priceStr) {
 }
 
 export default function DashboardProducts() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(getStoredProducts);
   const [categories, setCategories] = useState(getStoredCategories);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [viewProduct, setViewProduct] = useState(null);
-  const [isDbLive, setIsDbLive] = useState(false);
+  const [isDbLive, setIsDbLive] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    const init = getStoredProducts();
+    return !init || init.length === 0;
+  });
 
   useEffect(() => {
     let active = true;
     async function loadData() {
-      const data = await fetchProductsFromDb();
-      if (active && data) {
-        setProducts(data);
-        setIsDbLive(true);
+      try {
+        const data = await fetchProductsFromDb();
+        if (active && data) {
+          setProducts(data);
+          setIsDbLive(true);
+        }
+      } catch (e) {
+        console.warn("Failed to fetch products:", e);
+      } finally {
+        if (active) setIsLoading(false);
       }
+
       try {
         const catRes = await fetch(getApiUrl("/api/categories"));
         const catJson = await catRes.json();
@@ -294,10 +305,32 @@ export default function DashboardProducts() {
                 </tr>
               ))}
 
-              {filteredProducts.length === 0 && (
+              {isLoading && products.length === 0 && (
+                [1, 2, 3, 4, 5].map((idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-12 rounded-lg bg-slate-200" />
+                        <div className="space-y-1.5">
+                          <div className="w-32 h-3.5 bg-slate-200 rounded" />
+                          <div className="w-20 h-2.5 bg-slate-100 rounded" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3"><div className="w-24 h-3 bg-slate-200 rounded" /></td>
+                    <td className="py-3 px-3"><div className="w-16 h-3 bg-slate-200 rounded" /></td>
+                    <td className="py-3 px-3"><div className="w-16 h-3 bg-slate-200 rounded" /></td>
+                    <td className="py-3 px-3"><div className="w-14 h-3 bg-slate-200 rounded" /></td>
+                    <td className="py-3 px-3"><div className="w-16 h-5 bg-slate-200 rounded-full" /></td>
+                    <td className="py-3 px-3 text-right"><div className="w-12 h-4 bg-slate-200 rounded ml-auto" /></td>
+                  </tr>
+                ))
+              )}
+
+              {!isLoading && filteredProducts.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-400">
-                    No sarees found matching your search.
+                    <p className="text-sm font-medium">No sarees found matching your search.</p>
                   </td>
                 </tr>
               )}

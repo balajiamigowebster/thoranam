@@ -76,13 +76,27 @@ export default function Dashboard() {
         <DashboardHeader title={getPageTitle()} />
 
         <main className="p-6 md:p-8 flex-1 overflow-y-auto">
-          {activeTab === "overview" && <DashboardOverview setActiveTab={setActiveTab} />}
-          {activeTab === "orders" && <DashboardOrders />}
-          {activeTab === "products" && <DashboardProducts />}
-          {activeTab === "categories" && <DashboardCategories />}
-          {activeTab === "customers" && <DashboardCustomers />}
-          {activeTab === "promotions" && <DashboardPromotions />}
-          {activeTab === "settings" && <DashboardStoreSettings />}
+          <div className={activeTab === "overview" ? "block" : "hidden"}>
+            <DashboardOverview setActiveTab={setActiveTab} />
+          </div>
+          <div className={activeTab === "orders" ? "block" : "hidden"}>
+            <DashboardOrders />
+          </div>
+          <div className={activeTab === "products" ? "block" : "hidden"}>
+            <DashboardProducts />
+          </div>
+          <div className={activeTab === "categories" ? "block" : "hidden"}>
+            <DashboardCategories />
+          </div>
+          <div className={activeTab === "customers" ? "block" : "hidden"}>
+            <DashboardCustomers />
+          </div>
+          <div className={activeTab === "promotions" ? "block" : "hidden"}>
+            <DashboardPromotions />
+          </div>
+          <div className={activeTab === "settings" ? "block" : "hidden"}>
+            <DashboardStoreSettings />
+          </div>
         </main>
       </div>
     </div>
