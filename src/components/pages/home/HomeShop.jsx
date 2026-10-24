@@ -1,26 +1,39 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
-
-const bestsellers = [
-  {
-    id: "chettinad-80-count",
-    title: "Chettinad 80 Count Cotton Saree",
-    price: "Rs. 2,800.00",
-    image: "/images/bestseller-1.jpg",
-    href: "/products/chettinad-80-count",
-  },
-  {
-    id: "chettinad-120-count",
-    title: "Chettinad Cotton 120 Count",
-    price: "Rs. 3,500.00",
-    image: "/images/bestseller-2.jpg",
-    href: "/products/chettinad-120-count",
-  },
-];
+import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
 export default function HomeShop() {
+  const [products, setProducts] = useState(getStoredProducts);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function load() {
+      const data = await fetchProductsFromDb();
+      if (isMounted && Array.isArray(data)) {
+        setProducts(data);
+      }
+    }
+    load();
+    const handleSync = () => load();
+    window.addEventListener("thoranam_products_updated", handleSync);
+    window.addEventListener("storage", handleSync);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("thoranam_products_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
+  }, []);
+
+  const bestsellers = (products || []).filter((p) => Boolean(p.isBestseller)).slice(0, 4);
+
+  // If no products are marked as bestsellers, do not render section
+  if (bestsellers.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-10 sm:py-14 bg-white dark:bg-slate-950 border-t border-stone-100 dark:border-slate-800">
       <Container>
@@ -42,9 +55,9 @@ export default function HomeShop() {
                 id={item.id}
                 title={item.title}
                 price={item.price}
-                image={item.image}
+                image={item.mainImage || item.image}
                 tag="Bestseller"
-                href={item.href}
+                href={`/products/${item.id}`}
               />
             ))}
           </div>

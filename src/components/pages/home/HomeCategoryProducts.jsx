@@ -7,7 +7,7 @@ import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { getApiUrl } from "@/config";
 import { INITIAL_CATEGORIES } from "@/lib/categories";
-import { getStoredProducts } from "@/lib/products";
+import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
 export default function HomeCategoryProducts() {
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
@@ -18,13 +18,12 @@ export default function HomeCategoryProducts() {
 
     async function loadData() {
       try {
-        const [catRes, prodRes] = await Promise.all([
+        const [catRes, prodData] = await Promise.all([
           fetch(getApiUrl("/api/categories")),
-          fetch(getApiUrl("/api/products")),
+          fetchProductsFromDb(),
         ]);
 
         const catJson = await catRes.json();
-        const prodJson = await prodRes.json();
 
         if (isMounted) {
           if (catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
@@ -41,28 +40,35 @@ export default function HomeCategoryProducts() {
             }
             setCategories(list);
           }
-          if (prodJson.success && Array.isArray(prodJson.data)) {
-            setProducts(prodJson.data);
+          if (Array.isArray(prodData) && prodData.length > 0) {
+            setProducts(prodData);
+          } else {
+            setProducts(getStoredProducts());
           }
         }
       } catch (err) {
         console.error("Error loading category showcase data:", err);
+        if (isMounted) {
+          setProducts(getStoredProducts());
+        }
       }
     }
 
     loadData();
 
-    // Listen to admin category & product updates
+    // Listen to admin category & product updates and browser storage events
     const handleSync = () => {
       loadData();
     };
     window.addEventListener("thoranam_categories_updated", handleSync);
     window.addEventListener("thoranam_products_updated", handleSync);
+    window.addEventListener("storage", handleSync);
 
     return () => {
       isMounted = false;
       window.removeEventListener("thoranam_categories_updated", handleSync);
       window.removeEventListener("thoranam_products_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
     };
   }, []);
 

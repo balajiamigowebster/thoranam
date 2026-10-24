@@ -119,6 +119,18 @@ export function isSeedProduct(p) {
   return isPhantomOrSeedProduct(p);
 }
 
+export function sortProductsChronological(list) {
+  if (!Array.isArray(list)) return [];
+  return [...list].sort((a, b) => {
+    const timeA = Number(a.id) || a._createdAt || a._lastModified || 0;
+    const timeB = Number(b.id) || b._createdAt || b._lastModified || 0;
+    if (timeA && timeB && timeA !== timeB) {
+      return timeA - timeB;
+    }
+    return 0;
+  });
+}
+
 export async function fetchProductsFromDb() {
   try {
     const res = await fetch(getApiUrl("/api/products"));
@@ -150,7 +162,9 @@ export async function fetchProductsFromDb() {
 
       const dbIds = new Set(cleanDbData.map((p) => String(p.id)));
       const locallyAdded = local.filter((p) => !dbIds.has(String(p.id)));
-      const finalMerged = [...locallyAdded, ...merged].filter((p) => !isPhantomOrSeedProduct(p));
+      const finalMerged = sortProductsChronological(
+        [...merged, ...locallyAdded].filter((p) => !isPhantomOrSeedProduct(p))
+      );
       saveLocalProducts(finalMerged, false);
       return finalMerged;
     }
@@ -177,7 +191,7 @@ export async function saveProductToDb(productData) {
     _lastModified: Date.now(),
   };
 
-  // 3. Immediately persist to localStorage
+  // 3. Immediately persist to localStorage in chronological upload order
   const current = getLocalProducts();
   let updated;
   const idx = current.findIndex((p) => String(p.id) === String(productId));
@@ -185,8 +199,10 @@ export async function saveProductToDb(productData) {
     updated = [...current];
     updated[idx] = { ...updated[idx], ...finalItem };
   } else {
-    updated = [finalItem, ...current];
+    // First uploaded product is 1st, next product is next
+    updated = [...current, finalItem];
   }
+  updated = sortProductsChronological(updated);
   saveLocalProducts(updated, true);
 
   // 4. Send to backend API
@@ -248,7 +264,8 @@ function getLocalProducts() {
         if (clean.length !== parsed.length) {
           localStorage.setItem("thoranam_products", JSON.stringify(clean));
         }
-        return clean.map((p) => {
+        const sorted = sortProductsChronological(clean);
+        return sorted.map((p) => {
           if (overrides[String(p.id)] !== undefined) {
             return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
           }

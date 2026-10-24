@@ -87,7 +87,7 @@ export const productController = {
 
       let products = await Product.findAll({
         where,
-        order: [["id", "DESC"]],
+        order: [["id", "ASC"]],
       });
 
       if (products && products.length > 0) {
@@ -153,7 +153,7 @@ export const productController = {
       });
 
       const formatted = formatProduct(created.toJSON());
-      memoryProducts.unshift(formatted);
+      memoryProducts.push(formatted);
       return formatted;
     } catch (err) {
       console.warn("[Products] DB createProduct fallback to memory store:", err.message);
@@ -164,7 +164,7 @@ export const productController = {
         galleryImages: Array.isArray(data.galleryImages) ? data.galleryImages : [],
         highlights: Array.isArray(data.highlights) ? data.highlights : [],
       };
-      memoryProducts.unshift(newProduct);
+      memoryProducts.push(newProduct);
       return newProduct;
     }
   },
