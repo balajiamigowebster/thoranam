@@ -1,42 +1,61 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
-
 import { fetchProductsFromDb, getStoredProducts } from "@/lib/products";
 
 export default function HomeBestToday() {
-  const [products, setProducts] = useState([]);
-  const [loaded, setLoaded] = useState(false);
+  const [products, setProducts] = useState(() => {
+    const initial = getStoredProducts();
+    if (Array.isArray(initial) && initial.length > 0) {
+      const featured = initial.filter((p) => Boolean(p.isFeatured));
+      const source = featured.length > 0 ? featured : initial.slice(0, 4);
+      return source.slice(0, 4).map((p, idx) => ({
+        id: p.id,
+        title: p.title,
+        price: p.price,
+        image: p.mainImage || p.image || "/images/product-1.jpg",
+        tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
+      }));
+    }
+    return [];
+  });
+  const [isLoading, setIsLoading] = useState(products.length === 0);
 
   useEffect(() => {
     let active = true;
+
     async function loadProducts() {
       try {
         const data = await fetchProductsFromDb();
-        if (active && Array.isArray(data)) {
-          // STRICT RULE: Only show products when the checkbox is active / checked (isFeatured === true)
+        if (active && Array.isArray(data) && data.length > 0) {
+          // If admin has specifically checked featured sarees, show those; otherwise show the top handpicked 4 sarees
           const featured = data.filter((p) => Boolean(p.isFeatured));
-          const mapped = featured.map((p, idx) => ({
+          const source = featured.length > 0 ? featured : data.slice(0, 4);
+
+          const mapped = source.slice(0, 4).map((p, idx) => ({
             id: p.id,
             title: p.title,
             price: p.price,
-            image: p.mainImage || "/images/product-1.jpg",
+            image: p.mainImage || p.image || "/images/product-1.jpg",
             tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
           }));
           setProducts(mapped);
-          setLoaded(true);
+          setIsLoading(false);
+        } else if (active) {
+          setIsLoading(false);
         }
       } catch (e) {
         console.warn("Could not fetch products for home best today:", e);
-        if (active) setLoaded(true);
+        if (active) setIsLoading(false);
       }
     }
+
     loadProducts();
     window.addEventListener("thoranam_products_updated", loadProducts);
     window.addEventListener("storage", loadProducts);
+
     return () => {
       active = false;
       window.removeEventListener("thoranam_products_updated", loadProducts);
@@ -44,7 +63,34 @@ export default function HomeBestToday() {
     };
   }, []);
 
-  // Do not render section if no items are checked as featured
+  // Show luxury skeleton cards while loading if products haven't loaded yet
+  if (isLoading && products.length === 0) {
+    return (
+      <section className="py-12 sm:py-16 bg-white dark:bg-slate-950">
+        <Container>
+          <div className="mb-8 sm:mb-10 space-y-2 animate-pulse">
+            <div className="h-8 w-80 bg-stone-200 dark:bg-slate-800 rounded-lg" />
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7 animate-pulse">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 border border-stone-200/80 dark:border-slate-800 flex flex-col justify-between"
+              >
+                <div className="aspect-[4/5] w-full rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 animate-pulse" />
+                <div className="pt-3 space-y-2">
+                  <div className="h-4 w-3/4 bg-stone-200 dark:bg-slate-800 rounded" />
+                  <div className="h-4 w-1/3 bg-rose-200/70 dark:bg-slate-800 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+    );
+  }
+
+  // If store has no products at all, hide section
   if (products.length === 0) {
     return null;
   }
@@ -62,7 +108,7 @@ export default function HomeBestToday() {
           </h2>
         </div>
 
-        {/* 4 Column Product Grid */}
+        {/* 4 Column Product Grid with Lazy Loading */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7">
           {products.map((item) => (
             <ProductCard

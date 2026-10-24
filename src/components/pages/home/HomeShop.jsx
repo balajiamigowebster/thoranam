@@ -27,9 +27,10 @@ export default function HomeShop() {
     };
   }, []);
 
-  const bestsellers = (products || []).filter((p) => Boolean(p.isBestseller)).slice(0, 4);
+  const explicitBestsellers = (products || []).filter((p) => Boolean(p.isBestseller));
+  const bestsellers = (explicitBestsellers.length > 0 ? explicitBestsellers : products || []).slice(0, 4);
 
-  // If no products are marked as bestsellers, do not render section
+  // If no products exist at all, do not render section
   if (bestsellers.length === 0) {
     return null;
   }
