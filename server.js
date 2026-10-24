@@ -10,6 +10,29 @@ const bcrypt = require("bcryptjs");
 const fs = require("fs");
 const path = require("path");
 
+// Auto-detect if files were extracted directly into project root
+if (fs.existsSync(path.join(__dirname, "BUILD_ID")) && !fs.existsSync(path.join(__dirname, ".next", "BUILD_ID"))) {
+  try {
+    const nextDir = path.join(__dirname, ".next");
+    if (!fs.existsSync(nextDir)) fs.mkdirSync(nextDir, { recursive: true });
+    const items = [
+      "BUILD_ID", "build-manifest.json", "prerender-manifest.json",
+      "routes-manifest.json", "server", "static", "types", "build",
+      "turbopack", "trace", "trace-build"
+    ];
+    for (const item of items) {
+      const src = path.join(__dirname, item);
+      const dest = path.join(nextDir, item);
+      if (fs.existsSync(src) && !fs.existsSync(dest)) {
+        fs.renameSync(src, dest);
+      }
+    }
+    console.log("[Setup] Moved build files from root into .next!");
+  } catch (err) {
+    console.error("[Setup] Could not move build files from root:", err);
+  }
+}
+
 // Auto-detect if .next was extracted inside .next/.next or production-build/
 const nestedNext = path.join(__dirname, ".next", ".next");
 if (fs.existsSync(path.join(nestedNext, "BUILD_ID")) && !fs.existsSync(path.join(__dirname, ".next", "BUILD_ID"))) {
@@ -48,13 +71,13 @@ if (fs.existsSync(path.join(prodBuildDir, "BUILD_ID")) && !fs.existsSync(path.jo
   }
 }
 
-// Auto-detect production build
+// On cPanel, ALWAYS run production server mode (dev = false) to prevent webpack compilation errors
 const hasProductionBuild = fs.existsSync(path.join(__dirname, ".next", "BUILD_ID"));
-const dev = !hasProductionBuild;
+const dev = false;
 const hostname = "localhost";
 const port = process.env.PORT || 3000;
 
-console.log(`[Server] Starting Next.js app (dev mode: ${dev}, hasProductionBuild: ${hasProductionBuild})`);
+console.log(`[Server] Starting Next.js app in PRODUCTION mode (hasProductionBuild: ${hasProductionBuild})`);
 
 // Direct Database Synchronizer (Runs on server startup in cPanel)
 async function ensureTablesExist() {
@@ -146,9 +169,8 @@ async function ensureTablesExist() {
 }
 
 // Turbopack requires native binary bindings not available on cPanel Linux/x64.
-// Force Webpack mode so Next.js runs seamlessly in dev mode without native binding crashes.
 delete process.env.TURBOPACK;
-const app = next({ dev, hostname, port, webpack: true });
+const app = next({ dev, hostname, port });
 try {
   app.setAssetPrefix("/thoranam");
 } catch (e) {}
