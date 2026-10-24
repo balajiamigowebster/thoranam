@@ -5,12 +5,23 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
-import { getApiUrl } from "@/config";
 import { INITIAL_CATEGORIES } from "@/lib/categories";
 import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
+// Top-level umbrella parent menu categories that should NOT appear as collection sections
+const PARENT_CATEGORY_KEYS = [
+  "semi-silk",
+  "semi-silk-sarees",
+  "pure-cotton",
+  "silk-sarees",
+  "new-arrivals",
+  "exotic-cotton",
+  "exotic-cotton-sarees",
+  "thoranam-collection",
+  "thoranam-exclusive",
+];
+
 export default function HomeCategoryProducts() {
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [products, setProducts] = useState(getStoredProducts);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,7 +29,6 @@ export default function HomeCategoryProducts() {
     let isMounted = true;
 
     async function loadData() {
-      // 1. Fetch products directly and immediately (fast path)
       try {
         const prodData = await fetchProductsFromDb();
         if (isMounted && Array.isArray(prodData)) {
@@ -26,59 +36,29 @@ export default function HomeCategoryProducts() {
           setIsLoading(false);
         }
       } catch (err) {
-        console.error("Error loading category products:", err);
+        console.error("Error loading products for home showcase:", err);
         if (isMounted) setIsLoading(false);
-      }
-
-      // 2. Fetch categories independently without blocking products render
-      try {
-        const catRes = await fetch(getApiUrl("/api/categories"));
-        if (catRes.ok) {
-          const catJson = await catRes.json();
-          if (isMounted && catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
-            let list = [...catJson.data];
-            const fancyIdx = list.findIndex(
-              (c) =>
-                (c.id || "").toLowerCase() === "fancy-saree" ||
-                (c.label || "").toLowerCase().includes("fancy")
-            );
-            if (fancyIdx >= 0) {
-              const [fancyItem] = list.splice(fancyIdx, 1);
-              fancyItem.label = fancyItem.label || "Fancy Sarees";
-              list.splice(Math.min(5, list.length), 0, fancyItem);
-            }
-            setCategories(list);
-          }
-        }
-      } catch (catErr) {
-        // Fall back to INITIAL_CATEGORIES
       }
     }
 
     loadData();
 
-    // Listen to admin category & product updates and browser storage events
-    const handleSync = () => {
-      loadData();
-    };
-    window.addEventListener("thoranam_categories_updated", handleSync);
+    const handleSync = () => loadData();
     window.addEventListener("thoranam_products_updated", handleSync);
     window.addEventListener("storage", handleSync);
 
     return () => {
       isMounted = false;
-      window.removeEventListener("thoranam_categories_updated", handleSync);
       window.removeEventListener("thoranam_products_updated", handleSync);
       window.removeEventListener("storage", handleSync);
     };
   }, []);
 
-  // Filter products for each category (matching id, label, or name)
-  const getCategoryProducts = (cat) => {
-    const catLabel = (cat.label || cat.name || "").trim().toLowerCase();
-    const catId = (cat.id || "").trim().toLowerCase();
+  // Filter REAL products strictly matching each submenu
+  const getSubmenuProducts = (submenu) => {
+    const subLabel = (submenu.label || submenu.name || "").trim().toLowerCase();
+    const subId = (submenu.id || "").trim().toLowerCase();
 
-    // Normalizer to handle singular/plural and spacing (e.g. "Fancy Saree" vs "Fancy Sarees")
     const norm = (s) =>
       (s || "")
         .toLowerCase()
@@ -87,95 +67,82 @@ export default function HomeCategoryProducts() {
         .replace(/\s+/g, " ")
         .trim();
 
-    const catNorm = norm(catLabel);
-    const catIdNorm = norm(catId);
-
-    const subLabels = Array.isArray(cat.subcategories)
-      ? cat.subcategories.map((s) => norm(s.label || s.name || ""))
-      : [];
+    const subNorm = norm(subLabel);
+    const subIdNorm = norm(subId);
 
     const matched = products.filter((p) => {
       const pCat = (p.category || "").trim().toLowerCase();
       const pCatNorm = norm(pCat);
 
-      if (
-        pCatNorm === catNorm ||
-        pCatNorm === catIdNorm ||
-        subLabels.includes(pCatNorm)
-      ) {
+      if (pCatNorm === subNorm || pCatNorm === subIdNorm) {
         return true;
       }
 
-      // Keyword matching on product title or category for traditional saree weaves
+      // Exact submenu matches
       const pTitle = (p.title || "").toLowerCase();
-      if ((catId === "fancy-saree" || catNorm.includes("fancy")) && (pCatNorm.includes("fancy") || pTitle.includes("fancy"))) return true;
-      if ((catId === "bamboo-cotton-silk" || catNorm.includes("bamboo")) && (pCatNorm.includes("bamboo") || pTitle.includes("bamboo"))) return true;
-      if (catId === "mangalagiri-cotton" && pTitle.includes("mangalagiri")) return true;
-      if (catId === "chettinad-cotton" && pTitle.includes("chettinad")) return true;
-      if (catId === "coimbatore-cotton" && pTitle.includes("coimbatore")) return true;
-      if (catId === "illampillai-cotton" && pTitle.includes("illampillai")) return true;
-      if (catId === "banarasi-silk-cotton" && pTitle.includes("banarasi")) return true;
-      if (catId === "linen-cotton" && pTitle.includes("linen")) return true;
-      if (catId === "garden-silk-saree" && (pTitle.includes("garden") || pTitle.includes("crepe"))) return true;
-      if (catId === "crushed-organza-pure" && (pTitle.includes("organza") || pTitle.includes("kota"))) return true;
-      if (catId === "cotton-printed-sarees" && (pTitle.includes("printed") || pCatNorm.includes("printed"))) return true;
-      if (catId === "digital-print-saree-with-blouse" && (pTitle.includes("digital") || pTitle.includes("neem"))) return true;
-      if (catId === "bengali-cotton-with-zari-border" && (pTitle.includes("bengali") || pTitle.includes("chanderi"))) return true;
-      if (catId === "handloom-cotton-sarees" && pTitle.includes("handloom")) return true;
-      if (catId === "pure-cotton" && (pCatNorm === "pure cotton" || pTitle.includes("pure cotton"))) return true;
-      if (catId === "semi-silk-cotton" && (pCatNorm === "semi silk" || pTitle.includes("semi silk") || pTitle.includes("kanchipuram"))) return true;
-      if (catId === "simple-silk-cottons" && (pCatNorm === "simple silk" || pTitle.includes("simple silk") || pTitle.includes("tussar"))) return true;
+      if ((subId === "fancy-saree" || subNorm.includes("fancy")) && (pCatNorm.includes("fancy") || pTitle.includes("fancy"))) return true;
+      if ((subId === "bamboo-cotton-silk" || subNorm.includes("bamboo")) && (pCatNorm.includes("bamboo") || pTitle.includes("bamboo"))) return true;
+      if (subId === "mangalagiri-cotton" && (pCatNorm.includes("mangalagiri") || pTitle.includes("mangalagiri"))) return true;
+      if (subId === "chettinad-cotton" && (pCatNorm.includes("chettinad") || pTitle.includes("chettinad"))) return true;
+      if (subId === "coimbatore-cotton" && (pCatNorm.includes("coimbatore") || pTitle.includes("coimbatore"))) return true;
+      if (subId === "illampillai-cotton" && (pCatNorm.includes("illampillai") || pTitle.includes("illampillai"))) return true;
+      if (subId === "banarasi-silk-cotton" && (pCatNorm.includes("banarasi") || pTitle.includes("banarasi"))) return true;
+      if (subId === "linen-cotton" && (pCatNorm.includes("linen") || pTitle.includes("linen"))) return true;
+      if (subId === "garden-silk-saree" && (pCatNorm.includes("garden") || pTitle.includes("garden") || pTitle.includes("crepe"))) return true;
+      if (subId === "crushed-organza-pure" && (pCatNorm.includes("organza") || pTitle.includes("organza") || pTitle.includes("kota"))) return true;
+      if (subId === "cotton-printed-sarees" && (pCatNorm.includes("printed") || pTitle.includes("printed"))) return true;
+      if (subId === "digital-print-saree-with-blouse" && (pCatNorm.includes("digital") || pTitle.includes("digital"))) return true;
+      if (subId === "bengali-cotton-with-zari-border" && (pCatNorm.includes("bengali") || pTitle.includes("bengali"))) return true;
+      if (subId === "handloom-cotton-sarees" && (pCatNorm.includes("handloom") || pTitle.includes("handloom"))) return true;
+      if (subId === "pure-cotton" && (pCatNorm === "pure cotton" || pCatNorm === "pure-cotton")) return true;
+      if (subId === "semi-silk-cotton" && (pCatNorm === "semi silk" || pCatNorm === "semi silk cotton")) return true;
+      if (subId === "simple-silk-cottons" && (pCatNorm === "simple silk" || pCatNorm === "simple silk cottons")) return true;
 
       return false;
     });
 
-    if (matched.length > 0) {
-      return matched.slice(0, 4);
-    }
-
-    // Only return admin-configured showcase if explicitly set
-    if (Array.isArray(cat.showcase) && cat.showcase.length > 0) {
-      return cat.showcase.slice(0, 4).map((s, idx) => ({
-        id: `${cat.id}-showcase-${idx}`,
-        title: s.title,
-        price: s.price,
-        mainImage: s.image || "/images/product-1.jpg",
-        category: cat.label || cat.name,
-        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
-      }));
-    }
-
-    return [];
+    // STRICT: ONLY return real products from MySQL. NO FAKE DEFAULT SHOWCASE SAREES!
+    return matched.slice(0, 4);
   };
 
-  // Collect all active categories
-  const coveredProductIds = new Set();
-  const activeCategories = [];
+  // Only consider submenus (the 17 specific weave subcategories), excluding umbrella parent menus
+  const submenus = INITIAL_CATEGORIES.filter((c) => {
+    const id = (c.id || "").toLowerCase();
+    const label = (c.label || c.name || "").toLowerCase();
+    return !PARENT_CATEGORY_KEYS.includes(id) && !PARENT_CATEGORY_KEYS.includes(label);
+  });
 
-  categories.forEach((category) => {
-    const items = getCategoryProducts(category);
+  const coveredProductIds = new Set();
+  const activeSubmenus = [];
+
+  submenus.forEach((submenu) => {
+    const items = getSubmenuProducts(submenu);
     if (items && items.length > 0) {
       items.forEach((p) => coveredProductIds.add(p.id));
-      activeCategories.push({
-        category,
+      activeSubmenus.push({
+        submenu,
         items,
       });
     }
   });
 
-  // Fail-safe: ensure any uploaded products whose category didn't match predefined list also appear
+  // Also include any user-created category from Dashboard that has products in MySQL
   const remainingProducts = products.filter((p) => !coveredProductIds.has(p.id));
   if (remainingProducts.length > 0) {
     const customGrouped = {};
     remainingProducts.forEach((p) => {
-      const catName = (p.category || "Exclusive Sarees").trim();
-      if (!customGrouped[catName]) customGrouped[catName] = [];
-      customGrouped[catName].push(p);
+      const catName = (p.category || "").trim();
+      const catKey = catName.toLowerCase();
+      // Skip umbrella parent names
+      if (!PARENT_CATEGORY_KEYS.includes(catKey) && catName) {
+        if (!customGrouped[catName]) customGrouped[catName] = [];
+        customGrouped[catName].push(p);
+      }
     });
 
     Object.entries(customGrouped).forEach(([catName, items]) => {
-      activeCategories.push({
-        category: {
+      activeSubmenus.push({
+        submenu: {
           id: catName.toLowerCase().replace(/\s+/g, "-"),
           label: catName,
           name: catName,
@@ -186,7 +153,7 @@ export default function HomeCategoryProducts() {
     });
   }
 
-  // Elegant luxury skeleton loader while initially fetching products
+  // Shimmer skeleton cards while loading
   if (isLoading && products.length === 0) {
     return (
       <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 space-y-16">
@@ -204,7 +171,7 @@ export default function HomeCategoryProducts() {
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 border border-stone-200/80 dark:border-slate-800/80 flex flex-col justify-between"
+                  className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 border border-stone-200/80 dark:border-slate-800 flex flex-col justify-between"
                 >
                   <div className="aspect-[4/5] w-full rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 animate-pulse relative overflow-hidden" />
                   <div className="pt-3 space-y-2">
@@ -220,28 +187,28 @@ export default function HomeCategoryProducts() {
     );
   }
 
-  // If no products exist in the store, don't show empty collection boxes
-  if (activeCategories.length === 0) {
+  // If no submenus have real products from MySQL, hide section
+  if (activeSubmenus.length === 0) {
     return null;
   }
 
   return (
     <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 space-y-16 sm:space-y-24">
       <Container>
-        {activeCategories.map(({ category, items }, idx) => {
-          const categoryName = category.label || category.name;
-          const categoryHref =
-            category.href ||
-            `/products?cat=${encodeURIComponent(category.id || categoryName)}`;
+        {activeSubmenus.map(({ submenu, items }, idx) => {
+          const submenuName = submenu.label || submenu.name;
+          const submenuHref =
+            submenu.href ||
+            `/products?cat=${encodeURIComponent(submenu.id || submenuName)}`;
 
           return (
             <div
-              key={category.id || idx}
+              key={submenu.id || idx}
               className={`space-y-6 sm:space-y-8 ${
                 idx > 0 ? "pt-12 sm:pt-16 border-t border-rose-100/70 dark:border-slate-800" : ""
               }`}
             >
-              {/* Category Header Row: Title & Subtitle on Left, 'View More' Button on Right */}
+              {/* Submenu Header Row: Title & Subtitle on Left, 'View More' Button on Right */}
               <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2">
                 <div className="space-y-1 sm:space-y-1.5">
                   <div className="flex items-center gap-2">
@@ -251,7 +218,7 @@ export default function HomeCategoryProducts() {
                     </span>
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#800F17] dark:text-rose-100 uppercase font-serif">
-                    {categoryName}
+                    {submenuName}
                   </h3>
                   <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300">
                     Handcrafted luxury sarees woven with timeless heritage and contemporary grace
@@ -260,7 +227,7 @@ export default function HomeCategoryProducts() {
 
                 {/* View More Button */}
                 <Link
-                  href={categoryHref}
+                  href={submenuHref}
                   className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#800F17] hover:bg-[#680C13] text-white text-xs sm:text-sm font-semibold tracking-wide transition-all duration-300 shadow-sm hover:shadow-md active:scale-95 w-fit"
                 >
                   <span>View More</span>
@@ -268,7 +235,7 @@ export default function HomeCategoryProducts() {
                 </Link>
               </div>
 
-              {/* Real Saree Product Cards Grid with Lazy Loading */}
+              {/* ONLY Real Saree Product Cards from MySQL */}
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6 lg:gap-7">
                 {items.map((item) => (
                   <ProductCard
@@ -277,7 +244,7 @@ export default function HomeCategoryProducts() {
                     title={item.title}
                     price={item.price}
                     image={item.mainImage || item.image || "/images/product-1.jpg"}
-                    category={item.category || categoryName}
+                    category={item.category || submenuName}
                     stock={item.stock}
                     href={item.href || `/products/${item.id}`}
                   />

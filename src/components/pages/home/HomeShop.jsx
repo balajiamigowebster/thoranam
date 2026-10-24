@@ -27,10 +27,9 @@ export default function HomeShop() {
     };
   }, []);
 
-  const explicitBestsellers = (products || []).filter((p) => Boolean(p.isBestseller));
-  const bestsellers = (explicitBestsellers.length > 0 ? explicitBestsellers : products || []).slice(0, 4);
+  const bestsellers = (products || []).filter((p) => Boolean(p.isBestseller)).slice(0, 4);
 
-  // If no products exist at all, do not render section
+  // Strictly ONLY render if admin has marked products as bestsellers in Dashboard
   if (bestsellers.length === 0) {
     return null;
   }

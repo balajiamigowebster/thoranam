@@ -6,22 +6,8 @@ import ProductCard from "@/components/ui/ProductCard";
 import { fetchProductsFromDb, getStoredProducts } from "@/lib/products";
 
 export default function HomeBestToday() {
-  const [products, setProducts] = useState(() => {
-    const initial = getStoredProducts();
-    if (Array.isArray(initial) && initial.length > 0) {
-      const featured = initial.filter((p) => Boolean(p.isFeatured));
-      const source = featured.length > 0 ? featured : initial.slice(0, 4);
-      return source.slice(0, 4).map((p, idx) => ({
-        id: p.id,
-        title: p.title,
-        price: p.price,
-        image: p.mainImage || p.image || "/images/product-1.jpg",
-        tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
-      }));
-    }
-    return [];
-  });
-  const [isLoading, setIsLoading] = useState(products.length === 0);
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -29,12 +15,10 @@ export default function HomeBestToday() {
     async function loadProducts() {
       try {
         const data = await fetchProductsFromDb();
-        if (active && Array.isArray(data) && data.length > 0) {
-          // If admin has specifically checked featured sarees, show those; otherwise show the top handpicked 4 sarees
+        if (active && Array.isArray(data)) {
+          // Strictly ONLY show products where admin has checked the isFeatured checkbox in Dashboard
           const featured = data.filter((p) => Boolean(p.isFeatured));
-          const source = featured.length > 0 ? featured : data.slice(0, 4);
-
-          const mapped = source.slice(0, 4).map((p, idx) => ({
+          const mapped = featured.slice(0, 4).map((p, idx) => ({
             id: p.id,
             title: p.title,
             price: p.price,
