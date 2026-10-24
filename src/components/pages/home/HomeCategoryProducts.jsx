@@ -11,7 +11,7 @@ import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
 export default function HomeCategoryProducts() {
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
-  const [products, setProducts] = useState(getStoredProducts);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -40,17 +40,12 @@ export default function HomeCategoryProducts() {
             }
             setCategories(list);
           }
-          if (Array.isArray(prodData) && prodData.length > 0) {
+          if (Array.isArray(prodData)) {
             setProducts(prodData);
-          } else {
-            setProducts(getStoredProducts());
           }
         }
       } catch (err) {
         console.error("Error loading category showcase data:", err);
-        if (isMounted) {
-          setProducts(getStoredProducts());
-        }
       }
     }
 

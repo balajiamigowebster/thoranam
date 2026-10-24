@@ -80,48 +80,13 @@ export default function ProductDetailView({ productId }) {
           );
         }
 
-        // Offline / localStorage fallback
-        if (!foundProduct && typeof window !== "undefined") {
-          try {
-            const saved = localStorage.getItem("thoranam_products");
-            if (saved) {
-              const localList = JSON.parse(saved);
-              foundProduct = localList.find(
-                (p) =>
-                  String(p.id) === String(productId) ||
-                  p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === String(productId).toLowerCase()
-              );
-            }
-          } catch (err) {}
-        }
-
-        // Static catalog fallback (e.g. initial seeded items or slug match)
-        if (!foundProduct) {
-          foundProduct = INITIAL_PRODUCTS.find(
-            (p) =>
-              String(p.id) === String(productId) ||
-              p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === String(productId).toLowerCase()
-          );
-        }
-
         if (mounted && foundProduct) {
           setProduct(foundProduct);
           setSelectedImage(foundProduct.mainImage || "/images/product-1.jpg");
         }
 
-        // Populate 'You may also like' related products
-        let candidates = [];
-        if (allJson.success && Array.isArray(allJson.data) && allJson.data.length > 0) {
-          candidates = allJson.data;
-        } else if (typeof window !== "undefined") {
-          try {
-            const saved = localStorage.getItem("thoranam_products");
-            if (saved) candidates = JSON.parse(saved);
-          } catch (e) {}
-        }
-        if (!candidates || candidates.length === 0) {
-          candidates = INITIAL_PRODUCTS;
-        }
+        // Populate 'You may also like' related products directly from DB candidates
+        const candidates = (allJson.success && Array.isArray(allJson.data)) ? allJson.data : [];
 
         const related = candidates
           .filter((p) => String(p.id) !== String(productId))

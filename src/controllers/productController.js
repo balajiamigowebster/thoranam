@@ -1,69 +1,5 @@
 import { Product, syncDatabase } from "@/models";
-import { INITIAL_PRODUCTS } from "@/lib/initial-products";
 import { Op } from "sequelize";
-
-const SEED_TITLES = new Set([
-  "semi mangalagiri saree",
-  "kanchipuram silk saree",
-  "exotic chanderi saree",
-  "pure cotton handloom saree",
-  "thoranam exclusive zari weave",
-  "aqua bloom – pure kota french knot saree",
-  "aqua blossom – neem silk festive saree",
-  "pastel radiance – chanderi silk saree",
-  "chettinad 80 count heritage cotton",
-  "illampillai zari border cotton saree",
-  "mangalagiri pattu border cotton saree",
-  "banarasi silk brocade grand saree",
-  "mysore crepe silk gold zari saree",
-  "dharmavaram festive silk saree",
-  "semi kanchipuram brocade saree",
-  "semi raw silk contemporary saree",
-  "semi tussar embroidered saree",
-  "thoranam signature coimbatore cotton",
-  "thoranam royal brocade festive saree",
-  "thoranam hand-painted kalamkari saree",
-  "chettinad 120 count royal cotton saree",
-  "handloom linen cotton pastel saree",
-  "organic mul cotton daily grace saree",
-]);
-
-const PHANTOM_IDS = new Set([
-  "1792827048894",
-  "1792827048895",
-  "1792827048896",
-  "1792827048897",
-  "1792827048898",
-  "fancy-misty-dusk-1",
-  "fancy-heritage-procession",
-  "fancy-emerald-chevron",
-  "fancy-misty-dusk-2",
-]);
-
-function isSeedProduct(p) {
-  if (!p) return false;
-  const idStr = String(p.id || "");
-  if (PHANTOM_IDS.has(idStr) || idStr.startsWith("fancy-")) return true;
-  const titleLow = (p.title || "").trim().toLowerCase();
-  if (SEED_TITLES.has(titleLow)) return true;
-  if (
-    titleLow.includes("heritage procession") &&
-    (String(p.price).includes("4,890") || String(p.price).includes("4890") || p.stock === 8)
-  ) {
-    return true;
-  }
-  if (titleLow.includes("misty dusk")) {
-    if (String(p.price).includes("3,250") || String(p.price).includes("3250")) return true;
-    if (Array.isArray(p.highlights) && p.highlights.length <= 3) return true;
-  }
-  if (
-    titleLow.includes("emerald chevron") &&
-    (String(p.price).includes("2,890") || String(p.price).includes("2890") || p.stock === 14)
-  ) {
-    return true;
-  }
-  return false;
-}
 
 // Resilient in-memory store initialized clean (zero default products)
 let memoryProducts = [];
@@ -90,10 +26,8 @@ export const productController = {
         order: [["id", "ASC"]],
       });
 
-      if (products && products.length > 0) {
-        const formatted = products
-          .map((p) => formatProduct(p.toJSON()))
-          .filter((p) => !isSeedProduct(p));
+      if (products) {
+        const formatted = products.map((p) => formatProduct(p.toJSON()));
         memoryProducts = formatted;
         return formatted;
       }
@@ -101,7 +35,7 @@ export const productController = {
       console.warn("[Products] DB query error, using resilient memory store:", dbErr.message);
     }
 
-    let list = memoryProducts.filter((p) => !isSeedProduct(p));
+    let list = [...memoryProducts];
     if (query.category && query.category !== "all") {
       list = list.filter((p) => p.category?.toLowerCase() === query.category.toLowerCase());
     }
@@ -214,7 +148,7 @@ export const productController = {
       if (!updatedObj) updatedObj = memoryProducts[idx];
     } else if (!updatedObj) {
       updatedObj = { ...data, id, isFeatured: Boolean(data.isFeatured) };
-      memoryProducts.unshift(updatedObj);
+      memoryProducts.push(updatedObj);
     }
 
     return updatedObj;
@@ -267,8 +201,8 @@ function formatProduct(r) {
     seoKeywords: r.seo_keywords || "",
     ogImage: r.og_image || "",
     isFeatured: Boolean(r.is_featured),
-    createdAt: r.created_at,
-    updatedAt: r.updated_at,
+    createdAt: r.created_at || r.createdAt,
+    updatedAt: r.updated_at || r.updatedAt,
   };
 }
 

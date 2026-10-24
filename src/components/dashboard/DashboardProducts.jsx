@@ -25,7 +25,7 @@ export function formatRupeePrice(priceStr) {
 }
 
 export default function DashboardProducts() {
-  const [products, setProducts] = useState(getStoredProducts);
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState(getStoredCategories);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -57,8 +57,9 @@ export default function DashboardProducts() {
     }
     loadData();
 
-    const handleProductSync = () => {
-      if (active) setProducts(getStoredProducts());
+    const handleProductSync = async () => {
+      const data = await fetchProductsFromDb();
+      if (active && data) setProducts(data);
     };
     const handleCategorySync = () => {
       if (active) setCategories(getStoredCategories());
@@ -66,12 +67,10 @@ export default function DashboardProducts() {
 
     window.addEventListener("thoranam_products_updated", handleProductSync);
     window.addEventListener("thoranam_categories_updated", handleCategorySync);
-    window.addEventListener("storage", handleProductSync);
     return () => {
       active = false;
       window.removeEventListener("thoranam_products_updated", handleProductSync);
       window.removeEventListener("thoranam_categories_updated", handleCategorySync);
-      window.removeEventListener("storage", handleProductSync);
     };
   }, []);
 

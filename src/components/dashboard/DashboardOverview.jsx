@@ -18,7 +18,7 @@ import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 import { getLocalOrders, fetchOrdersFromDb } from "@/lib/orders";
 
 export default function DashboardOverview({ setActiveTab }) {
-  const [products, setProducts] = useState(getStoredProducts);
+  const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState(getLocalOrders);
   const [customers, setCustomers] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
