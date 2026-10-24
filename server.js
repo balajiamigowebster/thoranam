@@ -10,9 +10,47 @@ const bcrypt = require("bcryptjs");
 const fs = require("fs");
 const path = require("path");
 
-// Auto-detect production build: if .next/BUILD_ID doesn't exist (e.g. fresh cPanel pull), fallback to dev mode to prevent 503 crash
+// Auto-detect if .next was extracted inside .next/.next or production-build/
+const nestedNext = path.join(__dirname, ".next", ".next");
+if (fs.existsSync(path.join(nestedNext, "BUILD_ID")) && !fs.existsSync(path.join(__dirname, ".next", "BUILD_ID"))) {
+  try {
+    const files = fs.readdirSync(nestedNext);
+    for (const f of files) {
+      const src = path.join(nestedNext, f);
+      const dest = path.join(__dirname, ".next", f);
+      if (!fs.existsSync(dest)) {
+        fs.renameSync(src, dest);
+      }
+    }
+    console.log("[Setup] Successfully flattened nested .next folder!");
+  } catch (err) {
+    console.error("[Setup] Could not flatten .next:", err);
+  }
+}
+
+const prodBuildDir = path.join(__dirname, "production-build");
+if (fs.existsSync(path.join(prodBuildDir, "BUILD_ID")) && !fs.existsSync(path.join(__dirname, ".next", "BUILD_ID"))) {
+  try {
+    if (!fs.existsSync(path.join(__dirname, ".next"))) {
+      fs.mkdirSync(path.join(__dirname, ".next"), { recursive: true });
+    }
+    const files = fs.readdirSync(prodBuildDir);
+    for (const f of files) {
+      const src = path.join(prodBuildDir, f);
+      const dest = path.join(__dirname, ".next", f);
+      if (!fs.existsSync(dest)) {
+        fs.renameSync(src, dest);
+      }
+    }
+    console.log("[Setup] Successfully moved production-build into .next!");
+  } catch (err) {
+    console.error("[Setup] Could not move production-build:", err);
+  }
+}
+
+// Auto-detect production build
 const hasProductionBuild = fs.existsSync(path.join(__dirname, ".next", "BUILD_ID"));
-const dev = !hasProductionBuild || process.env.NODE_ENV === "development";
+const dev = !hasProductionBuild;
 const hostname = "localhost";
 const port = process.env.PORT || 3000;
 
@@ -163,7 +201,8 @@ app.prepare().then(async () => {
     } catch (err) {
       console.error("Error occurred handling", req.url, err);
       res.statusCode = 500;
-      res.end("Internal Server Error");
+      res.setHeader("Content-Type", "text/plain");
+      res.end("Internal Server Error: " + (err.message || String(err)));
     }
   }).listen(port, (err) => {
     if (err) throw err;
