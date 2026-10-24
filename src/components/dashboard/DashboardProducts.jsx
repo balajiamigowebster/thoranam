@@ -95,6 +95,16 @@ export default function DashboardProducts() {
     setProducts(refreshed);
   };
 
+  const handleToggleFeatured = async (product) => {
+    const updated = {
+      ...product,
+      isFeatured: !product.isFeatured,
+    };
+    await saveProductToDb(updated);
+    const refreshed = await fetchProductsFromDb();
+    setProducts(refreshed);
+  };
+
   const handleDeleteProduct = async (productId) => {
     if (confirm("Are you sure you want to remove this product from the database?")) {
       await deleteProductFromDb(productId);
@@ -199,11 +209,25 @@ export default function DashboardProducts() {
                       <div className="max-w-[220px]">
                         <p className="font-semibold text-slate-800 truncate flex items-center gap-1.5" title={item.title}>
                           <span>{item.title}</span>
-                          {item.isFeatured && (
-                            <span className="shrink-0 inline-flex items-center text-[10px] bg-amber-50 text-amber-700 border border-amber-200/60 font-semibold px-1.5 py-0.2 rounded-full" title="Featured in Handpicked Favorites">
-                              ★ Handpicked
-                            </span>
-                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleFeatured(item);
+                            }}
+                            className={`shrink-0 inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full transition-all cursor-pointer ${
+                              item.isFeatured
+                                ? "bg-amber-100 text-amber-800 border border-amber-300 shadow-xs hover:bg-amber-200"
+                                : "bg-slate-100 text-slate-400 border border-slate-200 hover:text-amber-700 hover:bg-amber-50"
+                            }`}
+                            title={
+                              item.isFeatured
+                                ? "★ Active in Handpicked Favorites (Click to unfeature)"
+                                : "Click to feature in Handpicked Favorites"
+                            }
+                          >
+                            ★ {item.isFeatured ? "Handpicked" : "Feature"}
+                          </button>
                         </p>
                         <p className="text-[10px] text-slate-400 truncate">
                           {item.galleryImages?.length || 0} gallery photos • {item.material || "Silk blend"}

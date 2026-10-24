@@ -36,21 +36,35 @@ const fallbackProducts = [
   },
 ];
 
-import { getApiUrl } from "@/config";
+import { fetchProductsFromDb, getStoredProducts } from "@/lib/products";
 
 export default function HomeBestToday() {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = getStoredProducts();
+      if (Array.isArray(stored)) {
+        const featured = stored.filter((p) => Boolean(p.isFeatured));
+        return featured.map((p, idx) => ({
+          id: p.id,
+          title: p.title,
+          price: p.price,
+          image: p.mainImage || "/images/product-1.jpg",
+          tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
+        }));
+      }
+    }
+    return [];
+  });
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
     async function loadProducts() {
       try {
-        const res = await fetch(getApiUrl("/api/products"));
-        const json = await res.json();
-        if (active && json.success && Array.isArray(json.data)) {
+        const data = await fetchProductsFromDb();
+        if (active && Array.isArray(data)) {
           // STRICT RULE: Only show products when the checkbox is active / checked (isFeatured === true)
-          const featured = json.data.filter((p) => Boolean(p.isFeatured));
+          const featured = data.filter((p) => Boolean(p.isFeatured));
           const mapped = featured.map((p, idx) => ({
             id: p.id,
             title: p.title,
@@ -68,9 +82,11 @@ export default function HomeBestToday() {
     }
     loadProducts();
     window.addEventListener("thoranam_products_updated", loadProducts);
+    window.addEventListener("storage", loadProducts);
     return () => {
       active = false;
       window.removeEventListener("thoranam_products_updated", loadProducts);
+      window.removeEventListener("storage", loadProducts);
     };
   }, []);
 
