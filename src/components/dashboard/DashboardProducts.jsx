@@ -9,7 +9,7 @@ import {
   saveProductToDb,
   deleteProductFromDb,
 } from "@/lib/products";
-import { getStoredCategories, INITIAL_CATEGORIES } from "@/lib/categories";
+import { getStoredCategories, INITIAL_CATEGORIES, getUnifiedCategories } from "@/lib/categories";
 import { getApiUrl, getAssetUrl } from "@/config";
 
 // Helper to format price with proper Indian Rupee symbol
@@ -40,6 +40,11 @@ export default function DashboardProducts() {
 
   // Small loading progress indicator area state (left side of Add New Saree button)
   const [uploadState, setUploadState] = useState({ isUploading: false, percent: 0, message: "" });
+
+  // Unified category list combining DB categories, 17 baseline weaves, and all products' categories
+  const filterCategoryOptions = React.useMemo(() => {
+    return getUnifiedCategories(categories, products.map((p) => p.category));
+  }, [categories, products]);
 
   useEffect(() => {
     let active = true;
@@ -239,14 +244,11 @@ export default function DashboardProducts() {
             className="w-full sm:w-auto px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 font-medium cursor-pointer"
           >
             <option value="all">All Categories</option>
-            {INITIAL_CATEGORIES.map((c) => {
-              const name = c.label || c.name;
-              return (
-                <option key={c.id || name} value={name}>
-                  {name}
-                </option>
-              );
-            })}
+            {filterCategoryOptions.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
         </div>
 

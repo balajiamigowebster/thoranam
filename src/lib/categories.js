@@ -307,3 +307,36 @@ export function saveStoredBrowseCategories(browseCategories) {
   }
 }
 
+// Helper to get unified and deduplicated category names across DB, initial baseline, and custom products
+export function getUnifiedCategories(categories = [], additionalNames = []) {
+  const list = [];
+  const seen = new Set();
+
+  const add = (val) => {
+    if (!val) return;
+    const clean = String(val).trim();
+    if (!clean) return;
+    const lower = clean.toLowerCase();
+    if (!seen.has(lower)) {
+      seen.add(lower);
+      list.push(clean);
+    }
+  };
+
+  // 1. Any custom or newly added categories from DB or Categories tab (e.g. Chinyan Cotton Saree)
+  (categories || []).forEach((c) => {
+    add(typeof c === "string" ? c : (c.label || c.name));
+  });
+
+  // 2. All 17 baseline weave categories
+  INITIAL_CATEGORIES.forEach((c) => {
+    add(c.label || c.name);
+  });
+
+  // 3. Any additional category names (e.g. from existing products or current form data)
+  (additionalNames || []).forEach((name) => {
+    add(name);
+  });
+
+  return list;
+}

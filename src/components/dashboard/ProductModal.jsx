@@ -16,7 +16,7 @@ import {
   Globe,
 } from "lucide-react";
 import { getApiUrl, getAssetUrl } from "@/config";
-import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
+import { INITIAL_CATEGORIES, getStoredCategories, getUnifiedCategories } from "@/lib/categories";
 
 const getInitialFormData = (product, categories = []) => {
   const catList = categories && categories.length >= 10 ? categories : INITIAL_CATEGORIES;
@@ -83,6 +83,13 @@ export default function ProductModal({
   const [mainUploadPercent, setMainUploadPercent] = useState(0);
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [galleryUploadPercent, setGalleryUploadPercent] = useState(0);
+
+  // Dynamically merge live DB categories (e.g. Chinyan Cotton Saree), 17 baseline weaves, and current product category
+  const categoryOptions = React.useMemo(() => {
+    const fromStorage = typeof window !== "undefined" ? getStoredCategories() : [];
+    const sourceList = categories && categories.length > 0 ? categories : fromStorage;
+    return getUnifiedCategories(sourceList, [formData.category, editingProduct?.category]);
+  }, [categories, formData.category, editingProduct]);
 
   const mainFileInputRef = useRef(null);
   const galleryFileInputRef = useRef(null);
@@ -323,14 +330,11 @@ export default function ProductModal({
                     onChange={(e) => handleChange("category", e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17] bg-white font-medium"
                   >
-                    {INITIAL_CATEGORIES.map((c) => {
-                      const name = c.label || c.name;
-                      return (
-                        <option key={c.id || name} value={name}>
-                          {name}
-                        </option>
-                      );
-                    })}
+                    {categoryOptions.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
