@@ -315,35 +315,23 @@ export default function ProductModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-800">Category</label>
-                  {(() => {
-                    const categoryOptions =
-                      categories && categories.length >= 10
-                        ? categories
-                        : getStoredCategories();
-                    return (
-                      <select
-                        value={formData.category}
-                        onChange={(e) => handleChange("category", e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17] bg-white"
-                      >
-                        {formData.category &&
-                          !categoryOptions.some(
-                            (c) => (c.label || c.name) === formData.category
-                          ) && (
-                            <option value={formData.category}>{formData.category}</option>
-                          )}
-                        {categoryOptions.map((c) => {
-                          const name = c.label || c.name;
-                          return (
-                            <option key={c.id || name} value={name}>
-                              {name}
-                            </option>
-                          );
-                        })}
-                      </select>
-                    );
-                  })()}
+                  <label className="text-xs font-bold text-slate-800">
+                    Category <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => handleChange("category", e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17] bg-white font-medium"
+                  >
+                    {INITIAL_CATEGORIES.map((c) => {
+                      const name = c.label || c.name;
+                      return (
+                        <option key={c.id || name} value={name}>
+                          {name}
+                        </option>
+                      );
+                    })}
+                  </select>
                 </div>
 
                 <div className="space-y-1.5">

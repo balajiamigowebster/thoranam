@@ -9,7 +9,7 @@ import {
   saveProductToDb,
   deleteProductFromDb,
 } from "@/lib/products";
-import { getStoredCategories } from "@/lib/categories";
+import { getStoredCategories, INITIAL_CATEGORIES } from "@/lib/categories";
 import { getApiUrl, getAssetUrl } from "@/config";
 
 // Helper to format price with proper Indian Rupee symbol
@@ -157,7 +157,9 @@ export default function DashboardProducts() {
       p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       p.category?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCat =
-      selectedCategory === "all" || p.category === selectedCategory;
+      selectedCategory === "all" ||
+      p.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+      (selectedCategory.toLowerCase().startsWith("fancy") && p.category?.toLowerCase().startsWith("fancy"));
     return matchesSearch && matchesCat;
   });
 
@@ -234,14 +236,17 @@ export default function DashboardProducts() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#800F17]/20"
+            className="w-full sm:w-auto px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 font-medium cursor-pointer"
           >
             <option value="all">All Categories</option>
-            {categories.map((c) => (
-              <option key={c.id || c.label} value={c.label}>
-                {c.label}
-              </option>
-            ))}
+            {INITIAL_CATEGORIES.map((c) => {
+              const name = c.label || c.name;
+              return (
+                <option key={c.id || name} value={name}>
+                  {name}
+                </option>
+              );
+            })}
           </select>
         </div>
 
