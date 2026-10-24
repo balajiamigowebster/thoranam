@@ -6,7 +6,7 @@ import ProductCard from "@/components/ui/ProductCard";
 const bestsellers = [
   {
     id: "chettinad-80-count",
-    title: "Chettinad 80 Count Cotton Sarees",
+    title: "Chettinad 80 Count Cotton Saree",
     price: "Rs. 2,800.00",
     image: "/images/bestseller-1.jpg",
     href: "/products/chettinad-80-count",
