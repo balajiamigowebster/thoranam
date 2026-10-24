@@ -28,10 +28,36 @@ const SEED_TITLES = new Set([
   "organic mul cotton daily grace saree",
 ]);
 
+const PHANTOM_IDS = new Set([
+  "fancy-misty-dusk-1",
+  "fancy-heritage-procession",
+  "fancy-emerald-chevron",
+  "fancy-misty-dusk-2",
+]);
+
 function isSeedProduct(p) {
   if (!p) return false;
+  const idStr = String(p.id || "");
+  if (PHANTOM_IDS.has(idStr) || idStr.startsWith("fancy-")) return true;
   const titleLow = (p.title || "").trim().toLowerCase();
-  return SEED_TITLES.has(titleLow);
+  if (SEED_TITLES.has(titleLow)) return true;
+  if (
+    titleLow.includes("heritage procession") &&
+    (String(p.price).includes("4,890") || String(p.price).includes("4890") || p.stock === 8)
+  ) {
+    return true;
+  }
+  if (titleLow.includes("misty dusk")) {
+    if (String(p.price).includes("3,250") || String(p.price).includes("3250")) return true;
+    if (Array.isArray(p.highlights) && p.highlights.length <= 3) return true;
+  }
+  if (
+    titleLow.includes("emerald chevron") &&
+    (String(p.price).includes("2,890") || String(p.price).includes("2890") || p.stock === 14)
+  ) {
+    return true;
+  }
+  return false;
 }
 
 // Resilient in-memory store initialized with clean INITIAL_PRODUCTS

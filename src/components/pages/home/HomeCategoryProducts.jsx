@@ -2,23 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronRight, ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { getApiUrl } from "@/config";
 import { INITIAL_CATEGORIES } from "@/lib/categories";
+import { getStoredProducts } from "@/lib/products";
 
 export default function HomeCategoryProducts() {
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [products, setProducts] = useState(getStoredProducts);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadData() {
       try {
-        setIsLoading(true);
         const [catRes, prodRes] = await Promise.all([
           fetch(getApiUrl("/api/categories")),
           fetch(getApiUrl("/api/products")),
@@ -29,7 +28,6 @@ export default function HomeCategoryProducts() {
 
         if (isMounted) {
           if (catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
-            // Use all categories and ensure Fancy Sarees is placed at Collection 06
             let list = [...catJson.data];
             const fancyIdx = list.findIndex(
               (c) =>
@@ -42,8 +40,6 @@ export default function HomeCategoryProducts() {
               list.splice(Math.min(5, list.length), 0, fancyItem);
             }
             setCategories(list);
-          } else {
-            setCategories(INITIAL_CATEGORIES);
           }
           if (prodJson.success && Array.isArray(prodJson.data)) {
             setProducts(prodJson.data);
@@ -51,24 +47,22 @@ export default function HomeCategoryProducts() {
         }
       } catch (err) {
         console.error("Error loading category showcase data:", err);
-      } finally {
-        if (isMounted) setIsLoading(false);
       }
     }
 
     loadData();
 
-    // Listen to admin category updates
-    const handleCategoryUpdate = () => {
+    // Listen to admin category & product updates
+    const handleSync = () => {
       loadData();
     };
-    window.addEventListener("thoranam_categories_updated", handleCategoryUpdate);
-    window.addEventListener("thoranam_products_updated", handleCategoryUpdate);
+    window.addEventListener("thoranam_categories_updated", handleSync);
+    window.addEventListener("thoranam_products_updated", handleSync);
 
     return () => {
       isMounted = false;
-      window.removeEventListener("thoranam_categories_updated", handleCategoryUpdate);
-      window.removeEventListener("thoranam_products_updated", handleCategoryUpdate);
+      window.removeEventListener("thoranam_categories_updated", handleSync);
+      window.removeEventListener("thoranam_products_updated", handleSync);
     };
   }, []);
 
@@ -89,7 +83,6 @@ export default function HomeCategoryProducts() {
     const catNorm = norm(catLabel);
     const catIdNorm = norm(catId);
 
-    // Search products matching this category directly or through subcategories
     const subLabels = Array.isArray(cat.subcategories)
       ? cat.subcategories.map((s) => norm(s.label || s.name || ""))
       : [];
@@ -109,6 +102,7 @@ export default function HomeCategoryProducts() {
       // Keyword matching on product title for traditional saree weaves
       const pTitle = (p.title || "").toLowerCase();
       if ((catId === "fancy-saree" || catNorm.includes("fancy")) && (pCatNorm.includes("fancy") || pTitle.includes("fancy"))) return true;
+      if (catId === "bamboo-cotton-silk" && (pCatNorm.includes("bamboo") || pTitle.includes("bamboo"))) return true;
       if (catId === "mangalagiri-cotton" && pTitle.includes("mangalagiri")) return true;
       if (catId === "chettinad-cotton" && pTitle.includes("chettinad")) return true;
       if (catId === "coimbatore-cotton" && pTitle.includes("coimbatore")) return true;
@@ -120,7 +114,6 @@ export default function HomeCategoryProducts() {
       if (catId === "cotton-printed-sarees" && (pTitle.includes("printed") || pCatNorm.includes("printed"))) return true;
       if (catId === "digital-print-saree-with-blouse" && (pTitle.includes("digital") || pTitle.includes("neem"))) return true;
       if (catId === "bengali-cotton-with-zari-border" && (pTitle.includes("bengali") || pTitle.includes("chanderi"))) return true;
-      if (catId === "bamboo-cotton-silk" && (pTitle.includes("bamboo") || pTitle.includes("mul"))) return true;
       if (catId === "handloom-cotton-sarees" && pTitle.includes("handloom")) return true;
       if (catId === "pure-cotton" && (pCatNorm === "pure cotton" || pTitle.includes("pure cotton"))) return true;
       if (catId === "semi-silk-cotton" && (pCatNorm === "semi silk" || pTitle.includes("semi silk") || pTitle.includes("kanchipuram"))) return true;
@@ -133,7 +126,7 @@ export default function HomeCategoryProducts() {
       return matched.slice(0, 4);
     }
 
-    // Fallback to category showcase if defined in admin
+    // Only return admin-configured showcase if explicitly set
     if (Array.isArray(cat.showcase) && cat.showcase.length > 0) {
       return cat.showcase.slice(0, 4).map((s, idx) => ({
         id: `${cat.id}-showcase-${idx}`,
@@ -145,54 +138,30 @@ export default function HomeCategoryProducts() {
       }));
     }
 
-    // Default boutique showcase sarees for this category so all 17 submenus appear
-    const sampleWeaves = [
-      {
-        id: `${cat.id}-sample-1`,
-        title: `${cat.label || cat.name} Handcrafted Saree`,
-        price: "₹ 3,499",
-        mainImage: cat.image || "/images/product-1.jpg",
-        category: cat.label || cat.name,
-        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
-      },
-      {
-        id: `${cat.id}-sample-2`,
-        title: `Royal ${cat.label || cat.name} Zari Border`,
-        price: "₹ 4,250",
-        mainImage: "/images/product-2.jpg",
-        category: cat.label || cat.name,
-        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
-      },
-      {
-        id: `${cat.id}-sample-3`,
-        title: `Festive ${cat.label || cat.name} Weave`,
-        price: "₹ 2,890",
-        mainImage: "/images/product-3.jpg",
-        category: cat.label || cat.name,
-        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
-      },
-      {
-        id: `${cat.id}-sample-4`,
-        title: `Heritage ${cat.label || cat.name} Traditional`,
-        price: "₹ 5,100",
-        mainImage: "/images/product-4.jpg",
-        category: cat.label || cat.name,
-        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
-      },
-    ];
-
-    return sampleWeaves;
+    // DO NOT GENERATE FAKE DEFAULT SAREES. Only real products added in the Dashboard will show.
+    return [];
   };
+
+  // Only display categories that actually have products added in the Dashboard
+  const activeCategories = categories
+    .map((category) => ({
+      category,
+      items: getCategoryProducts(category),
+    }))
+    .filter(({ items }) => items && items.length > 0);
+
+  if (activeCategories.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 space-y-16 sm:space-y-24">
       <Container>
-        {categories.map((category, idx) => {
+        {activeCategories.map(({ category, items }, idx) => {
           const categoryName = category.label || category.name;
           const categoryHref =
             category.href ||
             `/products?cat=${encodeURIComponent(category.id || categoryName)}`;
-          const categoryItems = getCategoryProducts(category);
 
           return (
             <div
@@ -228,9 +197,9 @@ export default function HomeCategoryProducts() {
                 </Link>
               </div>
 
-              {/* 3 to 4 Saree Product Cards Grid */}
+              {/* Real Saree Product Cards Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6 lg:gap-7">
-                {categoryItems.map((item) => (
+                {items.map((item) => (
                   <ProductCard
                     key={item.id}
                     id={item.id}

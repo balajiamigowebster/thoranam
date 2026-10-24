@@ -53,10 +53,45 @@ const SEED_TITLES = new Set([
   "organic mul cotton daily grace saree",
 ]);
 
-export function isSeedProduct(p) {
+const PHANTOM_IDS = new Set([
+  "fancy-misty-dusk-1",
+  "fancy-heritage-procession",
+  "fancy-emerald-chevron",
+  "fancy-misty-dusk-2",
+]);
+
+export function isPhantomOrSeedProduct(p) {
   if (!p) return false;
+  const idStr = String(p.id || "");
+  if (PHANTOM_IDS.has(idStr)) return true;
+  if (idStr.startsWith("fancy-")) return true;
+
   const titleLow = (p.title || "").trim().toLowerCase();
-  return SEED_TITLES.has(titleLow);
+  if (SEED_TITLES.has(titleLow)) return true;
+
+  // Filter out dummy phantom items that were artificially injected
+  if (
+    titleLow.includes("heritage procession") &&
+    (String(p.price).includes("4,890") || String(p.price).includes("4890") || p.stock === 8)
+  ) {
+    return true;
+  }
+  if (titleLow.includes("misty dusk")) {
+    if (String(p.price).includes("3,250") || String(p.price).includes("3250")) return true;
+    if (Array.isArray(p.highlights) && p.highlights.length <= 3) return true;
+  }
+  if (
+    titleLow.includes("emerald chevron") &&
+    (String(p.price).includes("2,890") || String(p.price).includes("2890") || p.stock === 14)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+export function isSeedProduct(p) {
+  return isPhantomOrSeedProduct(p);
 }
 
 export async function fetchProductsFromDb() {
@@ -65,8 +100,8 @@ export async function fetchProductsFromDb() {
     if (!res.ok) throw new Error("Network response was not ok");
     const json = await res.json();
     if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-      // Exclude any legacy seed products
-      const cleanDbData = json.data.filter((p) => !isSeedProduct(p));
+      // Exclude any legacy seed or phantom dummy products
+      const cleanDbData = json.data.filter((p) => !isPhantomOrSeedProduct(p));
       const local = getLocalProducts();
       const localMap = new Map(local.map((p) => [String(p.id), p]));
       const overrides = getFeaturedOverrides();
@@ -93,7 +128,7 @@ export async function fetchProductsFromDb() {
 
       const dbIds = new Set(cleanDbData.map((p) => String(p.id)));
       const locallyAdded = local.filter((p) => !dbIds.has(String(p.id)));
-      const finalMerged = [...locallyAdded, ...merged].filter((p) => !isSeedProduct(p));
+      const finalMerged = [...locallyAdded, ...merged].filter((p) => !isPhantomOrSeedProduct(p));
       saveLocalProducts(finalMerged, false);
       return finalMerged;
     }
@@ -184,20 +219,26 @@ function getLocalProducts() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        // Exclude seed products from local storage cache
-        const clean = parsed.filter((p) => !isSeedProduct(p));
-        return clean.map((p) => {
-          if (overrides[String(p.id)] !== undefined) {
-            return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
-          }
-          return p;
-        });
+        // Exclude seed products and phantom dummy products from local storage cache
+        const clean = parsed.filter((p) => !isPhantomOrSeedProduct(p));
+        // If clean length changed (dummies purged), re-save clean list
+        if (clean.length !== parsed.length) {
+          localStorage.setItem("thoranam_products", JSON.stringify(clean));
+        }
+        if (clean.length > 0) {
+          return clean.map((p) => {
+            if (overrides[String(p.id)] !== undefined) {
+              return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
+            }
+            return p;
+          });
+        }
       }
     }
   } catch (e) {
     console.error(e);
   }
-  return INITIAL_PRODUCTS.filter((p) => !isSeedProduct(p)).map((p) => {
+  return INITIAL_PRODUCTS.filter((p) => !isPhantomOrSeedProduct(p)).map((p) => {
     if (overrides[String(p.id)] !== undefined) {
       return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
     }
@@ -208,7 +249,8 @@ function getLocalProducts() {
 function saveLocalProducts(products, notify = true) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem("thoranam_products", JSON.stringify(products));
+    const cleanOnly = (products || []).filter((p) => !isPhantomOrSeedProduct(p));
+    localStorage.setItem("thoranam_products", JSON.stringify(cleanOnly));
     if (notify) {
       window.dispatchEvent(new Event("thoranam_products_updated"));
     }
@@ -218,4 +260,3 @@ function saveLocalProducts(products, notify = true) {
 }
 
 export { INITIAL_PRODUCTS, getLocalProducts as getStoredProducts, saveLocalProducts as saveStoredProducts };
-
