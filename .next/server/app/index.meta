@@ -1,0 +1,36 @@
+{
+  "status": 200,
+  "headers": {
+    "link": "</_next/static/media/47fe1b7cd6e6ed85-s.p.3bh2vc0w-r-ll.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/media/8e6fa89aa22d24ec-s.p.2o7m9ogm38dql.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/media/a218039a3287bcfd-s.p.43zbiuwnnoiok.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/media/c875c6f5d3e977ac-s.p.1h18_wedhzk4h.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </_next/static/media/e2334d715941921e-s.p.3o_v2fun1jzxk.woff2>; rel=preload; as=\"font\"; crossorigin=\"\"; type=\"font/woff2\", </images/bestseller-1.jpg>; rel=preload; as=\"image\", </images/bestseller-2.jpg>; rel=preload; as=\"image\"",
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/(website)/layout,_N_T_/(website)/page,_N_T_/,_N_T_/index"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/!KHdlYnNpdGUp/__PAGE__"
+  ],
+  "prefetchHints": {
+    "hints": 49216,
+    "slots": {
+      "children": {
+        "hints": 49248,
+        "slots": {
+          "children": {
+            "hints": 49312,
+            "slots": null
+          }
+        }
+      }
+    }
+  },
+  "routeCache": {
+    "key": "/route-cache/APP_PAGE/4d93b534643a108e3c659d11184769181a14b3df734ec1d2bd88fd9f1ad1f9c3/$/index",
+    "owner": {
+      "kind": "APP_PAGE",
+      "sourceRoute": "/(website)/page"
+    },
+    "isFallback": false
+  }
+}
