@@ -43,29 +43,66 @@ export const productController = {
 
   // Create a new product directly in MySQL database
   async createProduct(data) {
-    await syncDatabase();
-    const created = await Product.create({
-      title: data.title,
-      category: data.category || "Silk Sarees",
-      price: data.price || "₹ 0",
-      stock: Number(data.stock) || 0,
-      status: data.status || "Published",
-      main_image: data.mainImage || "/images/product-1.jpg",
-      gallery_images: Array.isArray(data.galleryImages) ? data.galleryImages : [],
-      description: data.description || "",
-      highlights: Array.isArray(data.highlights) ? data.highlights : [],
-      closing_description: data.closingDescription || "",
-      material: data.material || "",
-      size: data.size || "",
-      wash_care: data.washCare || "",
-      seo_title: data.seoTitle || "",
-      seo_description: data.seoDescription || "",
-      seo_keywords: data.seoKeywords || "",
-      og_image: data.ogImage || "",
-      is_featured: Boolean(data.isFeatured),
-    });
+    const gallery = Array.isArray(data.galleryImages)
+      ? data.galleryImages
+      : typeof data.galleryImages === "string"
+      ? safeJsonParse(data.galleryImages, [])
+      : [];
+    
+    let mainImg = data.mainImage;
+    if (!mainImg || typeof mainImg !== "string" || mainImg.trim() === "") {
+      mainImg = gallery[0] || "/images/product-1.jpg";
+    }
 
-    return formatProduct(created.toJSON());
+    try {
+      const created = await Product.create({
+        title: data.title,
+        category: data.category || "Silk Sarees",
+        price: data.price || "₹ 0",
+        stock: Number(data.stock) || 0,
+        status: data.status || "Published",
+        main_image: mainImg,
+        gallery_images: JSON.stringify(gallery),
+        description: data.description || "",
+        highlights: Array.isArray(data.highlights) ? data.highlights : [],
+        closing_description: data.closingDescription || "",
+        material: data.material || "",
+        size: data.size || "",
+        wash_care: data.washCare || "",
+        seo_title: data.seoTitle || "",
+        seo_description: data.seoDescription || "",
+        seo_keywords: data.seoKeywords || "",
+        og_image: data.ogImage || mainImg,
+        is_featured: Boolean(data.isFeatured),
+      });
+
+      return formatProduct(created.toJSON());
+    } catch (createErr) {
+      console.warn("[Products DB] Direct create failed, attempting single sync fallback:", createErr.message);
+      await syncDatabase();
+      const created = await Product.create({
+        title: data.title,
+        category: data.category || "Silk Sarees",
+        price: data.price || "₹ 0",
+        stock: Number(data.stock) || 0,
+        status: data.status || "Published",
+        main_image: mainImg,
+        gallery_images: JSON.stringify(gallery),
+        description: data.description || "",
+        highlights: Array.isArray(data.highlights) ? data.highlights : [],
+        closing_description: data.closingDescription || "",
+        material: data.material || "",
+        size: data.size || "",
+        wash_care: data.washCare || "",
+        seo_title: data.seoTitle || "",
+        seo_description: data.seoDescription || "",
+        seo_keywords: data.seoKeywords || "",
+        og_image: data.ogImage || mainImg,
+        is_featured: Boolean(data.isFeatured),
+      });
+
+      return formatProduct(created.toJSON());
+    }
   },
 
   // Update product by ID directly in MySQL database
@@ -75,6 +112,11 @@ export const productController = {
       throw new Error(`Product with ID ${id} not found in database`);
     }
 
+    const galleryVal =
+      data.galleryImages !== undefined
+        ? (Array.isArray(data.galleryImages) ? JSON.stringify(data.galleryImages) : data.galleryImages)
+        : product.gallery_images;
+
     await product.update({
       title: data.title !== undefined ? data.title : product.title,
       category: data.category !== undefined ? data.category : product.category,
@@ -82,7 +124,7 @@ export const productController = {
       stock: data.stock !== undefined ? Number(data.stock) : product.stock,
       status: data.status !== undefined ? data.status : product.status,
       main_image: data.mainImage !== undefined ? data.mainImage : product.main_image,
-      gallery_images: data.galleryImages !== undefined ? data.galleryImages : product.gallery_images,
+      gallery_images: galleryVal,
       description: data.description !== undefined ? data.description : product.description,
       highlights: data.highlights !== undefined ? data.highlights : product.highlights,
       closing_description: data.closingDescription !== undefined ? data.closingDescription : product.closing_description,
@@ -120,6 +162,13 @@ function safeJsonParse(val, fallback = []) {
 
 // Formatter to match frontend props
 function formatProduct(r) {
+  const gallery = safeJsonParse(r.gallery_images, []);
+  let main = r.main_image;
+  // If main_image is missing, empty, or truncated corrupt 64KB base64
+  if (!main || typeof main !== "string" || main.trim() === "" || (main.startsWith("data:image") && main.length === 65535)) {
+    main = (gallery && gallery[0] && gallery[0].length !== 65535) ? gallery[0] : "/images/product-1.jpg";
+  }
+
   return {
     id: r.id,
     title: r.title,
@@ -127,8 +176,8 @@ function formatProduct(r) {
     price: r.price,
     stock: r.stock,
     status: r.status,
-    mainImage: r.main_image || "/images/product-1.jpg",
-    galleryImages: safeJsonParse(r.gallery_images, []),
+    mainImage: main,
+    galleryImages: gallery,
     description: r.description || "",
     highlights: safeJsonParse(r.highlights, []),
     closingDescription: r.closing_description || "",
@@ -138,7 +187,7 @@ function formatProduct(r) {
     seoTitle: r.seo_title || "",
     seoDescription: r.seo_description || "",
     seoKeywords: r.seo_keywords || "",
-    ogImage: r.og_image || "",
+    ogImage: r.og_image || main,
     isFeatured: Boolean(r.is_featured),
     createdAt: r.created_at || r.createdAt,
     updatedAt: r.updated_at || r.updatedAt,

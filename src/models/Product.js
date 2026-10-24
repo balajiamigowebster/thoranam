@@ -36,14 +36,14 @@ export const Product = sequelize.define(
           defaultValue: "Published",
         },
         main_image: {
-          type: DataTypes.TEXT,
+          type: DataTypes.TEXT("long"),
           allowNull: true,
           defaultValue: "/images/product-1.jpg",
         },
         gallery_images: {
-          type: DataTypes.JSON,
+          type: DataTypes.TEXT("long"),
           allowNull: true,
-          defaultValue: [],
+          defaultValue: "[]",
         },
         description: {
           type: DataTypes.TEXT,
@@ -83,7 +83,7 @@ export const Product = sequelize.define(
           allowNull: true,
         },
         og_image: {
-          type: DataTypes.STRING(500),
+          type: DataTypes.TEXT("long"),
           allowNull: true,
         },
         is_featured: {

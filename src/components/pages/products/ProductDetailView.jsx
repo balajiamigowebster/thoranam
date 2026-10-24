@@ -81,8 +81,11 @@ export default function ProductDetailView({ productId }) {
         }
 
         if (mounted && foundProduct) {
-          setProduct(foundProduct);
-          setSelectedImage(foundProduct.mainImage || "/images/product-1.jpg");
+          const validMain = (foundProduct.mainImage && foundProduct.mainImage.length !== 65535)
+            ? foundProduct.mainImage
+            : (foundProduct.galleryImages?.[0] || "/images/product-1.jpg");
+          setProduct({ ...foundProduct, mainImage: validMain });
+          setSelectedImage(validMain);
         }
 
         // Populate 'You may also like' related products directly from DB candidates
@@ -208,10 +211,11 @@ export default function ProductDetailView({ productId }) {
             {/* Big Main Image Container */}
             <div className="relative aspect-[3/4] w-full rounded-3xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-xs group">
               <img
-                src={getAssetUrl(selectedImage || product.mainImage)}
+                src={getAssetUrl(selectedImage || product.mainImage || "/images/product-1.jpg")}
                 alt={product.title}
                 className="w-full h-full object-cover object-center transition-all duration-300"
                 onError={(e) => {
+                  e.target.onerror = null;
                   e.target.src = "/images/product-1.jpg";
                 }}
               />
