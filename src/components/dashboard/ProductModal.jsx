@@ -40,8 +40,8 @@ const getInitialFormData = (product, categories = []) => {
     stock: 10,
     status: "Published",
     isFeatured: false,
-    mainImage: "/images/product-1.jpg",
-    galleryImages: ["/images/product-2.jpg"],
+    mainImage: "",
+    galleryImages: [],
     description: "",
     highlights: [
       "Handloom woven with premium natural yarns",
@@ -486,18 +486,24 @@ export default function ProductModal({
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4 items-start bg-stone-50/70 p-4 rounded-2xl border border-slate-200">
-                  <div className="relative w-36 h-48 rounded-2xl overflow-hidden border-2 border-[#800F17]/40 bg-white shadow-xs shrink-0 group">
-                    <img
-                      src={getAssetUrl(formData.mainImage) || "/images/product-1.jpg"}
-                      alt="Main Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.src = "/images/product-1.jpg";
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-semibold">
-                      Main Saree Cover
-                    </div>
+                  <div className="relative w-36 h-48 rounded-2xl overflow-hidden border-2 border-dashed border-[#800F17]/40 bg-white shadow-xs shrink-0 group flex items-center justify-center">
+                    {formData.mainImage ? (
+                      <>
+                        <img
+                          src={getAssetUrl(formData.mainImage)}
+                          alt="Main Preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-semibold">
+                          Main Saree Cover
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center p-3 text-slate-400">
+                        <ImageIcon className="w-8 h-8 mx-auto mb-1 text-slate-300" />
+                        <span className="text-[10px] block">No image selected</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex-1 space-y-3 w-full">

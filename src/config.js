@@ -35,15 +35,23 @@ export function getApiUrl(path) {
 
 /**
  * Helper to resolve uploaded images or static assets
- * If image is /uploads/filename.jpg, loads from backend where it was stored!
+ * If image is /uploads/filename.jpg, serves it from the current server or environment
  */
 export function getAssetUrl(src) {
   if (!src) return "/images/placeholder.jpg";
   if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
     return src;
   }
-  if (src.startsWith("/uploads/")) {
-    return `${LIVE_BACKEND_URL.replace(/\/$/, "")}${src}`;
+  // When running locally on localhost, /uploads/... is served directly from /public/uploads/
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname || "";
+    if (host === "localhost" || host === "127.0.0.1") {
+      return src;
+    }
+    // On Vercel or production without local file storage, fallback to live backend
+    if (src.startsWith("/uploads/") && (host.includes("vercel.app") || host.includes("thoranam"))) {
+      return `${LIVE_BACKEND_URL.replace(/\/$/, "")}${src}`;
+    }
   }
   return src;
 }

@@ -56,22 +56,26 @@ export default function HomeCategoryProducts() {
     };
   }, []);
 
-  // Filter products for each category safely (matching id, label, or name case-insensitively)
+  // Filter products strictly for each category (matching id, label, or name)
   const getCategoryProducts = (cat) => {
-    const catLabel = (cat.label || cat.name || "").toLowerCase();
-    const catId = (cat.id || "").toLowerCase();
+    const catLabel = (cat.label || cat.name || "").trim().toLowerCase();
+    const catId = (cat.id || "").trim().toLowerCase();
 
-    // 1. First, search live products from DB
+    // 1. Search products from DB matching this category
     const matched = products.filter((p) => {
-      const pCat = (p.category || "").toLowerCase();
-      return pCat === catLabel || pCat === catId;
+      const pCat = (p.category || "").trim().toLowerCase();
+      return (
+        pCat === catLabel ||
+        pCat === catId ||
+        pCat.replace(/-/g, " ") === catLabel.replace(/-/g, " ")
+      );
     });
 
     if (matched.length > 0) {
       return matched.slice(0, 4);
     }
 
-    // 2. Fallback to category showcase if defined
+    // 2. Fallback to category showcase if defined in admin
     if (Array.isArray(cat.showcase) && cat.showcase.length > 0) {
       return cat.showcase.slice(0, 4).map((s, idx) => ({
         id: `${cat.id}-showcase-${idx}`,
@@ -83,8 +87,8 @@ export default function HomeCategoryProducts() {
       }));
     }
 
-    // 3. Fallback to general products to ensure at least 3-4 beautiful items are always displayed
-    return products.slice(0, 4);
+    // 3. Do NOT dump unrelated products from other categories here
+    return [];
   };
 
   return (
@@ -94,6 +98,11 @@ export default function HomeCategoryProducts() {
           const categoryName = category.label || category.name;
           const categoryHref = category.href || `/products?cat=${encodeURIComponent(category.id || categoryName)}`;
           const categoryItems = getCategoryProducts(category);
+
+          // If this category has no products assigned to it, skip rendering this section
+          if (categoryItems.length === 0) {
+            return null;
+          }
 
           return (
             <div

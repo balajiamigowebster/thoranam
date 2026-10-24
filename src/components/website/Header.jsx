@@ -7,6 +7,7 @@ import AnnouncementBar from "./AnnouncementBar";
 import Navbar from "./Navbar";
 import ThoranamLogo from "@/components/ui/ThoranamLogo";
 import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
+import { MAIN_NAV_MENUS } from "@/lib/navigation";
 import { useCart } from "@/context/CartContext";
 import { getApiUrl } from "@/config";
 
@@ -240,32 +241,38 @@ export default function Header() {
                   Collections & Sarees
                 </span>
                 <span className="text-[10px] bg-rose-50 text-[#890e0e] px-2 py-0.5 rounded-full font-semibold">
-                  {categories.length} Categories
+                  {MAIN_NAV_MENUS.length} Categories
                 </span>
               </div>
 
-              <ul className="space-y-1.5">
-                {categories.map((item, idx) => (
-                  <li key={item.id || item.label || idx}>
+              <ul className="space-y-1">
+                {MAIN_NAV_MENUS.map((item, idx) => (
+                  <li key={item.id || idx} className="rounded-xl overflow-hidden border border-rose-50/60 bg-stone-50/30">
                     <Link
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center justify-between p-2 rounded-xl text-stone-800 hover:text-[#890e0e] hover:bg-rose-50/60 transition-colors"
+                      className="flex items-center justify-between p-2.5 text-stone-800 hover:text-[#890e0e] hover:bg-rose-50/60 transition-colors font-medium text-xs sm:text-sm"
                     >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-300 shrink-0 bg-stone-100">
-                          <img
-                            src={item.image || `/images/product-${(idx % 4) + 1}.jpg`}
-                            alt={item.label}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <span className="text-xs sm:text-sm font-medium capitalize">
-                          {item.label}
-                        </span>
-                      </div>
-                      <span className="text-stone-400 text-xs font-bold">›</span>
+                      <span className="font-semibold text-stone-900">{item.label}</span>
+                      <span className="text-[10px] text-[#890e0e] bg-rose-50 px-2 py-0.5 rounded-full">
+                        {item.subcategories?.length || 0}
+                      </span>
                     </Link>
+
+                    {item.subcategories && item.subcategories.length > 0 && (
+                      <div className="bg-white/70 px-3 py-1.5 border-t border-rose-50 space-y-1">
+                        {item.subcategories.map((sub, sIdx) => (
+                          <Link
+                            key={sIdx}
+                            href={sub.href}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="block py-1 px-1.5 text-[11px] sm:text-xs text-stone-600 hover:text-[#890e0e] hover:translate-x-1 transition-all"
+                          >
+                            • {sub.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

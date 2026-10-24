@@ -39,7 +39,8 @@ const fallbackProducts = [
 import { getApiUrl } from "@/config";
 
 export default function HomeBestToday() {
-  const [products, setProducts] = useState(fallbackProducts);
+  const [products, setProducts] = useState([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -47,11 +48,10 @@ export default function HomeBestToday() {
       try {
         const res = await fetch(getApiUrl("/api/products"));
         const json = await res.json();
-        if (active && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          // Prioritize products marked with isFeatured (handpicked favorites)
+        if (active && json.success && Array.isArray(json.data)) {
+          // STRICT RULE: Only show products when the checkbox is active / checked (isFeatured === true)
           const featured = json.data.filter((p) => Boolean(p.isFeatured));
-          const displayList = (featured.length > 0 ? featured : json.data).slice(0, 8);
-          const mapped = displayList.map((p, idx) => ({
+          const mapped = featured.map((p, idx) => ({
             id: p.id,
             title: p.title,
             price: p.price,
@@ -59,9 +59,11 @@ export default function HomeBestToday() {
             tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
           }));
           setProducts(mapped);
+          setLoaded(true);
         }
       } catch (e) {
         console.warn("Could not fetch products for home best today:", e);
+        if (active) setLoaded(true);
       }
     }
     loadProducts();
@@ -69,6 +71,11 @@ export default function HomeBestToday() {
       active = false;
     };
   }, []);
+
+  // Do not render section if products have loaded and no items are checked as featured
+  if (loaded && products.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-12 sm:py-16 bg-white dark:bg-slate-950">
