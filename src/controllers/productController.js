@@ -29,6 +29,11 @@ const SEED_TITLES = new Set([
 ]);
 
 const PHANTOM_IDS = new Set([
+  "1792827048894",
+  "1792827048895",
+  "1792827048896",
+  "1792827048897",
+  "1792827048898",
   "fancy-misty-dusk-1",
   "fancy-heritage-procession",
   "fancy-emerald-chevron",
@@ -60,12 +65,8 @@ function isSeedProduct(p) {
   return false;
 }
 
-// Resilient in-memory store initialized with clean INITIAL_PRODUCTS
-let memoryProducts = INITIAL_PRODUCTS.filter((p) => !isSeedProduct(p)).map((p, idx) => ({
-  ...p,
-  id: p.id || idx + 1,
-  isFeatured: Boolean(p.isFeatured),
-}));
+// Resilient in-memory store initialized clean (zero default products)
+let memoryProducts = [];
 
 // Controller for Product operations
 export const productController = {

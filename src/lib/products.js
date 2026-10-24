@@ -53,7 +53,12 @@ const SEED_TITLES = new Set([
   "organic mul cotton daily grace saree",
 ]);
 
-const PHANTOM_IDS = new Set([
+const DEFAULT_HARDCODED_IDS = new Set([
+  "1792827048894",
+  "1792827048895",
+  "1792827048896",
+  "1792827048897",
+  "1792827048898",
   "fancy-misty-dusk-1",
   "fancy-heritage-procession",
   "fancy-emerald-chevron",
@@ -63,13 +68,13 @@ const PHANTOM_IDS = new Set([
 export function isPhantomOrSeedProduct(p) {
   if (!p) return false;
   const idStr = String(p.id || "");
-  if (PHANTOM_IDS.has(idStr)) return true;
+  if (DEFAULT_HARDCODED_IDS.has(idStr)) return true;
   if (idStr.startsWith("fancy-")) return true;
 
   const titleLow = (p.title || "").trim().toLowerCase();
   if (SEED_TITLES.has(titleLow)) return true;
 
-  // Filter out dummy phantom items that were artificially injected
+  // Filter out any leftover hardcoded default cards
   if (
     titleLow.includes("heritage procession") &&
     (String(p.price).includes("4,890") || String(p.price).includes("4890") || p.stock === 8)
@@ -87,6 +92,26 @@ export function isPhantomOrSeedProduct(p) {
     return true;
   }
 
+  // Filter out old default products that have default placeholder paths and no explicit user creation flag
+  const defaultImages = new Set([
+    "/images/product-1.jpg",
+    "/images/product-2.jpg",
+    "/images/product-3.jpg",
+    "/images/product-4.jpg",
+    "/images/bestseller-2.jpg",
+  ]);
+  if (!p._userCreated && !p._userModified && defaultImages.has(p.mainImage)) {
+    if (
+      titleLow.includes("plum leaf") ||
+      titleLow.includes("misty dusk") ||
+      titleLow.includes("heritage procession") ||
+      titleLow.includes("emerald chevron") ||
+      titleLow.includes("verdant ikat")
+    ) {
+      return true;
+    }
+  }
+
   return false;
 }
 
@@ -99,8 +124,7 @@ export async function fetchProductsFromDb() {
     const res = await fetch(getApiUrl("/api/products"));
     if (!res.ok) throw new Error("Network response was not ok");
     const json = await res.json();
-    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-      // Exclude any legacy seed or phantom dummy products
+    if (json.success && Array.isArray(json.data)) {
       const cleanDbData = json.data.filter((p) => !isPhantomOrSeedProduct(p));
       const local = getLocalProducts();
       const localMap = new Map(local.map((p) => [String(p.id), p]));
@@ -111,12 +135,10 @@ export async function fetchProductsFromDb() {
         const localProduct = localMap.get(String(dbProduct.id));
         let combined = { ...dbProduct };
 
-        // If the product was edited locally in admin, retain all local modifications
         if (localProduct && (localProduct._userModified || localProduct._lastModified)) {
           combined = { ...combined, ...localProduct };
         }
 
-        // Apply explicit user featured override if present
         if (overrides[String(dbProduct.id)] !== undefined) {
           combined.isFeatured = Boolean(overrides[String(dbProduct.id)]);
         } else if (localProduct && localProduct.isFeatured !== undefined) {
@@ -133,7 +155,7 @@ export async function fetchProductsFromDb() {
       return finalMerged;
     }
   } catch (err) {
-    console.warn("Could not fetch products from MySQL API, falling back to local storage:", err.message);
+    console.warn("Could not fetch products from API, falling back to local storage:", err.message);
   }
   return getLocalProducts();
 }
@@ -145,11 +167,12 @@ export async function saveProductToDb(productData) {
   // 1. Immediately record in featured overrides
   saveFeaturedOverride(productId, isFeatured);
 
-  // 2. Mark product as modified by user so cold lambda responses cannot wipe it
+  // 2. Mark product as created/modified by user
   const finalItem = {
     ...productData,
     id: productId,
     isFeatured,
+    _userCreated: true,
     _userModified: true,
     _lastModified: Date.now(),
   };
@@ -203,7 +226,7 @@ export async function deleteProductFromDb(productId) {
       window.dispatchEvent(new Event("thoranam_products_updated"));
     }
   } catch (err) {
-    console.warn("Could not delete product via MySQL API:", err.message);
+    console.warn("Could not delete product via API:", err.message);
   }
   const current = getLocalProducts();
   const updated = current.filter((p) => String(p.id) !== String(productId));
@@ -212,38 +235,31 @@ export async function deleteProductFromDb(productId) {
 
 // Local storage helpers
 function getLocalProducts() {
-  if (typeof window === "undefined") return INITIAL_PRODUCTS;
+  if (typeof window === "undefined") return [];
   const overrides = getFeaturedOverrides();
   try {
     const saved = localStorage.getItem("thoranam_products");
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // Exclude seed products and phantom dummy products from local storage cache
+      if (Array.isArray(parsed)) {
+        // Exclude default mock and seed products
         const clean = parsed.filter((p) => !isPhantomOrSeedProduct(p));
-        // If clean length changed (dummies purged), re-save clean list
+        // If clean list changed, sync back to local storage
         if (clean.length !== parsed.length) {
           localStorage.setItem("thoranam_products", JSON.stringify(clean));
         }
-        if (clean.length > 0) {
-          return clean.map((p) => {
-            if (overrides[String(p.id)] !== undefined) {
-              return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
-            }
-            return p;
-          });
-        }
+        return clean.map((p) => {
+          if (overrides[String(p.id)] !== undefined) {
+            return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
+          }
+          return p;
+        });
       }
     }
   } catch (e) {
     console.error(e);
   }
-  return INITIAL_PRODUCTS.filter((p) => !isPhantomOrSeedProduct(p)).map((p) => {
-    if (overrides[String(p.id)] !== undefined) {
-      return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
-    }
-    return p;
-  });
+  return [];
 }
 
 function saveLocalProducts(products, notify = true) {

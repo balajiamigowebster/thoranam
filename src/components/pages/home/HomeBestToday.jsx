@@ -5,37 +5,6 @@ import Link from "next/link";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 
-const fallbackProducts = [
-  {
-    id: 1,
-    title: "Plum Leaf – Premium Fancy Kotta Saree",
-    price: "Rs. 2,500.00",
-    image: "/images/product-1.jpg",
-    tag: "Trending",
-  },
-  {
-    id: 2,
-    title: "Misty Dusk – Premium Fancy Saree",
-    price: "Rs. 1,900.00",
-    image: "/images/product-2.jpg",
-    tag: "New",
-  },
-  {
-    id: 3,
-    title: "Heritage Procession – Premium Fancy Saree",
-    price: "Rs. 1,700.00",
-    image: "/images/product-3.jpg",
-    tag: "Handcrafted",
-  },
-  {
-    id: 4,
-    title: "Emerald Chevron – Premium Fancy Saree",
-    price: "Rs. 1,400.00",
-    image: "/images/product-4.jpg",
-    tag: "Bestseller",
-  },
-];
-
 import { fetchProductsFromDb, getStoredProducts } from "@/lib/products";
 
 export default function HomeBestToday() {
@@ -90,8 +59,8 @@ export default function HomeBestToday() {
     };
   }, []);
 
-  // Do not render section if products have loaded and no items are checked as featured
-  if (loaded && products.length === 0) {
+  // Do not render section if no items are checked as featured
+  if (products.length === 0) {
     return null;
   }
 
