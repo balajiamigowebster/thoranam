@@ -5,11 +5,14 @@ let pool;
 export function getDbPool() {
   if (!pool) {
     pool = mysql.createPool({
-      host: process.env.DB_HOST || "127.0.0.1",
+      host: process.env.DB_HOST || "amigowebster.in",
       port: Number(process.env.DB_PORT) || 3306,
-      user: process.env.DB_USER || "root",
-      password: process.env.DB_PASSWORD ?? "",
-      database: process.env.DB_NAME || "thoranam-db",
+      user: process.env.DB_USER || "amigoweb_thoranam-user",
+      password:
+        process.env.DB_PASSWORD !== undefined && process.env.DB_PASSWORD !== ""
+          ? process.env.DB_PASSWORD
+          : "Thoranam-password-12",
+      database: process.env.DB_NAME || "amigoweb_thoranam-db",
       waitForConnections: true,
       connectionLimit: 10,
       queueLimit: 0,
