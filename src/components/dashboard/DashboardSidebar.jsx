@@ -67,33 +67,33 @@ export default function DashboardSidebar({ activeTab, setActiveTab }) {
             </button>
           );
         })}
-      </div>
 
-      {/* Quick Footer Links */}
-      <div className="p-3 border-t border-white/10 space-y-1">
-        <Link
-          href="/"
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all"
-        >
-          <ExternalLink className="w-4 h-4 text-white/60" />
-          <span>View Public Store</span>
-        </Link>
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              localStorage.removeItem("thoranam_admin_token");
-              localStorage.removeItem("thoranam_admin_user");
-              document.cookie = "thoranam_admin_token=; path=/; max-age=0";
-              await fetch("/api/auth/login", { method: "DELETE" });
-            } catch (e) {}
-            window.location.href = "/login";
-          }}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-red-200 hover:bg-red-500/20 hover:text-white transition-all cursor-pointer"
-        >
-          <LogOut className="w-4 h-4 text-red-300" />
-          <span>Sign Out</span>
-        </button>
+        {/* Directly under Slideshow & SEO */}
+        <div className="pt-2 mt-2 border-t border-white/10 space-y-1">
+          <Link
+            href="/"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-white/70 hover:bg-white/10 hover:text-white transition-all"
+          >
+            <ExternalLink className="w-4 h-4 text-white/60" />
+            <span>View Public Store</span>
+          </Link>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                localStorage.removeItem("thoranam_admin_token");
+                localStorage.removeItem("thoranam_admin_user");
+                document.cookie = "thoranam_admin_token=; path=/; max-age=0";
+                await fetch("/api/auth/login", { method: "DELETE" });
+              } catch (e) {}
+              window.location.href = "/login";
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-red-200 hover:bg-red-500/20 hover:text-white transition-all cursor-pointer"
+          >
+            <LogOut className="w-4 h-4 text-red-300" />
+            <span>Sign Out</span>
+          </button>
+        </div>
       </div>
     </aside>
   );
