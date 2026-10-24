@@ -16,9 +16,11 @@ import { getApiUrl } from "@/config";
 
 
 
+import { fetchOrdersFromDb, getLocalOrders } from "@/lib/orders";
+
 export default function DashboardOrders() {
-  const [orders, setOrders] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [orders, setOrders] = useState(getLocalOrders);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -26,15 +28,10 @@ export default function DashboardOrders() {
   const fetchOrders = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      const res = await fetch(getApiUrl("/api/orders"));
-      const json = await res.json();
-      if (json.success && Array.isArray(json.data)) {
-        setOrders(json.data);
-      } else {
-        setOrders([]);
-      }
+      const data = await fetchOrdersFromDb();
+      setOrders(data);
     } catch (e) {
-      setOrders([]);
+      console.warn("Failed to load orders:", e);
     } finally {
       setIsLoading(false);
     }
@@ -44,25 +41,30 @@ export default function DashboardOrders() {
     let ignore = false;
     const load = async () => {
       try {
-        const res = await fetch(getApiUrl("/api/orders"));
-        const json = await res.json();
-        if (!ignore) {
-          if (json.success && Array.isArray(json.data)) {
-            setOrders(json.data);
-          } else {
-            setOrders([]);
-          }
+        const data = await fetchOrdersFromDb();
+        if (!ignore && Array.isArray(data)) {
+          setOrders(data);
         }
       } catch (e) {
-        if (!ignore) setOrders([]);
+        if (!ignore) setOrders(getLocalOrders());
       } finally {
         if (!ignore) setIsLoading(false);
       }
     };
 
     load();
+
+    const handleOrdersUpdated = () => {
+      if (!ignore) setOrders(getLocalOrders());
+    };
+
+    window.addEventListener("thoranam_orders_updated", handleOrdersUpdated);
+    window.addEventListener("storage", handleOrdersUpdated);
+
     return () => {
       ignore = true;
+      window.removeEventListener("thoranam_orders_updated", handleOrdersUpdated);
+      window.removeEventListener("storage", handleOrdersUpdated);
     };
   }, []);
 

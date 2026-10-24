@@ -14,33 +14,25 @@ import {
 } from "lucide-react";
 import { getApiUrl } from "@/config";
 import { INITIAL_PRODUCTS } from "@/lib/initial-products";
-
-
+import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
+import { getLocalOrders, fetchOrdersFromDb } from "@/lib/orders";
 
 export default function DashboardOverview({ setActiveTab }) {
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
-  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState(getStoredProducts);
+  const [orders, setOrders] = useState(getLocalOrders);
   const [customers, setCustomers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchDashboardData = async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      // 1. Fetch real products
-      const pRes = await fetch(getApiUrl("/api/products"));
-      const pJson = await pRes.json();
-      if (pJson.success && Array.isArray(pJson.data) && pJson.data.length > 0) {
-        setProducts(pJson.data);
-      }
+      const [pData, oData] = await Promise.all([
+        fetchProductsFromDb(),
+        fetchOrdersFromDb(),
+      ]);
+      if (Array.isArray(pData) && pData.length > 0) setProducts(pData);
+      if (Array.isArray(oData)) setOrders(oData);
 
-      // 2. Fetch real orders
-      const oRes = await fetch(getApiUrl("/api/orders"));
-      const oJson = await oRes.json();
-      if (oJson.success && Array.isArray(oJson.data)) {
-        setOrders(oJson.data);
-      }
-
-      // 3. Fetch real customers
       const cRes = await fetch(getApiUrl("/api/customers"));
       const cJson = await cRes.json();
       if (cJson.success && Array.isArray(cJson.data)) {
@@ -57,37 +49,45 @@ export default function DashboardOverview({ setActiveTab }) {
     let ignore = false;
     const load = async () => {
       try {
-        const [pRes, oRes, cRes] = await Promise.all([
-          fetch(getApiUrl("/api/products")),
-          fetch(getApiUrl("/api/orders")),
-          fetch(getApiUrl("/api/customers")),
-        ]);
-        const [pJson, oJson, cJson] = await Promise.all([
-          pRes.json(),
-          oRes.json(),
-          cRes.json(),
+        const [pData, oData] = await Promise.all([
+          fetchProductsFromDb(),
+          fetchOrdersFromDb(),
         ]);
         if (!ignore) {
-          if (pJson.success && Array.isArray(pJson.data) && pJson.data.length > 0) {
-            setProducts(pJson.data);
-          }
-          if (oJson.success && Array.isArray(oJson.data)) {
-            setOrders(oJson.data);
-          }
-          if (cJson.success && Array.isArray(cJson.data)) {
-            setCustomers(cJson.data);
-          }
+          if (Array.isArray(pData) && pData.length > 0) setProducts(pData);
+          if (Array.isArray(oData)) setOrders(oData);
+        }
+
+        const cRes = await fetch(getApiUrl("/api/customers"));
+        const cJson = await cRes.json();
+        if (!ignore && cJson.success && Array.isArray(cJson.data)) {
+          setCustomers(cJson.data);
         }
       } catch (err) {
-        console.warn("Could not load full dashboard metrics from API:", err);
+        console.warn("Could not load full dashboard metrics:", err);
       } finally {
         if (!ignore) setIsLoading(false);
       }
     };
 
     load();
+
+    const handleSync = () => {
+      if (!ignore) {
+        setProducts(getStoredProducts());
+        setOrders(getLocalOrders());
+      }
+    };
+
+    window.addEventListener("thoranam_orders_updated", handleSync);
+    window.addEventListener("thoranam_products_updated", handleSync);
+    window.addEventListener("storage", handleSync);
+
     return () => {
       ignore = true;
+      window.removeEventListener("thoranam_orders_updated", handleSync);
+      window.removeEventListener("thoranam_products_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
     };
   }, []);
 
@@ -98,7 +98,14 @@ export default function DashboardOverview({ setActiveTab }) {
   const totalOrdersCount = orders.length;
   const newOrdersCount = orders.filter((o) => (o.order_status || "").toLowerCase() === "new").length;
 
-  const totalRegisteredClients = customers.length;
+  const totalRegisteredClients =
+    customers.length > 0
+      ? customers.length
+      : new Set(
+          orders
+            .map((o) => (o.customer_email || o.customer_name || "").trim().toLowerCase())
+            .filter((c) => c && !c.includes("guest"))
+        ).size;
 
   // Calculate live revenue from orders if available
   const revenueTotalNumber = orders.reduce((acc, o) => {

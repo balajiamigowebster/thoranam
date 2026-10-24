@@ -15,12 +15,18 @@ export function getSequelize() {
         port: Number(process.env.DB_PORT) || 3306,
         dialect: "mysql",
         dialectModule: mysql2,
-        logging: process.env.NODE_ENV === "development" ? false : false,
+        logging: false,
         pool: {
-          max: 10,
+          max: 5,
           min: 0,
-          acquire: 30000,
-          idle: 10000,
+          acquire: 4000,
+          idle: 5000,
+        },
+        retry: {
+          max: 1,
+        },
+        dialectOptions: {
+          connectTimeout: 3000,
         },
       }
     );

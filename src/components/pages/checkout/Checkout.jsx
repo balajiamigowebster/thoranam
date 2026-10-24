@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { getApiUrl } from "@/config";
+import { saveOrderToDb } from "@/lib/orders";
 
 const INDIAN_STATES = [
   "Tamil Nadu",
@@ -285,24 +286,11 @@ export default function Checkout() {
     };
 
     try {
-      const res = await fetch(getApiUrl("/api/orders"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      });
-
-      const json = await res.json();
-      if (json.success) {
-        setOrderSuccess(json.data || orderData);
-        clearCart();
-      } else {
-        // Fallback simulate success
-        setOrderSuccess(orderData);
-        clearCart();
-      }
+      const saved = await saveOrderToDb(orderData);
+      setOrderSuccess(saved || orderData);
+      clearCart();
     } catch (err) {
       console.error("Order placement error:", err);
-      // Client-side fallback to ensure seamless experience
       setOrderSuccess(orderData);
       clearCart();
     } finally {
