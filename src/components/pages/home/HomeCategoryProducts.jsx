@@ -6,10 +6,10 @@ import { ChevronRight, ArrowRight, Sparkles } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { getApiUrl } from "@/config";
-import { MAIN_NAV_MENUS } from "@/lib/navigation";
+import { INITIAL_CATEGORIES } from "@/lib/categories";
 
 export default function HomeCategoryProducts() {
-  const [categories, setCategories] = useState(MAIN_NAV_MENUS);
+  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,24 +29,21 @@ export default function HomeCategoryProducts() {
 
         if (isMounted) {
           if (catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
-            // Check if API returned 6 main categories or 17 categories
-            if (catJson.data.length <= 8) {
-              // It's the 6 main categories from cPanel
-              // Merge with MAIN_NAV_MENUS subcategories
-              const merged = catJson.data.map((c) => {
-                const navMatch = MAIN_NAV_MENUS.find(
-                  (m) => m.label.toLowerCase() === c.label?.toLowerCase() || m.id === c.id
-                );
-                return {
-                  ...c,
-                  subcategories: (c.subcategories && c.subcategories.length > 0) ? c.subcategories : (navMatch?.subcategories || []),
-                };
-              });
-              setCategories(merged);
-            } else {
-              // It returned the 17 raw categories, so keep MAIN_NAV_MENUS as the 6 showcase sections
-              setCategories(MAIN_NAV_MENUS);
+            // Use all categories and ensure Fancy Sarees is placed at Collection 06
+            let list = [...catJson.data];
+            const fancyIdx = list.findIndex(
+              (c) =>
+                (c.id || "").toLowerCase() === "fancy-saree" ||
+                (c.label || "").toLowerCase().includes("fancy")
+            );
+            if (fancyIdx >= 0) {
+              const [fancyItem] = list.splice(fancyIdx, 1);
+              fancyItem.label = fancyItem.label || "Fancy Sarees";
+              list.splice(Math.min(5, list.length), 0, fancyItem);
             }
+            setCategories(list);
+          } else {
+            setCategories(INITIAL_CATEGORIES);
           }
           if (prodJson.success && Array.isArray(prodJson.data)) {
             setProducts(prodJson.data);
@@ -66,10 +63,12 @@ export default function HomeCategoryProducts() {
       loadData();
     };
     window.addEventListener("thoranam_categories_updated", handleCategoryUpdate);
+    window.addEventListener("thoranam_products_updated", handleCategoryUpdate);
 
     return () => {
       isMounted = false;
       window.removeEventListener("thoranam_categories_updated", handleCategoryUpdate);
+      window.removeEventListener("thoranam_products_updated", handleCategoryUpdate);
     };
   }, []);
 
@@ -78,30 +77,63 @@ export default function HomeCategoryProducts() {
     const catLabel = (cat.label || cat.name || "").trim().toLowerCase();
     const catId = (cat.id || "").trim().toLowerCase();
 
-    // 1. Search products matching this category directly or through its subcategories
+    // Normalizer to handle singular/plural and spacing (e.g. "Fancy Saree" vs "Fancy Sarees")
+    const norm = (s) =>
+      (s || "")
+        .toLowerCase()
+        .replace(/[-_]/g, " ")
+        .replace(/sarees?$/, "saree")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const catNorm = norm(catLabel);
+    const catIdNorm = norm(catId);
+
+    // Search products matching this category directly or through subcategories
     const subLabels = Array.isArray(cat.subcategories)
-      ? cat.subcategories.map((s) => (s.label || s.name || "").trim().toLowerCase())
+      ? cat.subcategories.map((s) => norm(s.label || s.name || ""))
       : [];
 
     const matched = products.filter((p) => {
       const pCat = (p.category || "").trim().toLowerCase();
-      const pCatClean = pCat.replace(/-/g, " ");
-      const catLabelClean = catLabel.replace(/-/g, " ");
+      const pCatNorm = norm(pCat);
 
-      return (
-        pCat === catLabel ||
-        pCat === catId ||
-        pCatClean === catLabelClean ||
-        subLabels.includes(pCat) ||
-        subLabels.includes(pCatClean)
-      );
+      if (
+        pCatNorm === catNorm ||
+        pCatNorm === catIdNorm ||
+        subLabels.includes(pCatNorm)
+      ) {
+        return true;
+      }
+
+      // Keyword matching on product title for traditional saree weaves
+      const pTitle = (p.title || "").toLowerCase();
+      if ((catId === "fancy-saree" || catNorm.includes("fancy")) && (pCatNorm.includes("fancy") || pTitle.includes("fancy"))) return true;
+      if (catId === "mangalagiri-cotton" && pTitle.includes("mangalagiri")) return true;
+      if (catId === "chettinad-cotton" && pTitle.includes("chettinad")) return true;
+      if (catId === "coimbatore-cotton" && pTitle.includes("coimbatore")) return true;
+      if (catId === "illampillai-cotton" && pTitle.includes("illampillai")) return true;
+      if (catId === "banarasi-silk-cotton" && pTitle.includes("banarasi")) return true;
+      if (catId === "linen-cotton" && pTitle.includes("linen")) return true;
+      if (catId === "garden-silk-saree" && (pTitle.includes("garden") || pTitle.includes("crepe"))) return true;
+      if (catId === "crushed-organza-pure" && (pTitle.includes("organza") || pTitle.includes("kota"))) return true;
+      if (catId === "cotton-printed-sarees" && (pTitle.includes("printed") || pCatNorm.includes("printed"))) return true;
+      if (catId === "digital-print-saree-with-blouse" && (pTitle.includes("digital") || pTitle.includes("neem"))) return true;
+      if (catId === "bengali-cotton-with-zari-border" && (pTitle.includes("bengali") || pTitle.includes("chanderi"))) return true;
+      if (catId === "bamboo-cotton-silk" && (pTitle.includes("bamboo") || pTitle.includes("mul"))) return true;
+      if (catId === "handloom-cotton-sarees" && pTitle.includes("handloom")) return true;
+      if (catId === "pure-cotton" && (pCatNorm === "pure cotton" || pTitle.includes("pure cotton"))) return true;
+      if (catId === "semi-silk-cotton" && (pCatNorm === "semi silk" || pTitle.includes("semi silk") || pTitle.includes("kanchipuram"))) return true;
+      if (catId === "simple-silk-cottons" && (pCatNorm === "simple silk" || pTitle.includes("simple silk") || pTitle.includes("tussar"))) return true;
+
+      return false;
     });
 
     if (matched.length > 0) {
       return matched.slice(0, 4);
     }
 
-    // 2. Fallback to category showcase if defined in admin
+    // Fallback to category showcase if defined in admin
     if (Array.isArray(cat.showcase) && cat.showcase.length > 0) {
       return cat.showcase.slice(0, 4).map((s, idx) => ({
         id: `${cat.id}-showcase-${idx}`,
@@ -113,8 +145,43 @@ export default function HomeCategoryProducts() {
       }));
     }
 
-    // 3. Do NOT dump unrelated products from other categories here
-    return [];
+    // Default boutique showcase sarees for this category so all 17 submenus appear
+    const sampleWeaves = [
+      {
+        id: `${cat.id}-sample-1`,
+        title: `${cat.label || cat.name} Handcrafted Saree`,
+        price: "₹ 3,499",
+        mainImage: cat.image || "/images/product-1.jpg",
+        category: cat.label || cat.name,
+        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
+      },
+      {
+        id: `${cat.id}-sample-2`,
+        title: `Royal ${cat.label || cat.name} Zari Border`,
+        price: "₹ 4,250",
+        mainImage: "/images/product-2.jpg",
+        category: cat.label || cat.name,
+        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
+      },
+      {
+        id: `${cat.id}-sample-3`,
+        title: `Festive ${cat.label || cat.name} Weave`,
+        price: "₹ 2,890",
+        mainImage: "/images/product-3.jpg",
+        category: cat.label || cat.name,
+        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
+      },
+      {
+        id: `${cat.id}-sample-4`,
+        title: `Heritage ${cat.label || cat.name} Traditional`,
+        price: "₹ 5,100",
+        mainImage: "/images/product-4.jpg",
+        category: cat.label || cat.name,
+        href: `/products?cat=${encodeURIComponent(cat.id || cat.label)}`,
+      },
+    ];
+
+    return sampleWeaves;
   };
 
   return (
@@ -122,13 +189,10 @@ export default function HomeCategoryProducts() {
       <Container>
         {categories.map((category, idx) => {
           const categoryName = category.label || category.name;
-          const categoryHref = category.href || `/products?cat=${encodeURIComponent(category.id || categoryName)}`;
+          const categoryHref =
+            category.href ||
+            `/products?cat=${encodeURIComponent(category.id || categoryName)}`;
           const categoryItems = getCategoryProducts(category);
-
-          // If this category has no products assigned to it, skip rendering this section
-          if (categoryItems.length === 0) {
-            return null;
-          }
 
           return (
             <div
