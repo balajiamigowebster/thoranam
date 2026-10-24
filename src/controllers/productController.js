@@ -2,8 +2,40 @@ import { Product, syncDatabase } from "@/models";
 import { INITIAL_PRODUCTS } from "@/lib/initial-products";
 import { Op } from "sequelize";
 
-// Resilient in-memory store initialized with INITIAL_PRODUCTS
-let memoryProducts = INITIAL_PRODUCTS.map((p, idx) => ({
+const SEED_TITLES = new Set([
+  "semi mangalagiri saree",
+  "kanchipuram silk saree",
+  "exotic chanderi saree",
+  "pure cotton handloom saree",
+  "thoranam exclusive zari weave",
+  "aqua bloom – pure kota french knot saree",
+  "aqua blossom – neem silk festive saree",
+  "pastel radiance – chanderi silk saree",
+  "chettinad 80 count heritage cotton",
+  "illampillai zari border cotton saree",
+  "mangalagiri pattu border cotton saree",
+  "banarasi silk brocade grand saree",
+  "mysore crepe silk gold zari saree",
+  "dharmavaram festive silk saree",
+  "semi kanchipuram brocade saree",
+  "semi raw silk contemporary saree",
+  "semi tussar embroidered saree",
+  "thoranam signature coimbatore cotton",
+  "thoranam royal brocade festive saree",
+  "thoranam hand-painted kalamkari saree",
+  "chettinad 120 count royal cotton saree",
+  "handloom linen cotton pastel saree",
+  "organic mul cotton daily grace saree",
+]);
+
+function isSeedProduct(p) {
+  if (!p) return false;
+  const titleLow = (p.title || "").trim().toLowerCase();
+  return SEED_TITLES.has(titleLow);
+}
+
+// Resilient in-memory store initialized with clean INITIAL_PRODUCTS
+let memoryProducts = INITIAL_PRODUCTS.filter((p) => !isSeedProduct(p)).map((p, idx) => ({
   ...p,
   id: p.id || idx + 1,
   isFeatured: Boolean(p.isFeatured),
@@ -32,7 +64,9 @@ export const productController = {
       });
 
       if (products && products.length > 0) {
-        const formatted = products.map((p) => formatProduct(p.toJSON()));
+        const formatted = products
+          .map((p) => formatProduct(p.toJSON()))
+          .filter((p) => !isSeedProduct(p));
         memoryProducts = formatted;
         return formatted;
       }
@@ -40,7 +74,7 @@ export const productController = {
       console.warn("[Products] DB query error, using resilient memory store:", dbErr.message);
     }
 
-    let list = [...memoryProducts];
+    let list = memoryProducts.filter((p) => !isSeedProduct(p));
     if (query.category && query.category !== "all") {
       list = list.filter((p) => p.category?.toLowerCase() === query.category.toLowerCase());
     }

@@ -27,18 +27,52 @@ export function saveFeaturedOverride(id, isFeatured) {
   }
 }
 
+const SEED_TITLES = new Set([
+  "semi mangalagiri saree",
+  "kanchipuram silk saree",
+  "exotic chanderi saree",
+  "pure cotton handloom saree",
+  "thoranam exclusive zari weave",
+  "aqua bloom – pure kota french knot saree",
+  "aqua blossom – neem silk festive saree",
+  "pastel radiance – chanderi silk saree",
+  "chettinad 80 count heritage cotton",
+  "illampillai zari border cotton saree",
+  "mangalagiri pattu border cotton saree",
+  "banarasi silk brocade grand saree",
+  "mysore crepe silk gold zari saree",
+  "dharmavaram festive silk saree",
+  "semi kanchipuram brocade saree",
+  "semi raw silk contemporary saree",
+  "semi tussar embroidered saree",
+  "thoranam signature coimbatore cotton",
+  "thoranam royal brocade festive saree",
+  "thoranam hand-painted kalamkari saree",
+  "chettinad 120 count royal cotton saree",
+  "handloom linen cotton pastel saree",
+  "organic mul cotton daily grace saree",
+]);
+
+export function isSeedProduct(p) {
+  if (!p) return false;
+  const titleLow = (p.title || "").trim().toLowerCase();
+  return SEED_TITLES.has(titleLow);
+}
+
 export async function fetchProductsFromDb() {
   try {
     const res = await fetch(getApiUrl("/api/products"));
     if (!res.ok) throw new Error("Network response was not ok");
     const json = await res.json();
     if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      // Exclude any legacy seed products
+      const cleanDbData = json.data.filter((p) => !isSeedProduct(p));
       const local = getLocalProducts();
       const localMap = new Map(local.map((p) => [String(p.id), p]));
       const overrides = getFeaturedOverrides();
 
       // Merge db items with user's local edits and featured overrides
-      const merged = json.data.map((dbProduct) => {
+      const merged = cleanDbData.map((dbProduct) => {
         const localProduct = localMap.get(String(dbProduct.id));
         let combined = { ...dbProduct };
 
@@ -57,9 +91,9 @@ export async function fetchProductsFromDb() {
         return combined;
       });
 
-      const dbIds = new Set(json.data.map((p) => String(p.id)));
+      const dbIds = new Set(cleanDbData.map((p) => String(p.id)));
       const locallyAdded = local.filter((p) => !dbIds.has(String(p.id)));
-      const finalMerged = [...locallyAdded, ...merged];
+      const finalMerged = [...locallyAdded, ...merged].filter((p) => !isSeedProduct(p));
       saveLocalProducts(finalMerged, false);
       return finalMerged;
     }
@@ -150,7 +184,9 @@ function getLocalProducts() {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((p) => {
+        // Exclude seed products from local storage cache
+        const clean = parsed.filter((p) => !isSeedProduct(p));
+        return clean.map((p) => {
           if (overrides[String(p.id)] !== undefined) {
             return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
           }
@@ -161,7 +197,7 @@ function getLocalProducts() {
   } catch (e) {
     console.error(e);
   }
-  return INITIAL_PRODUCTS.map((p) => {
+  return INITIAL_PRODUCTS.filter((p) => !isSeedProduct(p)).map((p) => {
     if (overrides[String(p.id)] !== undefined) {
       return { ...p, isFeatured: Boolean(overrides[String(p.id)]) };
     }
