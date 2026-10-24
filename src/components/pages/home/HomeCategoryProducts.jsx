@@ -6,10 +6,10 @@ import { ChevronRight, ArrowRight, Sparkles } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { getApiUrl } from "@/config";
-import { INITIAL_CATEGORIES } from "@/lib/categories";
+import { MAIN_NAV_MENUS } from "@/lib/navigation";
 
 export default function HomeCategoryProducts() {
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState(MAIN_NAV_MENUS);
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -29,7 +29,24 @@ export default function HomeCategoryProducts() {
 
         if (isMounted) {
           if (catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
-            setCategories(catJson.data);
+            // Check if API returned 6 main categories or 17 categories
+            if (catJson.data.length <= 8) {
+              // It's the 6 main categories from cPanel
+              // Merge with MAIN_NAV_MENUS subcategories
+              const merged = catJson.data.map((c) => {
+                const navMatch = MAIN_NAV_MENUS.find(
+                  (m) => m.label.toLowerCase() === c.label?.toLowerCase() || m.id === c.id
+                );
+                return {
+                  ...c,
+                  subcategories: (c.subcategories && c.subcategories.length > 0) ? c.subcategories : (navMatch?.subcategories || []),
+                };
+              });
+              setCategories(merged);
+            } else {
+              // It returned the 17 raw categories, so keep MAIN_NAV_MENUS as the 6 showcase sections
+              setCategories(MAIN_NAV_MENUS);
+            }
           }
           if (prodJson.success && Array.isArray(prodJson.data)) {
             setProducts(prodJson.data);
@@ -61,13 +78,22 @@ export default function HomeCategoryProducts() {
     const catLabel = (cat.label || cat.name || "").trim().toLowerCase();
     const catId = (cat.id || "").trim().toLowerCase();
 
-    // 1. Search products from DB matching this category
+    // 1. Search products matching this category directly or through its subcategories
+    const subLabels = Array.isArray(cat.subcategories)
+      ? cat.subcategories.map((s) => (s.label || s.name || "").trim().toLowerCase())
+      : [];
+
     const matched = products.filter((p) => {
       const pCat = (p.category || "").trim().toLowerCase();
+      const pCatClean = pCat.replace(/-/g, " ");
+      const catLabelClean = catLabel.replace(/-/g, " ");
+
       return (
         pCat === catLabel ||
         pCat === catId ||
-        pCat.replace(/-/g, " ") === catLabel.replace(/-/g, " ")
+        pCatClean === catLabelClean ||
+        subLabels.includes(pCat) ||
+        subLabels.includes(pCatClean)
       );
     });
 
