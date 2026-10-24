@@ -7,9 +7,16 @@ const next = require("next");
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcryptjs");
 
-const dev = process.env.NODE_ENV !== "production";
+const fs = require("fs");
+const path = require("path");
+
+// Auto-detect production build: if .next/BUILD_ID doesn't exist (e.g. fresh cPanel pull), fallback to dev mode to prevent 503 crash
+const hasProductionBuild = fs.existsSync(path.join(__dirname, ".next", "BUILD_ID"));
+const dev = !hasProductionBuild || process.env.NODE_ENV === "development";
 const hostname = "localhost";
 const port = process.env.PORT || 3000;
+
+console.log(`[Server] Starting Next.js app (dev mode: ${dev}, hasProductionBuild: ${hasProductionBuild})`);
 
 // Direct Database Synchronizer (Runs on server startup in cPanel)
 async function ensureTablesExist() {
@@ -156,5 +163,20 @@ app.prepare().then(async () => {
     if (err) throw err;
     console.log(`> Ready on http://${hostname}:${port}`);
     console.log(`> Allowed Live Origins:`, ALLOWED_ORIGINS);
+  });
+}).catch((err) => {
+  console.error("[CRITICAL Startup Error] Next.js failed to prepare:", err);
+  // Fallback server to prevent LiteSpeed 503 Service Unavailable crash
+  createServer((req, res) => {
+    res.statusCode = 500;
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.end(JSON.stringify({ 
+      error: "Thoranam Server Initialization Error", 
+      message: err.message,
+      suggestion: "Please check stderr.log or run in development mode."
+    }));
+  }).listen(port, () => {
+    console.log(`[Emergency Server] Listening on http://${hostname}:${port}`);
   });
 });
