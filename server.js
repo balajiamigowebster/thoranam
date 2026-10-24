@@ -107,7 +107,10 @@ async function ensureTablesExist() {
   }
 }
 
-const app = next({ dev, hostname, port });
+// Turbopack requires native binary bindings not available on cPanel Linux/x64.
+// Force Webpack mode so Next.js runs seamlessly in dev mode without native binding crashes.
+delete process.env.TURBOPACK;
+const app = next({ dev, hostname, port, webpack: true });
 const handle = app.getRequestHandler();
 
 const ALLOWED_ORIGINS = [
