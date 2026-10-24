@@ -84,11 +84,6 @@ export default function ProductModal({
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [galleryUploadPercent, setGalleryUploadPercent] = useState(0);
 
-  // Submission progress state
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitPercent, setSubmitPercent] = useState(0);
-  const [submitStage, setSubmitStage] = useState("");
-
   const mainFileInputRef = useRef(null);
   const galleryFileInputRef = useRef(null);
 
@@ -223,17 +218,13 @@ export default function ProductModal({
     }));
   };
 
-  // Submit with percentage progress indicator
-  const handleSubmit = async (e) => {
+  // Submit handler
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!formData.title.trim()) {
       alert("Please enter a Product Title.");
       return;
     }
-
-    setIsSubmitting(true);
-    setSubmitPercent(15);
-    setSubmitStage("Formatting saree specifications & highlights...");
 
     const cleanedData = {
       ...formData,
@@ -247,42 +238,8 @@ export default function ProductModal({
       })(),
     };
 
-    try {
-      // Simulate smooth progress ramp-up while backend processes
-      const interval = setInterval(() => {
-        setSubmitPercent((prev) => {
-          if (prev < 40) {
-            setSubmitStage("Uploading media assets & connecting to MySQL...");
-            return prev + 10;
-          }
-          if (prev < 75) {
-            setSubmitStage("Writing saree record to live database...");
-            return prev + 8;
-          }
-          if (prev < 90) {
-            setSubmitStage("Synchronizing boutique inventory catalog...");
-            return prev + 3;
-          }
-          return prev;
-        });
-      }, 150);
-
-      await onSave(cleanedData);
-      clearInterval(interval);
-
-      setSubmitPercent(100);
-      setSubmitStage("Saree Product Saved Successfully!");
-
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setSubmitPercent(0);
-        onClose();
-      }, 400);
-    } catch (err) {
-      setIsSubmitting(false);
-      setSubmitPercent(0);
-      alert(err.message || "Failed to save product");
-    }
+    onSave(cleanedData);
+    onClose();
   };
 
   return (
@@ -291,60 +248,6 @@ export default function ProductModal({
         className="relative w-full max-w-4xl bg-white rounded-3xl shadow-2xl border border-slate-100 overflow-hidden my-auto flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Animated Submission Progress Overlay */}
-        {isSubmitting && (
-          <div className="absolute inset-0 z-50 bg-white/95 backdrop-blur-md rounded-3xl flex flex-col items-center justify-center p-8 space-y-6 animate-in fade-in duration-200">
-            <div className="relative flex items-center justify-center">
-              <svg className="w-28 h-28 transform -rotate-90">
-                <circle
-                  cx="56"
-                  cy="56"
-                  r="46"
-                  stroke="currentColor"
-                  strokeWidth="7"
-                  className="text-stone-100"
-                  fill="transparent"
-                />
-                <circle
-                  cx="56"
-                  cy="56"
-                  r="46"
-                  stroke="currentColor"
-                  strokeWidth="7"
-                  className="text-[#800F17] transition-all duration-300 ease-out"
-                  fill="transparent"
-                  strokeDasharray={289}
-                  strokeDashoffset={289 - (289 * submitPercent) / 100}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-2xl font-black text-slate-900 tracking-tight">
-                  {submitPercent}%
-                </span>
-                <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                  Upload
-                </span>
-              </div>
-            </div>
-
-            <div className="text-center space-y-1.5 max-w-sm">
-              <h3 className="text-base font-bold text-slate-900">
-                {editingProduct ? "Updating Saree..." : "Publishing New Saree..."}
-              </h3>
-              <p className="text-xs text-slate-500 font-medium animate-pulse">
-                {submitStage}
-              </p>
-            </div>
-
-            <div className="w-72 bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200 shadow-inner">
-              <div
-                className="bg-gradient-to-r from-[#800F17] via-amber-600 to-emerald-600 h-full transition-all duration-300 rounded-full"
-                style={{ width: `${submitPercent}%` }}
-              />
-            </div>
-          </div>
-        )}
         {/* Modal Header */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-stone-50 via-white to-amber-50/30">
           <div className="flex items-center gap-3">

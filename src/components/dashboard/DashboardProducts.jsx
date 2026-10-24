@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Search, Edit3, Trash2, Eye, Sparkles, Database } from "lucide-react";
+import { Plus, Search, Edit3, Trash2, Eye, Sparkles, Database, Loader2, CheckCircle2 } from "lucide-react";
 import ProductModal from "./ProductModal";
 import {
   getStoredProducts,
@@ -37,6 +37,9 @@ export default function DashboardProducts() {
     const init = getStoredProducts();
     return !init || init.length === 0;
   });
+
+  // Small loading progress indicator area state (left side of Add New Saree button)
+  const [uploadState, setUploadState] = useState({ isUploading: false, percent: 0, message: "" });
 
   useEffect(() => {
     let active = true;
@@ -100,9 +103,32 @@ export default function DashboardProducts() {
     if (selectedCategory !== "all" && productData.category !== selectedCategory) {
       setSelectedCategory("all");
     }
-    await saveProductToDb(productData);
-    const refreshed = await fetchProductsFromDb();
-    setProducts(refreshed);
+    
+    // Animate progress on the small indicator next to the Add Saree button
+    setUploadState({ isUploading: true, percent: 18, message: "Saving Saree..." });
+
+    const interval = setInterval(() => {
+      setUploadState((prev) => {
+        if (!prev.isUploading) return prev;
+        if (prev.percent < 85) return { ...prev, percent: prev.percent + 14 };
+        return prev;
+      });
+    }, 180);
+
+    try {
+      await saveProductToDb(productData);
+      clearInterval(interval);
+      setUploadState({ isUploading: true, percent: 100, message: "Published!" });
+      const refreshed = await fetchProductsFromDb();
+      setProducts(refreshed);
+      setTimeout(() => {
+        setUploadState({ isUploading: false, percent: 0, message: "" });
+      }, 2000);
+    } catch (err) {
+      clearInterval(interval);
+      setUploadState({ isUploading: false, percent: 0, message: "" });
+      alert(err.message || "Failed to save product");
+    }
   };
 
   const handleToggleFeatured = async (product) => {
@@ -152,13 +178,45 @@ export default function DashboardProducts() {
               Manage boutique inventory, descriptions, highlights, and gallery assets (synced with phpMyAdmin)
             </p>
           </div>
-          <button
-            onClick={handleOpenAddModal}
-            className="inline-flex items-center gap-2 bg-[#800F17] text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-[#660C12] transition-colors shadow-xs active:scale-[0.98]"
-          >
-            <Plus className="w-4 h-4" />
-            Add New Saree
-          </button>
+
+          {/* Right Action Container: Small Loading Progress Area + Add New Saree Button */}
+          <div className="flex items-center gap-3">
+            {uploadState.isUploading && (
+              <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-stone-50 to-amber-50/70 border border-amber-200/90 shadow-2xs animate-in fade-in duration-200">
+                {uploadState.percent < 100 ? (
+                  <Loader2 className="w-3.5 h-3.5 text-[#800F17] animate-spin shrink-0" />
+                ) : (
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                )}
+                <div className="flex flex-col min-w-[90px]">
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-800 leading-none">
+                    <span>{uploadState.message}</span>
+                    <span className={uploadState.percent === 100 ? "text-emerald-700 font-mono text-[10px]" : "text-[#800F17] font-mono text-[10px]"}>
+                      {uploadState.percent}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200/80 rounded-full h-1 mt-1 overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-200 rounded-full ${
+                        uploadState.percent === 100
+                          ? "bg-emerald-600"
+                          : "bg-gradient-to-r from-[#800F17] to-amber-600"
+                      }`}
+                      style={{ width: `${uploadState.percent}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={handleOpenAddModal}
+              className="inline-flex items-center gap-2 bg-[#800F17] text-white text-xs font-semibold px-4 py-2.5 rounded-xl hover:bg-[#660C12] transition-colors shadow-xs active:scale-[0.98] shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+              Add New Saree
+            </button>
+          </div>
         </div>
 
         {/* Filter and Search Bar */}
