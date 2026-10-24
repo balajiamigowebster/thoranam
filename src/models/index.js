@@ -24,6 +24,10 @@ export async function syncDatabase(options = {}) {
     AdminUser,
   };
 
+  if (isSynced && !options.force && !options.alter) {
+    return;
+  }
+
   if (!isSynced || options.force || options.alter) {
     try {
       await sequelize.authenticate();
@@ -38,6 +42,12 @@ export async function syncDatabase(options = {}) {
       } catch (colErr) {
         // If column already exists (Error 1060: Duplicate column name), that's expected and safe
       }
+
+      try {
+        await sequelize.query(`
+          ALTER TABLE products MODIFY COLUMN main_image TEXT;
+        `);
+      } catch (modErr) {}
 
       isSynced = true;
       console.log("Sequelize: All models synchronized with MySQL successfully.");

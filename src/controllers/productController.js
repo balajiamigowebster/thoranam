@@ -9,7 +9,6 @@ export const productController = {
   // Get all products with optional filters
   async getAllProducts(query = {}) {
     try {
-      await syncDatabase();
       const where = {};
       if (query.category && query.category !== "all") {
         where.category = query.category;
@@ -21,10 +20,20 @@ export const productController = {
         ];
       }
 
-      let products = await Product.findAll({
-        where,
-        order: [["id", "ASC"]],
-      });
+      let products;
+      try {
+        products = await Product.findAll({
+          where,
+          order: [["id", "ASC"]],
+        });
+      } catch (findErr) {
+        console.warn("[Products] Direct query failed, synchronizing DB schema:", findErr.message);
+        await syncDatabase();
+        products = await Product.findAll({
+          where,
+          order: [["id", "ASC"]],
+        });
+      }
 
       if (products) {
         const formatted = products.map((p) => formatProduct(p.toJSON()));
@@ -51,8 +60,7 @@ export const productController = {
   // Get single product by ID
   async getProductById(id) {
     try {
-      await syncDatabase();
-      const product = await Product.findByPk(id);
+      let product = await Product.findByPk(id);
       if (product) return formatProduct(product.toJSON());
     } catch (dbErr) {
       console.warn("[Products] DB getProductById error, fallback to memory store:", dbErr.message);

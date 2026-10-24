@@ -11,22 +11,31 @@ import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
 export default function HomeCategoryProducts() {
   const [categories, setCategories] = useState(INITIAL_CATEGORIES);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(getStoredProducts);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadData() {
+      // 1. Fetch products directly and immediately (fast path)
       try {
-        const [catRes, prodData] = await Promise.all([
-          fetch(getApiUrl("/api/categories")),
-          fetchProductsFromDb(),
-        ]);
+        const prodData = await fetchProductsFromDb();
+        if (isMounted && Array.isArray(prodData)) {
+          setProducts(prodData);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.error("Error loading category products:", err);
+        if (isMounted) setIsLoading(false);
+      }
 
-        const catJson = await catRes.json();
-
-        if (isMounted) {
-          if (catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
+      // 2. Fetch categories independently without blocking products render
+      try {
+        const catRes = await fetch(getApiUrl("/api/categories"));
+        if (catRes.ok) {
+          const catJson = await catRes.json();
+          if (isMounted && catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
             let list = [...catJson.data];
             const fancyIdx = list.findIndex(
               (c) =>
@@ -40,12 +49,9 @@ export default function HomeCategoryProducts() {
             }
             setCategories(list);
           }
-          if (Array.isArray(prodData)) {
-            setProducts(prodData);
-          }
         }
-      } catch (err) {
-        console.error("Error loading category showcase data:", err);
+      } catch (catErr) {
+        // Fall back to INITIAL_CATEGORIES
       }
     }
 
@@ -67,7 +73,7 @@ export default function HomeCategoryProducts() {
     };
   }, []);
 
-  // Filter products strictly for each category (matching id, label, or name)
+  // Filter products for each category (matching id, label, or name)
   const getCategoryProducts = (cat) => {
     const catLabel = (cat.label || cat.name || "").trim().toLowerCase();
     const catId = (cat.id || "").trim().toLowerCase();
@@ -100,10 +106,10 @@ export default function HomeCategoryProducts() {
         return true;
       }
 
-      // Keyword matching on product title for traditional saree weaves
+      // Keyword matching on product title or category for traditional saree weaves
       const pTitle = (p.title || "").toLowerCase();
       if ((catId === "fancy-saree" || catNorm.includes("fancy")) && (pCatNorm.includes("fancy") || pTitle.includes("fancy"))) return true;
-      if (catId === "bamboo-cotton-silk" && (pCatNorm.includes("bamboo") || pTitle.includes("bamboo"))) return true;
+      if ((catId === "bamboo-cotton-silk" || catNorm.includes("bamboo")) && (pCatNorm.includes("bamboo") || pTitle.includes("bamboo"))) return true;
       if (catId === "mangalagiri-cotton" && pTitle.includes("mangalagiri")) return true;
       if (catId === "chettinad-cotton" && pTitle.includes("chettinad")) return true;
       if (catId === "coimbatore-cotton" && pTitle.includes("coimbatore")) return true;
@@ -139,18 +145,82 @@ export default function HomeCategoryProducts() {
       }));
     }
 
-    // DO NOT GENERATE FAKE DEFAULT SAREES. Only real products added in the Dashboard will show.
     return [];
   };
 
-  // Only display categories that actually have products added in the Dashboard
-  const activeCategories = categories
-    .map((category) => ({
-      category,
-      items: getCategoryProducts(category),
-    }))
-    .filter(({ items }) => items && items.length > 0);
+  // Collect all active categories
+  const coveredProductIds = new Set();
+  const activeCategories = [];
 
+  categories.forEach((category) => {
+    const items = getCategoryProducts(category);
+    if (items && items.length > 0) {
+      items.forEach((p) => coveredProductIds.add(p.id));
+      activeCategories.push({
+        category,
+        items,
+      });
+    }
+  });
+
+  // Fail-safe: ensure any uploaded products whose category didn't match predefined list also appear
+  const remainingProducts = products.filter((p) => !coveredProductIds.has(p.id));
+  if (remainingProducts.length > 0) {
+    const customGrouped = {};
+    remainingProducts.forEach((p) => {
+      const catName = (p.category || "Exclusive Sarees").trim();
+      if (!customGrouped[catName]) customGrouped[catName] = [];
+      customGrouped[catName].push(p);
+    });
+
+    Object.entries(customGrouped).forEach(([catName, items]) => {
+      activeCategories.push({
+        category: {
+          id: catName.toLowerCase().replace(/\s+/g, "-"),
+          label: catName,
+          name: catName,
+          href: `/products?cat=${encodeURIComponent(catName)}`,
+        },
+        items: items.slice(0, 4),
+      });
+    });
+  }
+
+  // Elegant luxury skeleton loader while initially fetching products
+  if (isLoading && products.length === 0) {
+    return (
+      <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 space-y-16">
+        <Container>
+          <div className="space-y-6 sm:space-y-8 animate-pulse">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2">
+              <div className="space-y-2">
+                <div className="h-5 w-28 bg-rose-100 dark:bg-rose-950/60 rounded-full" />
+                <div className="h-7 sm:h-9 w-60 bg-stone-200 dark:bg-slate-800 rounded-lg" />
+                <div className="h-4 w-72 bg-stone-100 dark:bg-slate-800/60 rounded" />
+              </div>
+              <div className="h-9 w-28 bg-stone-200 dark:bg-slate-800 rounded-full" />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6 lg:gap-7">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 border border-stone-200/80 dark:border-slate-800/80 flex flex-col justify-between"
+                >
+                  <div className="aspect-[4/5] w-full rounded-lg sm:rounded-xl bg-stone-200 dark:bg-slate-800 animate-pulse relative overflow-hidden" />
+                  <div className="pt-3 space-y-2">
+                    <div className="h-4 w-3/4 bg-stone-200 dark:bg-slate-800 rounded" />
+                    <div className="h-4 w-1/3 bg-rose-200/70 dark:bg-slate-800 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Container>
+      </section>
+    );
+  }
+
+  // If no products exist in the store, don't show empty collection boxes
   if (activeCategories.length === 0) {
     return null;
   }
@@ -198,7 +268,7 @@ export default function HomeCategoryProducts() {
                 </Link>
               </div>
 
-              {/* Real Saree Product Cards Grid */}
+              {/* Real Saree Product Cards Grid with Lazy Loading */}
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6 lg:gap-7">
                 {items.map((item) => (
                   <ProductCard

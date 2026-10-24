@@ -29,6 +29,7 @@ export default function ProductCard({
   const { triggerAddToCartAnimation } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isImgLoaded, setIsImgLoaded] = useState(false);
 
   const productHref = href || `/products/${id}`;
   const displayImage = getAssetUrl(image) || "/images/product-1.jpg";
@@ -72,14 +73,27 @@ export default function ProductCard({
       {/* Luxury Golden Border Glow on Hover */}
       <div className="absolute inset-0 rounded-xl sm:rounded-2xl border-2 border-transparent group-hover:border-amber-300/60 pointer-events-none transition-colors duration-300 z-30" />
 
-      {/* Top Product Image Showcase Frame (Tall Luxury 4:5 Portrait Aspect Ratio) */}
+      {/* Top Product Image Showcase Frame (Tall Luxury 4:5 Portrait Aspect Ratio with Lazy Loading) */}
       <div className="relative aspect-[4/5] w-full rounded-lg sm:rounded-xl overflow-hidden bg-stone-100 dark:bg-slate-800">
-        <Link href={productHref} className="block w-full h-full">
+        <Link href={productHref} className="block w-full h-full relative">
+          {/* Shimmer skeleton while image lazy loads */}
+          {!isImgLoaded && (
+            <div className="absolute inset-0 bg-stone-200/80 dark:bg-slate-800 animate-pulse flex items-center justify-center">
+              <div className="w-5 h-5 rounded-full border-2 border-[#800F17]/30 border-t-[#800F17] animate-spin" />
+            </div>
+          )}
+
           <img
             src={displayImage}
             alt={title || "Thoranam Saree"}
-            className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-500 ease-out"
+            loading="lazy"
+            decoding="async"
+            onLoad={() => setIsImgLoaded(true)}
+            className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-all duration-500 ease-out ${
+              isImgLoaded ? "opacity-100" : "opacity-0"
+            }`}
             onError={(e) => {
+              setIsImgLoaded(true);
               e.target.src = "/images/product-1.jpg";
             }}
           />

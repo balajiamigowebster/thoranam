@@ -36,7 +36,7 @@ export const Product = sequelize.define(
           defaultValue: "Published",
         },
         main_image: {
-          type: DataTypes.STRING(500),
+          type: DataTypes.TEXT,
           allowNull: true,
           defaultValue: "/images/product-1.jpg",
         },

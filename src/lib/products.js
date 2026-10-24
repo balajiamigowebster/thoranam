@@ -23,6 +23,9 @@ export function sortProductsChronological(list) {
   });
 }
 
+// In-memory client cache to serve instant renders without waiting for network roundtrips
+let clientProductsCache = null;
+
 // Fetch all products directly from the database API
 export async function fetchProductsFromDb() {
   try {
@@ -33,12 +36,14 @@ export async function fetchProductsFromDb() {
     if (!res.ok) throw new Error("Failed to fetch products from database");
     const json = await res.json();
     if (json.success && Array.isArray(json.data)) {
-      return sortProductsChronological(json.data);
+      const sorted = sortProductsChronological(json.data);
+      clientProductsCache = sorted;
+      return sorted;
     }
   } catch (err) {
     console.warn("Could not fetch products from database API:", err.message);
   }
-  return [];
+  return clientProductsCache || [];
 }
 
 // Save (create or update) product directly into the database
@@ -82,9 +87,9 @@ export async function deleteProductFromDb(productId) {
   return json;
 }
 
-// Helper stub for legacy imports (always returns empty array so initial state stays clean)
+// Helper stub for initial states (uses client cache for instant synchronous render if present)
 export function getStoredProducts() {
-  return [];
+  return clientProductsCache || [];
 }
 
 export function saveStoredProducts() {

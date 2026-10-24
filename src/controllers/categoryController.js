@@ -4,13 +4,23 @@ import { INITIAL_CATEGORIES, HOMEPAGE_BROWSE_CATEGORIES } from "@/lib/categories
 export const categoryController = {
   async getAllCategories() {
     try {
-      await syncDatabase();
-      let categories = await Category.findAll({
-        order: [
-          ["sort_order", "ASC"],
-          ["created_at", "ASC"],
-        ],
-      });
+      let categories;
+      try {
+        categories = await Category.findAll({
+          order: [
+            ["sort_order", "ASC"],
+            ["created_at", "ASC"],
+          ],
+        });
+      } catch (findErr) {
+        await syncDatabase();
+        categories = await Category.findAll({
+          order: [
+            ["sort_order", "ASC"],
+            ["created_at", "ASC"],
+          ],
+        });
+      }
 
       if (categories.length === 0) {
         let idx = 0;
