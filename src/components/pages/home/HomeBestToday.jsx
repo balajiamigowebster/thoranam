@@ -67,8 +67,10 @@ export default function HomeBestToday() {
       }
     }
     loadProducts();
+    window.addEventListener("thoranam_products_updated", loadProducts);
     return () => {
       active = false;
+      window.removeEventListener("thoranam_products_updated", loadProducts);
     };
   }, []);
 

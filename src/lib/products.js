@@ -9,9 +9,14 @@ export async function fetchProductsFromDb() {
     const res = await fetch(getApiUrl("/api/products"));
     if (!res.ok) throw new Error("Network response was not ok");
     const json = await res.json();
-    if (json.success && Array.isArray(json.data)) {
-      saveLocalProducts(json.data, false);
-      return json.data;
+    if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+      // Merge with local items so locally added items are never erased
+      const local = getLocalProducts();
+      const dbIds = new Set(json.data.map((p) => String(p.id)));
+      const locallyAdded = local.filter((p) => !dbIds.has(String(p.id)));
+      const merged = [...locallyAdded, ...json.data];
+      saveLocalProducts(merged, false);
+      return merged;
     }
   } catch (err) {
     console.warn("Could not fetch products from MySQL API, falling back to local storage:", err.message);
@@ -20,6 +25,7 @@ export async function fetchProductsFromDb() {
 }
 
 export async function saveProductToDb(productData) {
+  let savedData = null;
   try {
     const isEdit = Boolean(productData.id);
     const method = isEdit ? "PUT" : "POST";
@@ -31,27 +37,27 @@ export async function saveProductToDb(productData) {
     });
     const json = await res.json();
     if (json.success && json.data) {
-      window.dispatchEvent(new Event("thoranam_products_updated"));
-      return json.data;
+      savedData = json.data;
     } else {
-      console.error("API error saving product:", json.message);
+      console.warn("API response warning:", json.message);
     }
   } catch (err) {
-    console.warn("Could not save product to MySQL API:", err.message);
+    console.warn("Could not save product to API:", err.message);
   }
 
-  // Fallback to local save
+  // Always persist to local store so additions/checkboxes never disappear
+  const finalItem = savedData || productData;
   const current = getLocalProducts();
   let updated;
-  const idx = current.findIndex((p) => p.id === productData.id);
+  const idx = current.findIndex((p) => String(p.id) === String(finalItem.id));
   if (idx >= 0) {
     updated = [...current];
-    updated[idx] = productData;
+    updated[idx] = { ...updated[idx], ...finalItem };
   } else {
-    updated = [{ ...productData, id: productData.id || Date.now() }, ...current];
+    updated = [{ ...finalItem, id: finalItem.id || Date.now() }, ...current];
   }
-  saveLocalProducts(updated);
-  return productData;
+  saveLocalProducts(updated, true);
+  return finalItem;
 }
 
 export async function deleteProductFromDb(productId) {
