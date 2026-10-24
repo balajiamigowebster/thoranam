@@ -27,8 +27,18 @@ export async function syncDatabase(options = {}) {
   if (!isSynced || options.force || options.alter) {
     try {
       await sequelize.authenticate();
-      // Synchronize all registered models with database and safely update column types
+      // Synchronize all registered models with database
       await sequelize.sync({ alter: true, ...options });
+
+      // Explicit fail-safe for cPanel MySQL environments where sync({ alter: true }) skips silently:
+      try {
+        await sequelize.query(`
+          ALTER TABLE products ADD COLUMN is_featured TINYINT(1) NOT NULL DEFAULT 0;
+        `);
+      } catch (colErr) {
+        // If column already exists (Error 1060: Duplicate column name), that's expected and safe
+      }
+
       isSynced = true;
       console.log("Sequelize: All models synchronized with MySQL successfully.");
     } catch (error) {
@@ -36,6 +46,14 @@ export async function syncDatabase(options = {}) {
       // Fallback without alter if alter is restricted by DB user permissions
       try {
         await sequelize.sync();
+
+        // Still attempt safe column addition in fallback mode
+        try {
+          await sequelize.query(`
+            ALTER TABLE products ADD COLUMN is_featured TINYINT(1) NOT NULL DEFAULT 0;
+          `);
+        } catch (colErr) {}
+
         isSynced = true;
       } catch (innerErr) {
         console.error("Sequelize fallback sync error:", innerErr);

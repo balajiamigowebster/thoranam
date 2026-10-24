@@ -69,6 +69,14 @@ export default function ProductModal({
     getInitialFormData(editingProduct, categories)
   );
 
+  // Re-sync form state whenever modal is opened or product changes
+  useEffect(() => {
+    if (isOpen) {
+      setFormData(getInitialFormData(editingProduct, categories));
+      setActiveTab("details");
+    }
+  }, [isOpen, editingProduct, categories]);
+
   const [activeTab, setActiveTab] = useState("details"); // 'details' | 'description' | 'media' | 'specs'
   const [newHighlightInput, setNewHighlightInput] = useState("");
   const [isUploadingMain, setIsUploadingMain] = useState(false);
