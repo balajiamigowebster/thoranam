@@ -67,7 +67,7 @@ export default function Navbar({ className = "" }) {
 
   return (
     <nav
-      className={`w-full bg-white border-b border-rose-100/70 shadow-xs relative ${className}`}
+      className={`hidden md:block w-full bg-white border-b border-rose-100/70 shadow-xs relative ${className}`}
       onMouseLeave={() => setHoveredMenu(null)}
     >
       {/* 

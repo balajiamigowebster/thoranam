@@ -226,14 +226,16 @@ export default function Header() {
         )}
       </div>
 
-      {/* 3. Category Navbar */}
-      <Suspense fallback={<div className="h-10 bg-white" />}>
-        <Navbar />
+      {/* 3. Category Navbar (Desktop / Tablet only - hidden on mobile view) */}
+      <Suspense fallback={<div className="hidden md:block h-10 bg-white" />}>
+        <div className="hidden md:block">
+          <Navbar />
+        </div>
       </Suspense>
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[110px] bg-slate-900/60 z-50 backdrop-blur-xs transition-opacity duration-300">
+        <div className="md:hidden fixed inset-0 top-[96px] bg-slate-900/60 z-50 backdrop-blur-xs transition-opacity duration-300">
           <div className="bg-white w-[85%] max-w-sm h-full p-5 shadow-2xl flex flex-col justify-between overflow-y-auto">
             <div>
               <div className="flex items-center justify-between pb-3 mb-3 border-b border-rose-100">
