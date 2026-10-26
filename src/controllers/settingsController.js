@@ -1,13 +1,20 @@
 import { StoreSetting, syncDatabase } from "@/models";
 
+let settingsCache = null;
+let settingsCacheExpiry = 0;
+
 export const settingsController = {
   async getSettings() {
+    const now = Date.now();
+    if (settingsCache && now < settingsCacheExpiry) {
+      return settingsCache;
+    }
+
     try {
-      await syncDatabase();
       const rows = await StoreSetting.findAll();
       const settings = {};
       rows.forEach((r) => {
-        const data = r.toJSON();
+        const data = r.toJSON ? r.toJSON() : r;
         try {
           settings[data.setting_key] =
             typeof data.setting_value === "string"
@@ -17,10 +24,12 @@ export const settingsController = {
           settings[data.setting_key] = data.setting_value;
         }
       });
+      settingsCache = settings;
+      settingsCacheExpiry = now + 60000; // 60s cache
       return settings;
     } catch (dbErr) {
       console.warn("[Settings] DB error, returning empty settings:", dbErr.message);
-      return {};
+      return settingsCache || {};
     }
   },
 
@@ -37,6 +46,8 @@ export const settingsController = {
         });
       }
     }
+    settingsCache = null;
+    settingsCacheExpiry = 0;
     return { success: true };
   },
 };

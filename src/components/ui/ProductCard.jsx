@@ -173,12 +173,6 @@ export default function ProductCard({
               </span>
             )}
           </div>
-
-          {stock && (
-            <span className="hidden sm:inline-block text-[10px] sm:text-[11px] text-stone-400 font-normal">
-              {typeof stock === "number" ? `${stock} in stock` : stock}
-            </span>
-          )}
         </div>
       </div>
     </div>

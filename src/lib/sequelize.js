@@ -22,16 +22,19 @@ export function getSequelize() {
       dialectModule: mysql2,
       logging: false,
       pool: {
-        max: 5,
+        max: 3,
         min: 0,
-        acquire: 10000,
-        idle: 5000,
+        acquire: 5000,
+        idle: 2000,
+        evict: 2000,
       },
       retry: {
         max: 2,
       },
       dialectOptions: {
-        connectTimeout: 8000,
+        connectTimeout: 5000,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 10000,
       },
     });
   }

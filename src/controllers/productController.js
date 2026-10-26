@@ -16,6 +16,19 @@ export function invalidateProductsCache() {
   productsCache.singleMap.clear();
 }
 
+// Helper to ensure database queries never hang the serverless runtime or client indefinitely
+async function withTimeout(promise, ms = 4500) {
+  let timer;
+  const timeoutPromise = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error("Database query timed out")), ms);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Controller for Product operations - STRICTLY CONNECTS ONLY TO MYSQL DATABASE
 export const productController = {
   // Get all products directly from MySQL database with optional filters
@@ -41,22 +54,24 @@ export const productController = {
 
     let products;
     try {
-      products = await Product.findAll({
-        where,
-        order: [["id", "ASC"]],
-      });
+      products = await withTimeout(
+        Product.findAll({
+          where,
+          order: [["id", "ASC"]],
+        }),
+        4500
+      );
     } catch (findErr) {
-      console.warn("[Products DB] Table or query uninitialized, synchronizing schema:", findErr.message);
-      await syncDatabase();
-      products = await Product.findAll({
-        where,
-        order: [["id", "ASC"]],
-      });
+      console.warn("[Products DB] Query failed or timed out:", findErr.message);
+      if (productsCache.data && productsCache.data.length > 0) {
+        return productsCache.data;
+      }
+      return [];
     }
 
     const formatted = (products || []).map((p) => formatProduct(p.toJSON()));
 
-    if (isUnfiltered) {
+    if (isUnfiltered && formatted.length > 0) {
       productsCache.data = formatted;
       productsCache.timestamp = now;
       // Also prime individual product cache map
@@ -78,11 +93,15 @@ export const productController = {
       return cached.data;
     }
 
-    const product = await Product.findByPk(id);
-    if (product) {
-      const formatted = formatProduct(product.toJSON());
-      productsCache.singleMap.set(key, { data: formatted, timestamp: now });
-      return formatted;
+    try {
+      const product = await withTimeout(Product.findByPk(id), 4500);
+      if (product) {
+        const formatted = formatProduct(product.toJSON());
+        productsCache.singleMap.set(key, { data: formatted, timestamp: now });
+        return formatted;
+      }
+    } catch (e) {
+      console.warn("[Products DB] getProductById timed out or failed:", e.message);
     }
 
     // Try finding by slug from cache if available
