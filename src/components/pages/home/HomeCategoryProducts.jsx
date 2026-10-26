@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { INITIAL_CATEGORIES } from "@/lib/categories";
@@ -20,6 +20,177 @@ const PARENT_CATEGORY_KEYS = [
   "thoranam-collection",
   "thoranam-exclusive",
 ];
+
+// Single Category Showcase Row with Premium Carousel & Navigation Arrows
+function CategorySection({ submenu, items, idx }) {
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    // Allow slight tolerance of 6px
+    setCanScrollLeft(scrollLeft > 6);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 6);
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const handleResize = () => checkScroll();
+    window.addEventListener("resize", handleResize);
+    // Timeout to recalculate when cards and images mount
+    const timer = setTimeout(checkScroll, 350);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      clearTimeout(timer);
+    };
+  }, [items]);
+
+  const handleScroll = (direction) => {
+    if (!scrollRef.current) return;
+    const container = scrollRef.current;
+    const firstCard = container.querySelector(":scope > div");
+    const gap = window.innerWidth >= 1024 ? 28 : window.innerWidth >= 768 ? 24 : 14;
+    const cardWidth = firstCard ? firstCard.offsetWidth : 280;
+    // On desktop slide 2 cards, on mobile/tablet slide 1-2 cards
+    const isDesktop = window.innerWidth >= 1024;
+    const scrollStep = (cardWidth + gap) * (isDesktop ? 2 : 1);
+
+    container.scrollBy({
+      left: direction === "next" ? scrollStep : -scrollStep,
+      behavior: "smooth",
+    });
+  };
+
+  const submenuName = submenu.label || submenu.name;
+  const submenuHref =
+    submenu.href ||
+    `/products?cat=${encodeURIComponent(submenu.id || submenuName)}`;
+
+  const hasMultipleProducts = items.length > 4;
+
+  return (
+    <div
+      className={`space-y-6 sm:space-y-8 ${
+        idx > 0 ? "pt-12 sm:pt-16 border-t border-rose-100/70 dark:border-slate-800" : ""
+      }`}
+    >
+      {/* Submenu Header Row: Title & Subtitle on Left, Arrows & 'View More' on Right */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2">
+        <div className="space-y-1 sm:space-y-1.5">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#800F17] bg-rose-50 dark:bg-rose-950/40 px-2.5 py-0.5 rounded-full border border-rose-100/80 dark:border-rose-900/50">
+              <Sparkles className="w-3 h-3 text-[#AA771C]" />
+              Collection {String(idx + 1).padStart(2, "0")}
+            </span>
+            {items.length > 4 && (
+              <span className="text-[11px] font-semibold text-rose-800/80 bg-rose-100/70 dark:bg-rose-950/60 px-2.5 py-0.5 rounded-full">
+                {items.length} Designs
+              </span>
+            )}
+          </div>
+          <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#800F17] dark:text-rose-100 uppercase font-serif">
+            {submenuName}
+          </h3>
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300">
+            Handcrafted luxury sarees woven with timeless heritage and contemporary grace
+          </p>
+        </div>
+
+        {/* Right side: Premium Carousel Arrows + View More Button */}
+        <div className="flex items-center gap-3 self-start sm:self-end">
+          {/* Left / Right Carousel Arrows (Active whenever products exceed screen or 4+) */}
+          {(hasMultipleProducts || canScrollLeft || canScrollRight) && (
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <button
+                type="button"
+                onClick={() => handleScroll("prev")}
+                disabled={!canScrollLeft}
+                aria-label={`Previous ${submenuName} products`}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-rose-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#800F17] dark:text-rose-200 flex items-center justify-center hover:bg-rose-50 dark:hover:bg-slate-700 hover:border-[#800F17] disabled:opacity-25 disabled:cursor-not-allowed shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="Previous products"
+              >
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleScroll("next")}
+                disabled={!canScrollRight}
+                aria-label={`Next ${submenuName} products`}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-rose-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#800F17] dark:text-rose-200 flex items-center justify-center hover:bg-rose-50 dark:hover:bg-slate-700 hover:border-[#800F17] disabled:opacity-25 disabled:cursor-not-allowed shadow-xs transition-all active:scale-95 cursor-pointer"
+                title="Next products"
+              >
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
+              </button>
+            </div>
+          )}
+
+          {/* View More Button */}
+          <Link
+            href={submenuHref}
+            className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#800F17] hover:bg-[#680C13] text-white text-xs sm:text-sm font-semibold tracking-wide transition-all duration-300 shadow-sm hover:shadow-md active:scale-95 w-fit shrink-0"
+          >
+            <span>View More</span>
+            <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Product Cards Row / Carousel Track */}
+      <div className="relative group/carousel">
+        {/* Floating Side Arrow - Left (desktop hover) */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => handleScroll("prev")}
+            aria-label="Previous products"
+            className="hidden lg:flex absolute -left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 dark:bg-slate-800/95 text-[#800F17] dark:text-rose-200 border border-rose-200/90 dark:border-slate-700 shadow-lg items-center justify-center hover:scale-110 active:scale-95 transition-all cursor-pointer backdrop-blur-xs opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronLeft className="w-5 h-5 stroke-[2.2]" />
+          </button>
+        )}
+
+        {/* Floating Side Arrow - Right (desktop hover) */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => handleScroll("next")}
+            aria-label="Next products"
+            className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/95 dark:bg-slate-800/95 text-[#800F17] dark:text-rose-200 border border-rose-200/90 dark:border-slate-700 shadow-lg items-center justify-center hover:scale-110 active:scale-95 transition-all cursor-pointer backdrop-blur-xs opacity-0 group-hover/carousel:opacity-100"
+          >
+            <ChevronRight className="w-5 h-5 stroke-[2.2]" />
+          </button>
+        )}
+
+        {/* Horizontally scrollable product card track */}
+        <div
+          ref={scrollRef}
+          onScroll={checkScroll}
+          className="flex gap-3.5 sm:gap-6 lg:gap-7 overflow-x-auto scroll-smooth snap-x snap-mandatory py-2 -mx-1 px-1 scrollbar-none"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className="snap-start shrink-0 w-[calc((100%-0.875rem)/2)] md:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-5.25rem)/4)]"
+            >
+              <ProductCard
+                id={item.id}
+                title={item.title}
+                price={item.price}
+                image={item.mainImage || item.image || "/images/product-1.jpg"}
+                category={item.category || submenuName}
+                stock={item.stock}
+                href={item.href || `/products/${item.id}`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function HomeCategoryProducts({ initialProducts = [] }) {
   const [products, setProducts] = useState(() =>
@@ -57,7 +228,7 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
     };
   }, []);
 
-  // Filter REAL products strictly matching each submenu
+  // Filter REAL products strictly matching each submenu (NO slicing, return all)
   const getSubmenuProducts = (submenu) => {
     const subLabel = (submenu.label || submenu.name || "").trim().toLowerCase();
     const subId = (submenu.id || "").trim().toLowerCase();
@@ -104,13 +275,12 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       return false;
     });
 
-    // STRICT: ONLY return real products from MySQL. NO FAKE DEFAULT SHOWCASE SAREES!
-    return matched.slice(0, 4);
+    // Return ALL matching products without artificial limit
+    return matched;
   };
 
-  // Memoize activeSubmenus so filtering doesn't re-run on every scroll/state update
+  // Group products strictly into UNIQUE category collections (NO duplicates)
   const activeSubmenus = useMemo(() => {
-    // Only consider submenus (the 17 specific weave subcategories), excluding umbrella parent menus
     const submenus = INITIAL_CATEGORIES.filter((c) => {
       const id = (c.id || "").toLowerCase();
       const label = (c.label || c.name || "").toLowerCase();
@@ -121,7 +291,9 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
     const result = [];
 
     submenus.forEach((submenu) => {
-      const items = getSubmenuProducts(submenu);
+      const allMatched = getSubmenuProducts(submenu);
+      // Ensure products already assigned to a collection aren't repeated
+      const items = allMatched.filter((p) => !coveredProductIds.has(p.id));
       if (items && items.length > 0) {
         items.forEach((p) => coveredProductIds.add(p.id));
         result.push({
@@ -131,14 +303,13 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       }
     });
 
-    // Also include any user-created category from Dashboard that has products in MySQL
+    // Also include any custom category from Dashboard that has products in MySQL
     const remainingProducts = products.filter((p) => !coveredProductIds.has(p.id));
     if (remainingProducts.length > 0) {
       const customGrouped = {};
       remainingProducts.forEach((p) => {
         const catName = (p.category || "").trim();
         const catKey = catName.toLowerCase();
-        // Skip umbrella parent names
         if (!PARENT_CATEGORY_KEYS.includes(catKey) && catName) {
           if (!customGrouped[catName]) customGrouped[catName] = [];
           customGrouped[catName].push(p);
@@ -146,15 +317,25 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       });
 
       Object.entries(customGrouped).forEach(([catName, items]) => {
-        result.push({
-          submenu: {
-            id: catName.toLowerCase().replace(/\s+/g, "-"),
-            label: catName,
-            name: catName,
-            href: `/products?cat=${encodeURIComponent(catName)}`,
-          },
-          items: items.slice(0, 4),
-        });
+        // If this category already exists in result, merge the items
+        const existing = result.find(
+          (r) =>
+            (r.submenu.label || r.submenu.name || "").trim().toLowerCase() ===
+            catName.toLowerCase()
+        );
+        if (existing) {
+          existing.items.push(...items);
+        } else {
+          result.push({
+            submenu: {
+              id: catName.toLowerCase().replace(/\s+/g, "-"),
+              label: catName,
+              name: catName,
+              href: `/products?cat=${encodeURIComponent(catName)}`,
+            },
+            items,
+          });
+        }
       });
     }
 
@@ -200,8 +381,6 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
     return null;
   }
 
-  const displayedSubmenus = activeSubmenus;
-
   return (
     <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 border-t border-stone-100 dark:border-slate-800 space-y-12 sm:space-y-16">
       <Container>
@@ -215,64 +394,15 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
           </p>
         </div>
 
-        {displayedSubmenus.map(({ submenu, items }, idx) => {
-          const submenuName = submenu.label || submenu.name;
-          const submenuHref =
-            submenu.href ||
-            `/products?cat=${encodeURIComponent(submenu.id || submenuName)}`;
-
-          return (
-            <div
-              key={submenu.id || idx}
-              className={`space-y-6 sm:space-y-8 ${
-                idx > 0 ? "pt-12 sm:pt-16 border-t border-rose-100/70 dark:border-slate-800" : ""
-              }`}
-            >
-              {/* Submenu Header Row: Title & Subtitle on Left, 'View More' Button on Right */}
-              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-2">
-                <div className="space-y-1 sm:space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-[#800F17] bg-rose-50 dark:bg-rose-950/40 px-2.5 py-0.5 rounded-full border border-rose-100/80 dark:border-rose-900/50">
-                      <Sparkles className="w-3 h-3 text-[#AA771C]" />
-                      Collection {String(idx + 1).padStart(2, "0")}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#800F17] dark:text-rose-100 uppercase font-serif">
-                    {submenuName}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300">
-                    Handcrafted luxury sarees woven with timeless heritage and contemporary grace
-                  </p>
-                </div>
-
-                {/* View More Button */}
-                <Link
-                  href={submenuHref}
-                  className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#800F17] hover:bg-[#680C13] text-white text-xs sm:text-sm font-semibold tracking-wide transition-all duration-300 shadow-sm hover:shadow-md active:scale-95 w-fit"
-                >
-                  <span>View More</span>
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </Link>
-              </div>
-
-              {/* ONLY Real Saree Product Cards from MySQL */}
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-6 lg:gap-7">
-                {items.map((item) => (
-                  <ProductCard
-                    key={item.id}
-                    id={item.id}
-                    title={item.title}
-                    price={item.price}
-                    image={item.mainImage || item.image || "/images/product-1.jpg"}
-                    category={item.category || submenuName}
-                    stock={item.stock}
-                    href={item.href || `/products/${item.id}`}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        {/* Categories Showcase with Premium Carousel Tracks */}
+        {activeSubmenus.map(({ submenu, items }, idx) => (
+          <CategorySection
+            key={submenu.id || idx}
+            submenu={submenu}
+            items={items}
+            idx={idx}
+          />
+        ))}
       </Container>
     </section>
   );
