@@ -25,11 +25,16 @@ export function sortProductsChronological(list) {
 
 // In-memory client cache to serve instant renders without waiting for network roundtrips
 let clientProductsCache = null;
+let pendingFetch = null;
 
-// Initialize from sessionStorage if available in browser
+const CACHE_STORAGE_KEY = "thoranam_products_catalog_cache_v2";
+
+// Initialize from sessionStorage or localStorage if available in browser
 if (typeof window !== "undefined") {
   try {
-    const saved = sessionStorage.getItem("thoranam_products_cache");
+    const saved =
+      sessionStorage.getItem(CACHE_STORAGE_KEY) ||
+      localStorage.getItem(CACHE_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -45,7 +50,9 @@ function updateLocalCache(data) {
     clientProductsCache = sorted;
     if (typeof window !== "undefined") {
       try {
-        sessionStorage.setItem("thoranam_products_cache", JSON.stringify(sorted));
+        const str = JSON.stringify(sorted);
+        sessionStorage.setItem(CACHE_STORAGE_KEY, str);
+        localStorage.setItem(CACHE_STORAGE_KEY, str);
       } catch (e) {}
     }
     return sorted;
@@ -53,22 +60,44 @@ function updateLocalCache(data) {
   return clientProductsCache || [];
 }
 
-// Fetch all products directly from the database API
-export async function fetchProductsFromDb() {
-  try {
-    const res = await fetch(getApiUrl("/api/products"), {
-      cache: "no-store",
-      headers: { Pragma: "no-cache" },
-    });
-    if (!res.ok) throw new Error("Failed to fetch products from database");
-    const json = await res.json();
-    if (json.success && Array.isArray(json.data)) {
-      return updateLocalCache(json.data);
-    }
-  } catch (err) {
-    console.warn("Could not fetch products from database API:", err.message);
+// Fast lookup of single product from memory/storage
+export function getProductFromCache(productId) {
+  if (!productId) return null;
+  const products = getStoredProducts();
+  const idStr = String(productId).trim().toLowerCase();
+  return (
+    products.find(
+      (p) =>
+        String(p.id).toLowerCase() === idStr ||
+        p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === idStr
+    ) || null
+  );
+}
+
+// Fetch all products directly from the database API with in-flight deduplication
+export async function fetchProductsFromDb(force = false) {
+  // If request is already in progress, reuse the existing promise
+  if (pendingFetch && !force) {
+    return pendingFetch;
   }
-  return getStoredProducts();
+
+  pendingFetch = (async () => {
+    try {
+      const res = await fetch(getApiUrl("/api/products"));
+      if (!res.ok) throw new Error("Failed to fetch products from database");
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        return updateLocalCache(json.data);
+      }
+    } catch (err) {
+      console.warn("Could not fetch products from database API:", err.message);
+    } finally {
+      pendingFetch = null;
+    }
+    return getStoredProducts();
+  })();
+
+  return pendingFetch;
 }
 
 // Save (create or update) product directly into the database
@@ -136,7 +165,10 @@ export function getStoredProducts() {
   }
   if (typeof window !== "undefined") {
     try {
-      const saved = sessionStorage.getItem("thoranam_products_cache");
+      const saved =
+        sessionStorage.getItem(CACHE_STORAGE_KEY) ||
+        localStorage.getItem(CACHE_STORAGE_KEY) ||
+        sessionStorage.getItem("thoranam_products_cache");
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {

@@ -1,13 +1,22 @@
 import { Suspense } from "react";
 import ProductDetailView from "@/components/pages/products/ProductDetailView";
-import { getApiUrl } from "@/config";
+import { productController } from "@/controllers";
+
+async function getProductSafe(id) {
+  if (!id) return null;
+  try {
+    const product = await productController.getProductById(id);
+    if (product) return product;
+  } catch (e) {
+    console.warn("Direct product lookup error in page.js:", e?.message);
+  }
+  return null;
+}
 
 export async function generateMetadata({ params }) {
   const { id } = await params;
   try {
-    const res = await fetch(getApiUrl(`/api/products/${id}`));
-    const json = await res.json();
-    const product = json?.data;
+    const product = await getProductSafe(id);
     if (product) {
       const pageTitle = product.seoTitle?.trim()
         ? product.seoTitle
@@ -58,7 +67,8 @@ export async function generateMetadata({ params }) {
 
 async function ProductDetailContent({ paramsPromise }) {
   const { id } = await paramsPromise;
-  return <ProductDetailView productId={id} />;
+  const initialProduct = await getProductSafe(id);
+  return <ProductDetailView productId={id} initialProduct={initialProduct} />;
 }
 
 export default function ProductDetailPage({ params }) {

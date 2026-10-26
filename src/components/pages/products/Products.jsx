@@ -7,32 +7,31 @@ import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 
 import { getApiUrl } from "@/config";
+import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
 export default function Products() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const urlCat = searchParams.get("cat");
 
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(getStoredProducts);
   const [categories, setCategories] = useState([]);
   const [customSelectedCat, setCustomSelectedCat] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => getStoredProducts().length === 0);
 
   useEffect(() => {
     let mounted = true;
     async function loadData() {
       try {
-        setIsLoading(true);
-        const [prodRes, catRes] = await Promise.all([
-          fetch(getApiUrl("/api/products")),
+        const [prodData, catRes] = await Promise.all([
+          fetchProductsFromDb(),
           fetch(getApiUrl("/api/categories")),
         ]);
-        const prodJson = await prodRes.json();
         const catJson = await catRes.json();
 
         if (mounted) {
-          if (prodJson.success && Array.isArray(prodJson.data)) {
-            setProducts(prodJson.data);
+          if (Array.isArray(prodData)) {
+            setProducts(prodData);
           }
           if (catJson.success && Array.isArray(catJson.data)) {
             setCategories(catJson.data);

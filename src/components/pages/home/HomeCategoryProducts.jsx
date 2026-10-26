@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Container from "@/components/ui/Container";
@@ -24,6 +24,8 @@ const PARENT_CATEGORY_KEYS = [
 export default function HomeCategoryProducts() {
   const [products, setProducts] = useState(getStoredProducts);
   const [isLoading, setIsLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(2);
+  const sentinelRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -153,6 +155,29 @@ export default function HomeCategoryProducts() {
     });
   }
 
+  // IntersectionObserver to lazy load subsequent categories progressively as user scrolls down
+  useEffect(() => {
+    if (visibleCount >= activeSubmenus.length) return;
+
+    const currentSentinel = sentinelRef.current;
+    if (!currentSentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + 2, activeSubmenus.length));
+        }
+      },
+      { rootMargin: "450px" }
+    );
+
+    observer.observe(currentSentinel);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [visibleCount, activeSubmenus.length]);
+
   // Shimmer skeleton cards while loading
   if (isLoading && products.length === 0) {
     return (
@@ -192,10 +217,12 @@ export default function HomeCategoryProducts() {
     return null;
   }
 
+  const displayedSubmenus = activeSubmenus.slice(0, visibleCount);
+
   return (
     <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 space-y-16 sm:space-y-24">
       <Container>
-        {activeSubmenus.map(({ submenu, items }, idx) => {
+        {displayedSubmenus.map(({ submenu, items }, idx) => {
           const submenuName = submenu.label || submenu.name;
           const submenuHref =
             submenu.href ||
@@ -253,6 +280,19 @@ export default function HomeCategoryProducts() {
             </div>
           );
         })}
+
+        {/* Sentinel element to trigger lazy loading of the next categories */}
+        {visibleCount < activeSubmenus.length && (
+          <div
+            ref={sentinelRef}
+            className="pt-10 pb-4 text-center flex flex-col items-center justify-center gap-2"
+          >
+            <div className="w-6 h-6 border-2 border-[#800F17]/30 border-t-[#800F17] rounded-full animate-spin" />
+            <span className="text-xs text-stone-500 font-medium">
+              Loading more saree collections...
+            </span>
+          </div>
+        )}
       </Container>
     </section>
   );

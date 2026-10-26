@@ -6,8 +6,22 @@ import ProductCard from "@/components/ui/ProductCard";
 import { fetchProductsFromDb, getStoredProducts } from "@/lib/products";
 
 export default function HomeBestToday() {
-  const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [products, setProducts] = useState(() => {
+    const data = getStoredProducts();
+    const featured = (data || []).filter((p) => Boolean(p.isFeatured));
+    return featured.slice(0, 4).map((p, idx) => ({
+      id: p.id,
+      title: p.title,
+      price: p.price,
+      image: p.mainImage || p.image || "/images/product-1.jpg",
+      tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
+    }));
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    const data = getStoredProducts();
+    const featured = (data || []).filter((p) => Boolean(p.isFeatured));
+    return featured.length === 0;
+  });
 
   useEffect(() => {
     let active = true;

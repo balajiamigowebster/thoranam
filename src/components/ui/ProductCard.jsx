@@ -75,7 +75,7 @@ export default function ProductCard({
 
       {/* Top Product Image Showcase Frame (Tall Luxury 4:5 Portrait Aspect Ratio with Lazy Loading) */}
       <div className="relative aspect-[4/5] w-full rounded-lg sm:rounded-xl overflow-hidden bg-stone-100 dark:bg-slate-800">
-        <Link href={productHref} className="block w-full h-full relative">
+        <Link href={productHref} prefetch={false} className="block w-full h-full relative">
           {/* Shimmer skeleton while image lazy loads */}
           {!isImgLoaded && (
             <div className="absolute inset-0 bg-stone-200/80 dark:bg-slate-800 animate-pulse flex items-center justify-center">
@@ -153,6 +153,7 @@ export default function ProductCard({
       <div className="pt-2 sm:pt-3.5 pb-1 sm:pb-2 px-1 sm:px-1.5 flex-1 flex flex-col justify-between space-y-1 sm:space-y-2">
         <Link
           href={productHref}
+          prefetch={false}
           className="group-hover:text-[#800F17] transition-colors duration-200"
         >
           <h3 className="text-[11px] sm:text-[14px] font-medium text-stone-800 dark:text-stone-100 line-clamp-2 leading-tight sm:leading-snug">

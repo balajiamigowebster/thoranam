@@ -24,7 +24,14 @@ export async function GET(request, { params }) {
       );
     }
 
-    return NextResponse.json({ success: true, data: product });
+    return NextResponse.json(
+      { success: true, data: product },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+        },
+      }
+    );
   } catch (error) {
     console.error("API GET /api/products/[id] error:", error);
     return NextResponse.json(

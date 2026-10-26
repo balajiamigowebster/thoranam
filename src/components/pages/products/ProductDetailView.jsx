@@ -25,7 +25,7 @@ import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { useCart } from "@/context/CartContext";
 import { getApiUrl, getAssetUrl } from "@/config";
-import { INITIAL_PRODUCTS } from "@/lib/initial-products";
+import { getProductFromCache, getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
 // Global Rupee Formatter to fix ? or corrupted currency strings
 function formatRupee(priceStr) {
@@ -35,80 +35,82 @@ function formatRupee(priceStr) {
   return `₹ ${cleaned}`;
 }
 
-export default function ProductDetailView({ productId }) {
+export default function ProductDetailView({ productId, initialProduct = null }) {
   const { triggerAddToCartAnimation } = useCart();
-  const [product, setProduct] = useState(null);
-  const [relatedProducts, setRelatedProducts] = useState([]);
-  const [selectedImage, setSelectedImage] = useState("");
+
+  const cachedProduct =
+    initialProduct ||
+    (typeof window !== "undefined" ? getProductFromCache(productId) : null);
+
+  const initialMainImage =
+    cachedProduct?.mainImage && cachedProduct.mainImage.length !== 65535
+      ? cachedProduct.mainImage
+      : (cachedProduct?.galleryImages?.[0] || "/images/product-1.jpg");
+
+  const [product, setProduct] = useState(
+    cachedProduct ? { ...cachedProduct, mainImage: initialMainImage } : null
+  );
+  const [selectedImage, setSelectedImage] = useState(initialMainImage);
   const [quantity, setQuantity] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!cachedProduct);
   const [copied, setCopied] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [addedItems, setAddedItems] = useState({});
 
+  const [relatedProducts, setRelatedProducts] = useState(() => {
+    const stored = getStoredProducts();
+    return stored.filter((p) => String(p.id) !== String(productId)).slice(0, 4);
+  });
+
   useEffect(() => {
     let mounted = true;
-    async function fetchProduct() {
+
+    async function loadData() {
       try {
-        setIsLoading(true);
-        
-        let json = { success: false };
-        let allJson = { success: false, data: [] };
-
-        try {
-          const res = await fetch(getApiUrl(`/api/products/${productId}`));
-          if (res.ok) json = await res.json();
-        } catch (e) {
-          console.warn("Single product endpoint error:", e);
-        }
-
-        try {
-          const allRes = await fetch(getApiUrl("/api/products"));
-          if (allRes.ok) allJson = await allRes.json();
-        } catch (e) {
-          console.warn("Catalog endpoint error:", e);
-        }
-
-        let foundProduct = null;
-        if (json.success && json.data) {
-          foundProduct = json.data;
-        } else if (allJson.success && Array.isArray(allJson.data)) {
-          foundProduct = allJson.data.find(
-            (p) =>
-              String(p.id) === String(productId) ||
-              p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === String(productId).toLowerCase()
-          );
-        }
-
-        if (mounted && foundProduct) {
-          const validMain = (foundProduct.mainImage && foundProduct.mainImage.length !== 65535)
-            ? foundProduct.mainImage
-            : (foundProduct.galleryImages?.[0] || "/images/product-1.jpg");
-          setProduct({ ...foundProduct, mainImage: validMain });
-          setSelectedImage(validMain);
-        }
-
-        // Populate 'You may also like' related products directly from DB candidates
-        const candidates = (allJson.success && Array.isArray(allJson.data)) ? allJson.data : [];
-
-        const related = candidates
-          .filter((p) => String(p.id) !== String(productId))
-          .slice(0, 4);
-
-        if (mounted) {
-          setRelatedProducts(related);
+        // Fast fetch single product
+        const res = await fetch(getApiUrl(`/api/products/${productId}`));
+        if (res.ok) {
+          const json = await res.json();
+          if (mounted && json.success && json.data) {
+            const validMain =
+              json.data.mainImage && json.data.mainImage.length !== 65535
+                ? json.data.mainImage
+                : (json.data.galleryImages?.[0] || "/images/product-1.jpg");
+            setProduct({ ...json.data, mainImage: validMain });
+            setSelectedImage((prev) => prev || validMain);
+            setIsLoading(false);
+          }
         }
       } catch (e) {
-        console.error("Failed to load product detail:", e);
+        console.warn("Product fetch notice:", e);
       } finally {
-        if (mounted) setIsLoading(false);
+        if (mounted && !cachedProduct) {
+          setIsLoading(false);
+        }
+      }
+
+      // Fetch related products in background without blocking main view
+      if (relatedProducts.length === 0) {
+        try {
+          const prodList = await fetchProductsFromDb();
+          if (mounted && Array.isArray(prodList)) {
+            const related = prodList
+              .filter((p) => String(p.id) !== String(productId))
+              .slice(0, 4);
+            setRelatedProducts(related);
+          }
+        } catch (e) {}
       }
     }
-    if (productId) fetchProduct();
+
+    if (productId) {
+      loadData();
+    }
+
     return () => {
       mounted = false;
     };
-  }, [productId]);
+  }, [productId, cachedProduct]);
 
   if (isLoading) {
     return (

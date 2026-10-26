@@ -9,7 +9,14 @@ export async function GET(request) {
     const search = searchParams.get("search");
 
     const products = await productController.getAllProducts({ category, search });
-    return NextResponse.json({ success: true, data: products });
+    return NextResponse.json(
+      { success: true, data: products },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+        },
+      }
+    );
   } catch (error) {
     console.error("API GET /api/products error:", error);
     return NextResponse.json(

@@ -1,10 +1,33 @@
 import { Product, syncDatabase } from "@/models";
 import { Op } from "sequelize";
 
+// In-memory cache for ultra-fast product retrieval without hitting MySQL on every request
+let productsCache = {
+  data: null,
+  timestamp: 0,
+  singleMap: new Map(), // string id -> { data, timestamp }
+};
+
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL
+
+export function invalidateProductsCache() {
+  productsCache.data = null;
+  productsCache.timestamp = 0;
+  productsCache.singleMap.clear();
+}
+
 // Controller for Product operations - STRICTLY CONNECTS ONLY TO MYSQL DATABASE
 export const productController = {
   // Get all products directly from MySQL database with optional filters
   async getAllProducts(query = {}) {
+    const isUnfiltered = (!query.category || query.category === "all") && !query.search;
+    const now = Date.now();
+
+    // Serve from memory cache if query is unfiltered and cache is fresh
+    if (isUnfiltered && productsCache.data && now - productsCache.timestamp < CACHE_TTL_MS) {
+      return productsCache.data;
+    }
+
     const where = {};
     if (query.category && query.category !== "all") {
       where.category = query.category;
@@ -31,14 +54,53 @@ export const productController = {
       });
     }
 
-    return (products || []).map((p) => formatProduct(p.toJSON()));
+    const formatted = (products || []).map((p) => formatProduct(p.toJSON()));
+
+    if (isUnfiltered) {
+      productsCache.data = formatted;
+      productsCache.timestamp = now;
+      // Also prime individual product cache map
+      formatted.forEach((item) => {
+        productsCache.singleMap.set(String(item.id), { data: item, timestamp: now });
+      });
+    }
+
+    return formatted;
   },
 
-  // Get single product by ID directly from MySQL
+  // Get single product by ID directly from MySQL with in-memory cache
   async getProductById(id) {
+    if (!id) return null;
+    const key = String(id);
+    const now = Date.now();
+    const cached = productsCache.singleMap.get(key);
+    if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+      return cached.data;
+    }
+
     const product = await Product.findByPk(id);
-    if (product) return formatProduct(product.toJSON());
+    if (product) {
+      const formatted = formatProduct(product.toJSON());
+      productsCache.singleMap.set(key, { data: formatted, timestamp: now });
+      return formatted;
+    }
+
+    // Try finding by slug from cache if available
+    if (productsCache.data) {
+      const match = productsCache.data.find(
+        (p) =>
+          String(p.id) === key ||
+          p.title?.toLowerCase().replace(/[^a-z0-9]+/g, "-") === key.toLowerCase()
+      );
+      if (match) return match;
+    }
+
     return null;
+  },
+
+  // Invalidate cache method
+  invalidateCache() {
+    invalidateProductsCache();
   },
 
   // Create a new product directly in MySQL database
@@ -76,6 +138,7 @@ export const productController = {
         is_featured: Boolean(data.isFeatured),
       });
 
+      invalidateProductsCache();
       return formatProduct(created.toJSON());
     } catch (createErr) {
       console.warn("[Products DB] Direct create failed, attempting single sync fallback:", createErr.message);
@@ -101,6 +164,7 @@ export const productController = {
         is_featured: Boolean(data.isFeatured),
       });
 
+      invalidateProductsCache();
       return formatProduct(created.toJSON());
     }
   },
@@ -138,6 +202,7 @@ export const productController = {
       is_featured: data.isFeatured !== undefined ? Boolean(data.isFeatured) : product.is_featured,
     });
 
+    invalidateProductsCache();
     return formatProduct(product.toJSON());
   },
 
@@ -147,6 +212,7 @@ export const productController = {
     if (product) {
       await product.destroy();
     }
+    invalidateProductsCache();
     return { success: true, message: "Product deleted from database" };
   },
 };
