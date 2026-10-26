@@ -229,8 +229,18 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
   const displayedSubmenus = activeSubmenus.slice(0, visibleCount);
 
   return (
-    <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 space-y-16 sm:space-y-24">
+    <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 border-t border-stone-100 dark:border-slate-800 space-y-12 sm:space-y-16">
       <Container>
+        {/* ================= Shop Our Bestsellers ================= */}
+        <div className="text-center max-w-2xl mx-auto space-y-2 pb-8 sm:pb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-[#800F17]">
+            Shop Our Bestsellers
+          </h2>
+          <p className="text-xs sm:text-sm md:text-base text-rose-950/80 dark:text-rose-200/80 font-normal">
+            Discover Thoranam&apos;s most loved sarees. Browse now and find your favorite!
+          </p>
+        </div>
+
         {displayedSubmenus.map(({ submenu, items }, idx) => {
           const submenuName = submenu.label || submenu.name;
           const submenuHref =

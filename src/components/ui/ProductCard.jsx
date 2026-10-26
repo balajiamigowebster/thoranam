@@ -82,6 +82,12 @@ export default function ProductCard({
             decoding="async"
             className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ease-out"
             onError={(e) => {
+              const currentSrc = e.currentTarget.getAttribute("src") || "";
+              if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
+                e.currentTarget.dataset.retried = "true";
+                e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
+                return;
+              }
               e.currentTarget.src = "/images/product-1.jpg";
             }}
           />

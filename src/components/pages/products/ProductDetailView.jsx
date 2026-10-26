@@ -217,8 +217,14 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
                 alt={product.title}
                 className="w-full h-full object-cover object-center transition-all duration-300"
                 onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = "/images/product-1.jpg";
+                  const currentSrc = e.currentTarget.getAttribute("src") || "";
+                  if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
+                    e.currentTarget.dataset.retried = "true";
+                    e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
+                    return;
+                  }
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/images/product-1.jpg";
                 }}
               />
               <div className="absolute top-4 left-4 z-10">
@@ -250,7 +256,14 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
                         alt={`Thumbnail ${idx + 1}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          e.target.src = "/images/product-2.jpg";
+                          const currentSrc = e.currentTarget.getAttribute("src") || "";
+                          if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
+                            e.currentTarget.dataset.retried = "true";
+                            e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
+                            return;
+                          }
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "/images/product-2.jpg";
                         }}
                       />
                     </button>
