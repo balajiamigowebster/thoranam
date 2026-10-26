@@ -9,7 +9,8 @@ export default function HomeBestToday({ initialProducts = [] }) {
   const [products, setProducts] = useState(() => {
     const data = initialProducts.length > 0 ? initialProducts : getStoredProducts();
     const featured = (data || []).filter((p) => Boolean(p.isFeatured));
-    return featured.slice(0, 4).map((p, idx) => ({
+    const itemsToDisplay = featured.length > 0 ? featured : (data || []);
+    return itemsToDisplay.slice(0, 4).map((p, idx) => ({
       id: p.id,
       title: p.title,
       price: p.price,
@@ -19,8 +20,7 @@ export default function HomeBestToday({ initialProducts = [] }) {
   });
   const [isLoading, setIsLoading] = useState(() => {
     const data = initialProducts.length > 0 ? initialProducts : getStoredProducts();
-    const featured = (data || []).filter((p) => Boolean(p.isFeatured));
-    return featured.length === 0;
+    return (data || []).length === 0;
   });
 
   useEffect(() => {
@@ -30,9 +30,9 @@ export default function HomeBestToday({ initialProducts = [] }) {
       try {
         const data = await fetchProductsFromDb();
         if (active && Array.isArray(data)) {
-          // Strictly ONLY show products where admin has checked the isFeatured checkbox in Dashboard
           const featured = data.filter((p) => Boolean(p.isFeatured));
-          const mapped = featured.slice(0, 4).map((p, idx) => ({
+          const itemsToDisplay = featured.length > 0 ? featured : data;
+          const mapped = itemsToDisplay.slice(0, 4).map((p, idx) => ({
             id: p.id,
             title: p.title,
             price: p.price,

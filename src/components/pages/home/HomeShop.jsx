@@ -33,9 +33,12 @@ export default function HomeShop({ initialProducts = [] }) {
     };
   }, [initialProducts.length]);
 
-  const bestsellers = (products || []).filter((p) => Boolean(p.isBestseller)).slice(0, 4);
+  const bestsellers = (() => {
+    const explicit = (products || []).filter((p) => Boolean(p.isBestseller));
+    if (explicit.length > 0) return explicit.slice(0, 4);
+    return (products || []).slice(0, 4);
+  })();
 
-  // Strictly ONLY render if admin has marked products as bestsellers in Dashboard
   if (bestsellers.length === 0) {
     return null;
   }
