@@ -5,9 +5,12 @@
 import { getApiUrl } from "@/config";
 
 // Clear any legacy localStorage products cache from user's browser
+// STRICT REQUIREMENT: Products must ONLY be stored in MySQL Database, never in localStorage!
 if (typeof window !== "undefined") {
   try {
     localStorage.removeItem("thoranam_products");
+    localStorage.removeItem("thoranam_products_cache");
+    localStorage.removeItem("thoranam_products_catalog_cache_v2");
   } catch (e) {}
 }
 
@@ -23,18 +26,16 @@ export function sortProductsChronological(list) {
   });
 }
 
-// In-memory client cache to serve instant renders without waiting for network roundtrips
+// In-memory client cache only (RAM only, NEVER saved to localStorage)
 let clientProductsCache = null;
 let pendingFetch = null;
 
-const CACHE_STORAGE_KEY = "thoranam_products_catalog_cache_v2";
+const CACHE_STORAGE_KEY = "thoranam_products_session_cache";
 
-// Initialize from sessionStorage or localStorage if available in browser
+// Initialize transient session-only cache if available in current browser tab
 if (typeof window !== "undefined") {
   try {
-    const saved =
-      sessionStorage.getItem(CACHE_STORAGE_KEY) ||
-      localStorage.getItem(CACHE_STORAGE_KEY);
+    const saved = sessionStorage.getItem(CACHE_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -48,11 +49,10 @@ function updateLocalCache(data) {
   if (Array.isArray(data)) {
     const sorted = sortProductsChronological(data);
     clientProductsCache = sorted;
+    // Transient tab session only - strictly NO localStorage
     if (typeof window !== "undefined") {
       try {
-        const str = JSON.stringify(sorted);
-        sessionStorage.setItem(CACHE_STORAGE_KEY, str);
-        localStorage.setItem(CACHE_STORAGE_KEY, str);
+        sessionStorage.setItem(CACHE_STORAGE_KEY, JSON.stringify(sorted));
       } catch (e) {}
     }
     return sorted;
@@ -165,10 +165,7 @@ export function getStoredProducts() {
   }
   if (typeof window !== "undefined") {
     try {
-      const saved =
-        sessionStorage.getItem(CACHE_STORAGE_KEY) ||
-        localStorage.getItem(CACHE_STORAGE_KEY) ||
-        sessionStorage.getItem("thoranam_products_cache");
+      const saved = sessionStorage.getItem(CACHE_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
