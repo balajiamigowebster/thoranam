@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import sharp from "sharp";
 import { uploadMiddleware } from "@/middleware/uploadMiddleware";
 
 export async function POST(request) {
@@ -28,23 +29,37 @@ export async function POST(request) {
     for (const file of files) {
       if (typeof file === "string") continue;
       const bytes = await file.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const mime = file.type || "image/jpeg";
+      const inputBuffer = Buffer.from(bytes);
+
+      // Automatically optimize & convert to high-resolution lightweight WebP (<90 KB)
+      let optimizedBuffer = inputBuffer;
+      let ext = "webp";
+      try {
+        optimizedBuffer = await sharp(inputBuffer)
+          .resize(1200, 1500, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 82 })
+          .toBuffer();
+      } catch (sharpErr) {
+        console.warn("[Upload API] Sharp compression notice:", sharpErr.message);
+        optimizedBuffer = inputBuffer;
+        ext = file.name?.split(".").pop() || "jpg";
+      }
 
       try {
         await mkdir(uploadDir, { recursive: true });
-        const rawName = file.name || "saree-image.jpg";
-        const sanitizedName = rawName.replace(/[^a-zA-Z0-9._-]/g, "_");
-        const filename = `${Date.now()}-${sanitizedName}`;
+        const rawBase = (file.name || "saree")
+          .replace(/\.[^/.]+$/, "")
+          .replace(/[^a-zA-Z0-9_-]/g, "_");
+        const filename = `${Date.now()}-${rawBase}.${ext}`;
         const filePath = path.join(uploadDir, filename);
 
-        await writeFile(filePath, buffer);
+        await writeFile(filePath, optimizedBuffer);
         uploadedUrls.push(`/uploads/${filename}`);
       } catch (fsErr) {
         // If running in a read-only serverless environment (e.g. Vercel), fallback to optimized data URL
-        console.warn("[Upload API] Read-only filesystem detected, converting file to base64 data URL:", fsErr.message);
-        const base64 = buffer.toString("base64");
-        uploadedUrls.push(`data:${mime};base64,${base64}`);
+        console.warn("[Upload API] Read-only filesystem detected, fallback to compressed WebP data URL:", fsErr.message);
+        const base64 = optimizedBuffer.toString("base64");
+        uploadedUrls.push(`data:image/webp;base64,${base64}`);
       }
     }
 
