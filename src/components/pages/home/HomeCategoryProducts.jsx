@@ -25,17 +25,15 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
   const [products, setProducts] = useState(() =>
     initialProducts.length > 0 ? initialProducts : getStoredProducts()
   );
-  const [isLoading, setIsLoading] = useState(() => initialProducts.length === 0);
-  const [visibleCount, setVisibleCount] = useState(2);
-  const sentinelRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(() => initialProducts.length === 0 && products.length === 0);
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadData() {
       try {
-        const prodData = await fetchProductsFromDb();
-        if (isMounted && Array.isArray(prodData)) {
+        const prodData = await fetchProductsFromDb(true);
+        if (isMounted && Array.isArray(prodData) && prodData.length > 0) {
           setProducts(prodData);
           setIsLoading(false);
         }
@@ -45,9 +43,8 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       }
     }
 
-    if (initialProducts.length === 0) {
-      loadData();
-    }
+    // Always fetch fresh products on mount to reflect newly added dashboard products immediately
+    loadData();
 
     const handleSync = () => loadData();
     window.addEventListener("thoranam_products_updated", handleSync);
@@ -58,7 +55,7 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       window.removeEventListener("thoranam_products_updated", handleSync);
       window.removeEventListener("storage", handleSync);
     };
-  }, [initialProducts.length]);
+  }, []);
 
   // Filter REAL products strictly matching each submenu
   const getSubmenuProducts = (submenu) => {
@@ -164,29 +161,6 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
     return result;
   }, [products]);
 
-  // IntersectionObserver to lazy load subsequent categories progressively as user scrolls down
-  useEffect(() => {
-    if (visibleCount >= activeSubmenus.length) return;
-
-    const currentSentinel = sentinelRef.current;
-    if (!currentSentinel) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) {
-          setVisibleCount((prev) => Math.min(prev + 2, activeSubmenus.length));
-        }
-      },
-      { rootMargin: "450px" }
-    );
-
-    observer.observe(currentSentinel);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [visibleCount, activeSubmenus.length]);
-
   // Shimmer skeleton cards while loading
   if (isLoading && products.length === 0) {
     return (
@@ -226,7 +200,7 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
     return null;
   }
 
-  const displayedSubmenus = activeSubmenus.slice(0, visibleCount);
+  const displayedSubmenus = activeSubmenus;
 
   return (
     <section className="py-12 sm:py-16 bg-stone-50/60 dark:bg-slate-900/60 border-t border-stone-100 dark:border-slate-800 space-y-12 sm:space-y-16">
@@ -299,19 +273,6 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
             </div>
           );
         })}
-
-        {/* Sentinel element to trigger lazy loading of the next categories */}
-        {visibleCount < activeSubmenus.length && (
-          <div
-            ref={sentinelRef}
-            className="pt-10 pb-4 text-center flex flex-col items-center justify-center gap-2"
-          >
-            <div className="w-6 h-6 border-2 border-[#800F17]/30 border-t-[#800F17] rounded-full animate-spin" />
-            <span className="text-xs text-stone-500 font-medium">
-              Loading more saree collections...
-            </span>
-          </div>
-        )}
       </Container>
     </section>
   );

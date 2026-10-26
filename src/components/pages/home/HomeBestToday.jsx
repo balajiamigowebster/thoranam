@@ -54,10 +54,8 @@ export default function HomeBestToday({ initialProducts = [] }) {
       }
     }
 
-    // Only fetch on mount if initialProducts was not pre-rendered from server
-    if (initialProducts.length === 0) {
-      loadProducts();
-    }
+    // Always fetch on mount in background to reflect fresh dashboard additions
+    loadProducts();
 
     window.addEventListener("thoranam_products_updated", loadProducts);
     window.addEventListener("storage", loadProducts);

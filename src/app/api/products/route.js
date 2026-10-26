@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { productController } from "@/controllers";
 
 // GET /api/products
@@ -13,7 +14,7 @@ export async function GET(request) {
       { success: true, data: products },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=120, stale-while-revalidate=86400",
+          "Cache-Control": "public, s-maxage=5, stale-while-revalidate=30",
         },
       }
     );
@@ -31,6 +32,12 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const createdProduct = await productController.createProduct(body);
+
+    try {
+      revalidateTag("products");
+      revalidatePath("/");
+      revalidatePath("/products");
+    } catch (e) {}
 
     return NextResponse.json({
       success: true,
@@ -58,6 +65,13 @@ export async function PUT(request) {
     }
 
     const updatedProduct = await productController.updateProduct(body.id, body);
+
+    try {
+      revalidateTag("products");
+      revalidatePath("/");
+      revalidatePath("/products");
+    } catch (e) {}
+
     return NextResponse.json({
       success: true,
       data: updatedProduct,
@@ -86,6 +100,13 @@ export async function DELETE(request) {
     }
 
     const result = await productController.deleteProduct(id);
+
+    try {
+      revalidateTag("products");
+      revalidatePath("/");
+      revalidatePath("/products");
+    } catch (e) {}
+
     return NextResponse.json(result);
   } catch (error) {
     console.error("API DELETE /api/products error:", error);

@@ -9,7 +9,7 @@ let productsCache = {
   singleMap: new Map(), // string id -> { data, timestamp }
 };
 
-const CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL
+const CACHE_TTL_MS = 5 * 1000; // 5 seconds TTL
 
 export function invalidateProductsCache() {
   productsCache.data = null;
@@ -51,7 +51,7 @@ const getCachedDbProducts = unstable_cache(
   },
   ["thoranam-db-products-global-v1"],
   {
-    revalidate: 120,
+    revalidate: 5,
     tags: ["products"],
   }
 );
