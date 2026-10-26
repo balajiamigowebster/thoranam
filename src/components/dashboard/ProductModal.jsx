@@ -69,6 +69,12 @@ export default function ProductModal({
   const [formData, setFormData] = useState(() =>
     getInitialFormData(editingProduct, categories)
   );
+  const [activeTab, setActiveTab] = useState("details"); // 'details' | 'description' | 'media' | 'specs'
+  const [newHighlightInput, setNewHighlightInput] = useState("");
+  const [isUploadingMain, setIsUploadingMain] = useState(false);
+  const [mainUploadPercent, setMainUploadPercent] = useState(0);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [galleryUploadPercent, setGalleryUploadPercent] = useState(0);
 
   // Re-sync form state whenever modal is opened or product changes
   useEffect(() => {
@@ -77,13 +83,6 @@ export default function ProductModal({
       setActiveTab("details");
     }
   }, [isOpen, editingProduct, categories]);
-
-  const [activeTab, setActiveTab] = useState("details"); // 'details' | 'description' | 'media' | 'specs'
-  const [newHighlightInput, setNewHighlightInput] = useState("");
-  const [isUploadingMain, setIsUploadingMain] = useState(false);
-  const [mainUploadPercent, setMainUploadPercent] = useState(0);
-  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
-  const [galleryUploadPercent, setGalleryUploadPercent] = useState(0);
 
   // Dynamically merge live DB categories (e.g. Chinyan Cotton Saree), 17 baseline weaves, and current product category
   const categoryOptions = React.useMemo(() => {
