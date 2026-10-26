@@ -61,14 +61,22 @@ export default function HomeBestToday() {
     };
   }, []);
 
-  // Show luxury skeleton cards while loading if products haven't loaded yet
-  if (isLoading && products.length === 0) {
-    return (
-      <section className="py-12 sm:py-16 bg-white dark:bg-slate-950">
-        <Container>
-          <div className="mb-8 sm:mb-10 space-y-2 animate-pulse">
-            <div className="h-8 w-80 bg-stone-200 dark:bg-slate-800 rounded-lg" />
-          </div>
+  // Section Heading is always rendered immediately as H1 without any lazy loading
+  return (
+    <section className="py-12 sm:py-16 bg-white dark:bg-slate-950">
+      <Container>
+        {/* Section Heading matching screenshot - Rendered immediately as H1 without lazyload */}
+        <div className="mb-8 sm:mb-10">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-medium tracking-tight text-slate-800 dark:text-slate-100">
+            <span className="font-bold text-[#800F17]">
+              Discover the Best of the Bunch –
+            </span>{" "}
+            Shop Our Handpicked Favorites Today!
+          </h1>
+        </div>
+
+        {/* 4 Column Product Grid or Skeleton while products load */}
+        {isLoading && products.length === 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7 animate-pulse">
             {[1, 2, 3, 4].map((i) => (
               <div
@@ -83,43 +91,21 @@ export default function HomeBestToday() {
               </div>
             ))}
           </div>
-        </Container>
-      </section>
-    );
-  }
-
-  // If store has no products at all, hide section
-  if (products.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="py-12 sm:py-16 bg-white dark:bg-slate-950">
-      <Container>
-        {/* Section Heading matching screenshot */}
-        <div className="mb-8 sm:mb-10">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-medium tracking-tight text-slate-800 dark:text-slate-100">
-            <span className="font-bold text-[#800F17]">
-              Discover the Best of the Bunch –
-            </span>{" "}
-            Shop Our Handpicked Favorites Today!
-          </h2>
-        </div>
-
-        {/* 4 Column Product Grid with Lazy Loading */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7">
-          {products.map((item) => (
-            <ProductCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              price={item.price}
-              image={item.image}
-              tag={item.tag}
-              href={`/products/${item.id}`}
-            />
-          ))}
-        </div>
+        ) : products.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7">
+            {products.map((item) => (
+              <ProductCard
+                key={item.id}
+                id={item.id}
+                title={item.title}
+                price={item.price}
+                image={item.image}
+                tag={item.tag}
+                href={`/products/${item.id}`}
+              />
+            ))}
+          </div>
+        ) : null}
       </Container>
     </section>
   );
