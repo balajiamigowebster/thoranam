@@ -4,6 +4,34 @@ import mysql2 from "mysql2";
 // Singleton sequelize instance across hot-reloads
 let sequelizeInstance = null;
 
+export function resetSequelize() {
+  if (sequelizeInstance) {
+    try {
+      sequelizeInstance.close();
+    } catch (e) {}
+    sequelizeInstance = null;
+  }
+}
+
+// Global safety timeout wrapper to ensure NO remote query can stall the serverless runtime
+export async function withTimeout(promise, ms = 4000, fallback = null) {
+  let timer;
+  const timeoutPromise = new Promise((resolve, reject) => {
+    timer = setTimeout(() => {
+      if (fallback !== null) {
+        resolve(fallback);
+      } else {
+        reject(new Error(`Database operation timed out after ${ms}ms`));
+      }
+    }, ms);
+  });
+  try {
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function getSequelize() {
   if (!sequelizeInstance) {
     const dbName = process.env.DB_NAME || "amigoweb_thoranam-db";
@@ -24,17 +52,17 @@ export function getSequelize() {
       pool: {
         max: 3,
         min: 0,
-        acquire: 5000,
-        idle: 2000,
-        evict: 2000,
+        acquire: 4000,
+        idle: 1500,
+        evict: 1500,
       },
       retry: {
         max: 2,
       },
       dialectOptions: {
-        connectTimeout: 5000,
+        connectTimeout: 4000,
         enableKeepAlive: true,
-        keepAliveInitialDelay: 10000,
+        keepAliveInitialDelay: 5000,
       },
     });
   }

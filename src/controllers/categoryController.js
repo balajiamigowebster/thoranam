@@ -1,30 +1,77 @@
-import { Category, syncDatabase } from "@/models";
+import { Category, StoreSetting, syncDatabase } from "@/models";
 import { INITIAL_CATEGORIES, HOMEPAGE_BROWSE_CATEGORIES } from "@/lib/categories";
+import { withTimeout } from "@/lib/sequelize";
+
+// In-memory caching for category queries to prevent repetitive DB connections
+let categoriesCache = null;
+let categoriesCacheExpiry = 0;
+let browseCategoriesCache = null;
+let browseCategoriesCacheExpiry = 0;
+
+export function invalidateCategoriesCache() {
+  categoriesCache = null;
+  categoriesCacheExpiry = 0;
+  browseCategoriesCache = null;
+  browseCategoriesCacheExpiry = 0;
+}
+
+const FALLBACK_CATEGORIES = INITIAL_CATEGORIES.map((c, idx) => ({
+  id: c.id,
+  label: c.label || c.name,
+  href: c.href,
+  image: c.image || "",
+  sort_order: c.sort_order ?? idx,
+  featured: Boolean(c.featured),
+  subcategories: c.subcategories || [],
+  showcase: c.showcase || [],
+}));
 
 export const categoryController = {
   async getAllCategories() {
+    const now = Date.now();
+    if (categoriesCache && now < categoriesCacheExpiry) {
+      return categoriesCache;
+    }
+
     try {
-      let categories;
-      try {
-        categories = await Category.findAll({
+      const categories = await withTimeout(
+        Category.findAll({
           order: [
             ["sort_order", "ASC"],
             ["created_at", "ASC"],
           ],
+        }),
+        3500
+      );
+
+      if (categories && categories.length > 0) {
+        const formatted = categories.map((c) => {
+          const safeParse = (v) => {
+            if (typeof v !== "string") return v || [];
+            try { return JSON.parse(v || "[]"); } catch { return []; }
+          };
+          const item = c.toJSON ? c.toJSON() : c;
+          return {
+            id: item.id,
+            label: item.label,
+            href: item.href,
+            image: item.image || "",
+            sort_order: item.sort_order || 0,
+            featured: Boolean(item.featured),
+            subcategories: safeParse(item.subcategories),
+            showcase: safeParse(item.showcase),
+          };
         });
-      } catch (findErr) {
-        await syncDatabase();
-        categories = await Category.findAll({
-          order: [
-            ["sort_order", "ASC"],
-            ["created_at", "ASC"],
-          ],
-        });
+
+        categoriesCache = formatted;
+        categoriesCacheExpiry = now + 60000; // 60s cache
+        return formatted;
       }
 
-      if (categories.length === 0) {
-        let idx = 0;
-        for (const cat of INITIAL_CATEGORIES) {
+      // If DB has 0 categories, initialize with default list
+      let idx = 0;
+      for (const cat of INITIAL_CATEGORIES) {
+        try {
           await Category.create({
             id: cat.id,
             label: cat.label,
@@ -35,44 +82,15 @@ export const categoryController = {
             subcategories: cat.subcategories || [],
             showcase: cat.showcase || [],
           });
-        }
-        categories = await Category.findAll({
-          order: [
-            ["sort_order", "ASC"],
-            ["created_at", "ASC"],
-          ],
-        });
+        } catch (seedErr) {}
       }
 
-      return categories.map((c) => {
-        const safeParse = (v) => {
-          if (typeof v !== "string") return v || [];
-          try { return JSON.parse(v || "[]"); } catch { return []; }
-        };
-        const item = c.toJSON ? c.toJSON() : c;
-        return {
-          id: item.id,
-          label: item.label,
-          href: item.href,
-          image: item.image || "",
-          sort_order: item.sort_order || 0,
-          featured: Boolean(item.featured),
-          subcategories: safeParse(item.subcategories),
-          showcase: safeParse(item.showcase),
-        };
-      });
+      categoriesCache = FALLBACK_CATEGORIES;
+      categoriesCacheExpiry = now + 60000;
+      return FALLBACK_CATEGORIES;
     } catch (dbErr) {
-      console.warn("[Categories] Database unreachable, falling back to INITIAL_CATEGORIES:", dbErr.message);
-      return INITIAL_CATEGORIES.map((c, idx) => ({
-        id: c.id,
-        label: c.label || c.name,
-        href: c.href,
-        image: c.image || "",
-        sort_order: c.sort_order ?? idx,
-        featured: Boolean(c.featured),
-        subcategories: c.subcategories || [],
-        showcase: c.showcase || [],
-      }));
+      console.warn("[Categories] DB unreachable/timeout, returning cached or defaults:", dbErr.message);
+      return categoriesCache || FALLBACK_CATEGORIES;
     }
   },
 
@@ -93,9 +111,11 @@ export const categoryController = {
           showcase: cat.showcase || [],
         });
       }
+      invalidateCategoriesCache();
       return { success: true };
     } catch (e) {
-      console.warn("[Categories] Database sync warning (falling back to storage):", e.message);
+      console.warn("[Categories] Database sync warning:", e.message);
+      invalidateCategoriesCache();
       return { success: true, warning: e.message };
     }
   },
@@ -112,6 +132,7 @@ export const categoryController = {
       subcategories: data.subcategories || [],
       showcase: data.showcase || [],
     });
+    invalidateCategoriesCache();
     return created.toJSON();
   },
 
@@ -120,6 +141,7 @@ export const categoryController = {
     const cat = await Category.findByPk(id);
     if (!cat) throw new Error("Category not found");
     await cat.update(data);
+    invalidateCategoriesCache();
     return cat.toJSON();
   },
 
@@ -128,38 +150,43 @@ export const categoryController = {
     const cat = await Category.findByPk(id);
     if (!cat) throw new Error("Category not found");
     await cat.destroy();
+    invalidateCategoriesCache();
     return { success: true };
   },
 
   async getBrowseCategories() {
+    const now = Date.now();
+    if (browseCategoriesCache && now < browseCategoriesCacheExpiry) {
+      return browseCategoriesCache;
+    }
+
     try {
-      const { StoreSetting } = await syncDatabase();
-      const setting = await StoreSetting.findByPk("homepage_browse_categories");
+      const setting = await withTimeout(
+        StoreSetting.findByPk("homepage_browse_categories"),
+        3500
+      );
       if (setting && setting.setting_value) {
         let val = setting.setting_value;
         if (typeof val === "string") {
-          try {
-            val = JSON.parse(val);
-          } catch {
-            val = null;
-          }
+          try { val = JSON.parse(val); } catch { val = null; }
         }
         if (typeof val === "string") {
-          try {
-            val = JSON.parse(val);
-          } catch {}
+          try { val = JSON.parse(val); } catch {}
         }
-        if (Array.isArray(val) && val.length > 0) return val;
+        if (Array.isArray(val) && val.length > 0) {
+          browseCategoriesCache = val;
+          browseCategoriesCacheExpiry = now + 60000;
+          return val;
+        }
       }
     } catch (e) {
       console.warn("[BrowseCategories] Error getting browse categories from DB:", e.message);
     }
-    return HOMEPAGE_BROWSE_CATEGORIES;
+    return browseCategoriesCache || HOMEPAGE_BROWSE_CATEGORIES;
   },
 
   async syncBrowseCategories(list) {
     try {
-      const { StoreSetting } = await syncDatabase();
       const stringified = typeof list === "string" ? list : JSON.stringify(list);
       const existing = await StoreSetting.findByPk("homepage_browse_categories");
       if (existing) {
@@ -170,6 +197,8 @@ export const categoryController = {
           setting_value: stringified,
         });
       }
+      browseCategoriesCache = list;
+      browseCategoriesCacheExpiry = Date.now() + 60000;
       return { success: true };
     } catch (e) {
       console.warn("[BrowseCategories] Database sync error:", e);

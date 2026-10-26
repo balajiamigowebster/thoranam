@@ -1,10 +1,13 @@
 import { Promotion, syncDatabase } from "@/models";
+import { withTimeout } from "@/lib/sequelize";
 
 export const promotionController = {
   async getAllPromotions() {
     try {
-      await syncDatabase();
-      const promotions = await Promotion.findAll({ order: [["created_at", "DESC"]] });
+      const promotions = await withTimeout(
+        Promotion.findAll({ order: [["created_at", "DESC"]] }),
+        3500
+      );
       return promotions.map((p) => p.toJSON());
     } catch (dbErr) {
       console.warn("[Promotions] DB error, returning sample promotions:", dbErr.message);

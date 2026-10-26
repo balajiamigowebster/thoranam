@@ -1,12 +1,16 @@
 import { Customer, syncDatabase } from "@/models";
+import { withTimeout } from "@/lib/sequelize";
 import bcrypt from "bcryptjs";
 
 export const customerController = {
   async getAllCustomers() {
     try {
-      await syncDatabase();
-      const customers = await Customer.findAll({ order: [["created_at", "DESC"]] });
-      return customers.map((c) => c.toJSON());
+      const customers = await withTimeout(
+        Customer.findAll({ order: [["created_at", "DESC"]] }),
+        3500,
+        []
+      );
+      return (customers || []).map((c) => (c.toJSON ? c.toJSON() : c));
     } catch (dbErr) {
       console.warn("[Customers] DB error or empty, returning empty list:", dbErr.message);
       return [];

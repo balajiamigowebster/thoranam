@@ -1,4 +1,5 @@
 import { Order, syncDatabase } from "@/models";
+import { withTimeout } from "@/lib/sequelize";
 
 // In-memory orders store fallback when MySQL is disconnected or on serverless
 let memoryOrders = [];
@@ -6,8 +7,11 @@ let memoryOrders = [];
 export const orderController = {
   async getAllOrders() {
     try {
-      await syncDatabase();
-      const orders = await Order.findAll({ order: [["created_at", "DESC"]] });
+      const orders = await withTimeout(
+        Order.findAll({ order: [["created_at", "DESC"]] }),
+        3500,
+        []
+      );
       if (orders && orders.length > 0) {
         const list = orders.map((o) => o.toJSON());
         const dbIds = new Set(list.map((o) => String(o.id)));

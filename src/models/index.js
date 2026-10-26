@@ -25,7 +25,7 @@ export async function syncDatabase(options = {}) {
   };
 
   if (isSynced && !options.force && !options.alter) {
-    return;
+    return { sequelize, ...models };
   }
 
   if (!isSynced || options.force || options.alter) {

@@ -82,8 +82,16 @@ export async function fetchProductsFromDb(force = false) {
   }
 
   pendingFetch = (async () => {
+    let timeoutId = null;
     try {
-      const res = await fetch(getApiUrl("/api/products"));
+      const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+      if (controller) {
+        timeoutId = setTimeout(() => controller.abort(), 6000);
+      }
+      const res = await fetch(getApiUrl("/api/products"), {
+        signal: controller?.signal,
+      });
+      if (timeoutId) clearTimeout(timeoutId);
       if (!res.ok) throw new Error("Failed to fetch products from database");
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
@@ -92,6 +100,7 @@ export async function fetchProductsFromDb(force = false) {
     } catch (err) {
       console.warn("Could not fetch products from database API:", err.message);
     } finally {
+      if (timeoutId) clearTimeout(timeoutId);
       pendingFetch = null;
     }
     return getStoredProducts();

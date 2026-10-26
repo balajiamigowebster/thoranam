@@ -22,8 +22,14 @@ export default function Header() {
 
   useEffect(() => {
     async function loadCats() {
+      let timer = null;
       try {
-        const res = await fetch(getApiUrl("/api/categories"));
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        if (controller) timer = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(getApiUrl("/api/categories"), {
+          signal: controller?.signal,
+        });
+        if (timer) clearTimeout(timer);
         const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           setCategories(json.data);
@@ -34,7 +40,8 @@ export default function Header() {
           }
         }
       } catch (e) {
-        console.error(e);
+        if (timer) clearTimeout(timer);
+        // Silently use INITIAL_CATEGORIES
       }
     }
     loadCats();

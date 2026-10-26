@@ -1,4 +1,5 @@
 import { StoreSetting, syncDatabase } from "@/models";
+import { withTimeout } from "@/lib/sequelize";
 
 let settingsCache = null;
 let settingsCacheExpiry = 0;
@@ -11,7 +12,7 @@ export const settingsController = {
     }
 
     try {
-      const rows = await StoreSetting.findAll();
+      const rows = await withTimeout(StoreSetting.findAll(), 3500, []);
       const settings = {};
       rows.forEach((r) => {
         const data = r.toJSON ? r.toJSON() : r;
