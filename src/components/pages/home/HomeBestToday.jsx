@@ -14,6 +14,8 @@ export default function HomeBestToday({ initialProducts = [] }) {
       id: p.id,
       title: p.title,
       price: p.price,
+      stock: p.stock,
+      category: p.category,
       image: p.mainImage || p.image || "/images/product-1.jpg",
       tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
     }));
@@ -36,6 +38,8 @@ export default function HomeBestToday({ initialProducts = [] }) {
             id: p.id,
             title: p.title,
             price: p.price,
+            stock: p.stock,
+            category: p.category,
             image: p.mainImage || p.image || "/images/product-1.jpg",
             tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
           }));
@@ -103,6 +107,8 @@ export default function HomeBestToday({ initialProducts = [] }) {
                 id={item.id}
                 title={item.title}
                 price={item.price}
+                stock={item.stock}
+                category={item.category}
                 image={item.image}
                 tag={item.tag}
                 href={`/products/${item.id}`}

@@ -145,6 +145,13 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
     ...(Array.isArray(product.galleryImages) ? product.galleryImages : []),
   ].filter(Boolean);
 
+  const parsedStock =
+    product?.stock !== undefined && product?.stock !== null && !isNaN(Number(product.stock))
+      ? Number(product.stock)
+      : null;
+  const isSoldOut = parsedStock !== null ? parsedStock <= 0 : false;
+  const isLowStock = !isSoldOut && parsedStock !== null && parsedStock > 0 && parsedStock <= 10;
+
   const handleCopyLink = () => {
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href);
@@ -163,6 +170,7 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
   };
 
   const handleAddToCart = (e) => {
+    if (isSoldOut) return;
     setIsAddedToCart(true);
     triggerAddToCartAnimation({
       startElementOrRect: e?.currentTarget,
@@ -232,6 +240,13 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
                   {product.category || "Exclusive Saree"}
                 </span>
               </div>
+              {isSoldOut && (
+                <div className="absolute top-4 right-4 z-10">
+                  <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md bg-stone-800/90 text-white shadow-xs backdrop-blur-xs">
+                    SOLD OUT
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Down Gallery Thumbnails */}
@@ -329,60 +344,94 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
               </div>
             </div>
 
+            {/* Availability / Urgency Warning Row */}
+            {isSoldOut ? (
+              <div className="flex items-center gap-2 p-3.5 rounded-xl bg-stone-100 dark:bg-slate-800 text-stone-700 dark:text-stone-300 border border-stone-200/80 dark:border-slate-700 text-xs sm:text-sm font-semibold">
+                <span className="w-2 h-2 rounded-full bg-stone-400 shrink-0" />
+                <span>Sold Out – This saree is currently out of stock</span>
+              </div>
+            ) : isLowStock ? (
+              <div className="flex items-center gap-2 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-900/60 text-xs sm:text-sm font-semibold">
+                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                <span>Hurry! Only {parsedStock} {parsedStock === 1 ? 'saree' : 'sarees'} left in stock</span>
+              </div>
+            ) : null}
+
             {/* Quantity Selector & Action Buttons */}
             <div className="space-y-3">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <div className="inline-flex items-center justify-between border border-slate-300 rounded-xl px-4 py-3 bg-white w-full sm:w-36 shrink-0">
+                <div
+                  className={`inline-flex items-center justify-between border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-3 bg-white dark:bg-slate-900 w-full sm:w-36 shrink-0 ${
+                    isSoldOut ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
                   <button
                     type="button"
+                    disabled={isSoldOut}
                     onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    className="p-1 text-slate-500 hover:text-slate-900 cursor-pointer"
+                    className="p-1 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer disabled:cursor-not-allowed"
                   >
                     <Minus className="w-4 h-4" />
                   </button>
-                  <span className="font-semibold text-sm text-slate-900">{quantity}</span>
+                  <span className="font-semibold text-sm text-slate-900 dark:text-slate-100">
+                    {isSoldOut ? 0 : quantity}
+                  </span>
                   <button
                     type="button"
+                    disabled={isSoldOut || (parsedStock !== null && quantity >= parsedStock)}
                     onClick={() => setQuantity((q) => q + 1)}
-                    className="p-1 text-slate-500 hover:text-slate-900 cursor-pointer"
+                    className="p-1 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer disabled:cursor-not-allowed"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  className="flex-1 py-3.5 px-6 rounded-xl bg-[#800F17] hover:bg-[#660B12] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer"
-                >
-                  {isAddedToCart ? (
-                    <>
-                      <Check className="w-4 h-4" /> Added to Cart!
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="w-4 h-4" /> ADD TO CART
-                    </>
-                  )}
-                </button>
+                {isSoldOut ? (
+                  <button
+                    type="button"
+                    disabled
+                    aria-disabled="true"
+                    className="flex-1 py-3.5 px-6 rounded-xl bg-[#800F17]/45 text-white/90 font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed uppercase tracking-wider select-none shadow-none"
+                  >
+                    SOLD OUT
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleAddToCart}
+                    className="flex-1 py-3.5 px-6 rounded-xl bg-[#800F17] hover:bg-[#660B12] text-white font-bold text-sm flex items-center justify-center gap-2 shadow-sm transition-all active:scale-[0.99] cursor-pointer"
+                  >
+                    {isAddedToCart ? (
+                      <>
+                        <Check className="w-4 h-4" /> Added to Cart!
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="w-4 h-4" /> ADD TO CART
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  triggerAddToCartAnimation({
-                    image: selectedImage || product?.mainImage || "/images/product-1.jpg",
-                    item: product,
-                    quantity: quantity || 1,
-                  });
-                  setTimeout(() => {
-                    window.location.href = "/checkout";
-                  }, 300);
-                }}
-                className="w-full py-3.5 px-6 rounded-xl bg-white border border-slate-800 text-slate-900 font-bold text-sm hover:bg-slate-50 transition-colors uppercase cursor-pointer"
-              >
-                BUY IT NOW
-              </button>
+              {!isSoldOut && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerAddToCartAnimation({
+                      image: selectedImage || product?.mainImage || "/images/product-1.jpg",
+                      item: product,
+                      quantity: quantity || 1,
+                    });
+                    setTimeout(() => {
+                      window.location.href = "/checkout";
+                    }, 300);
+                  }}
+                  className="w-full py-3.5 px-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors uppercase cursor-pointer"
+                >
+                  BUY IT NOW
+                </button>
+              )}
             </div>
 
             {/* 3 Trust Badges matching screenshot */}

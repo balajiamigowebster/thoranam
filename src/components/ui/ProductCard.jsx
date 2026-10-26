@@ -36,9 +36,19 @@ export default function ProductCard({
   const displayPrice = formatRupee(price);
   const displayOriginalPrice = originalPrice ? formatRupee(originalPrice) : null;
 
+  // Safe stock calculation
+  const parsedStock =
+    stock !== undefined && stock !== null && !isNaN(Number(stock))
+      ? Number(stock)
+      : null;
+  const isSoldOut = parsedStock !== null ? parsedStock <= 0 : false;
+  const isLowStock = !isSoldOut && parsedStock !== null && parsedStock > 0 && parsedStock <= 10;
+
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (isSoldOut) return;
 
     setIsAdded(true);
     triggerAddToCartAnimation({
@@ -67,12 +77,12 @@ export default function ProductCard({
 
   return (
     <div
-      className={`group relative bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-1.5 sm:p-3 border border-stone-200/80 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(128,15,23,0.14)] hover:-translate-y-1.5 transition-all duration-300 ease-out flex flex-col justify-between overflow-hidden cursor-pointer ${className}`}
+      className={`group relative bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-2 sm:p-3 border border-stone-200/80 dark:border-slate-800/80 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_16px_36px_rgba(128,15,23,0.12)] hover:-translate-y-1 transition-all duration-300 ease-out flex flex-col justify-between overflow-hidden cursor-pointer ${className}`}
     >
-      {/* Luxury Golden Border Glow on Hover */}
-      <div className="absolute inset-0 rounded-xl sm:rounded-2xl border-2 border-transparent group-hover:border-amber-300/60 pointer-events-none transition-colors duration-300 z-30" />
+      {/* Luxury Subtle Gold Glow on Hover */}
+      <div className="absolute inset-0 rounded-xl sm:rounded-2xl border-2 border-transparent group-hover:border-amber-300/50 pointer-events-none transition-colors duration-300 z-30" />
 
-      {/* Top Product Image Showcase Frame (Tall Luxury 4:5 Portrait Aspect Ratio with Lazy Loading) */}
+      {/* Top Product Image Container */}
       <div className="relative aspect-[4/5] w-full rounded-lg sm:rounded-xl overflow-hidden bg-stone-100 dark:bg-slate-800">
         <Link href={productHref} prefetch={false} className="block w-full h-full relative">
           <img
@@ -80,7 +90,9 @@ export default function ProductCard({
             alt={title || "Thoranam Saree"}
             loading="lazy"
             decoding="async"
-            className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ease-out"
+            className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ease-out ${
+              isSoldOut ? "opacity-85 grayscale-[15%]" : ""
+            }`}
             onError={(e) => {
               const currentSrc = e.currentTarget.getAttribute("src") || "";
               if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
@@ -92,73 +104,68 @@ export default function ProductCard({
             }}
           />
 
-          {/* Luxury soft vignette gradient on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          {/* Vignette on hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         </Link>
 
-        {/* Top-Left: Badge Tag */}
-        {displayTag && (
-          <div className="absolute top-1.5 sm:top-2.5 left-1.5 sm:left-2.5 z-20">
-            <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 dark:bg-slate-900/95 text-[#800F17] dark:text-rose-300 shadow-sm border border-stone-200/50 dark:border-slate-700/50 backdrop-blur-md">
+        {/* Top-Right Badge: SOLD OUT takes precedence */}
+        {isSoldOut ? (
+          <div className="absolute top-2 right-2 z-20">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-stone-800/90 text-white shadow-xs backdrop-blur-xs">
+              SOLD OUT
+            </span>
+          </div>
+        ) : displayTag ? (
+          <div className="absolute top-2 left-2 z-20">
+            <span className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider px-1.5 sm:px-2 py-0.5 rounded-md bg-white/95 dark:bg-slate-900/95 text-[#800F17] dark:text-rose-300 shadow-xs border border-stone-200/50 backdrop-blur-xs">
               {displayTag}
             </span>
           </div>
-        )}
+        ) : null}
 
-        {/* Top-Right: Wishlist Button */}
-        <button
-          type="button"
-          onClick={handleToggleWishlist}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          className={`absolute top-1.5 sm:top-2.5 right-1.5 sm:right-2.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-90 ${
-            isWishlisted
-              ? "bg-[#800F17] text-white opacity-100"
-              : "bg-white/90 dark:bg-slate-900/90 text-stone-600 dark:text-stone-300 hover:text-[#800F17] opacity-90 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
-          }`}
-        >
-          <Heart
-            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 ${
-              isWishlisted ? "fill-current scale-110" : ""
+        {/* Top-Right: Wishlist Button (only when not sold out) */}
+        {!isSoldOut && (
+          <button
+            type="button"
+            onClick={handleToggleWishlist}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            className={`absolute top-2 right-2 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center shadow-md backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-90 ${
+              isWishlisted
+                ? "bg-[#800F17] text-white opacity-100"
+                : "bg-white/90 dark:bg-slate-900/90 text-stone-600 dark:text-stone-300 hover:text-[#800F17] opacity-90 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100"
             }`}
-          />
-        </button>
-
-        {/* Bottom-Right: Floating Add-To-Cart Circular Action Button */}
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          aria-label="Add saree to cart"
-          title="Add to Cart"
-          className={`absolute bottom-1.5 sm:bottom-2.5 right-1.5 sm:right-2.5 z-20 w-7 h-7 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-90 shadow-md cursor-pointer border ${
-            isAdded
-              ? "bg-emerald-600 text-white border-emerald-500 ring-2 sm:ring-4 ring-emerald-400/30 scale-105"
-              : "bg-white dark:bg-slate-900 text-stone-800 dark:text-stone-100 hover:bg-[#800F17] hover:text-white border-stone-200/80 dark:border-slate-700 group/cartbtn"
-          }`}
-        >
-          {isAdded ? (
-            <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white animate-in zoom-in duration-200" />
-          ) : (
-            <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[1.9] transition-transform duration-300 group-hover/cartbtn:scale-110" />
-          )}
-        </button>
+          >
+            <Heart
+              className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-300 ${
+                isWishlisted ? "fill-current scale-110" : ""
+              }`}
+            />
+          </button>
+        )}
       </div>
 
-      {/* Saree Meta / Info Section */}
-      <div className="pt-2 sm:pt-3.5 pb-1 sm:pb-2 px-1 sm:px-1.5 flex-1 flex flex-col justify-between space-y-1 sm:space-y-2">
-        <Link
-          href={productHref}
-          prefetch={false}
-          className="group-hover:text-[#800F17] transition-colors duration-200"
-        >
-          <h3 className="text-[11px] sm:text-[14px] font-medium text-stone-800 dark:text-stone-100 line-clamp-2 leading-tight sm:leading-snug">
-            {title}
-          </h3>
-        </Link>
+      {/* Saree Meta / Info Area matching Screenshots 1 & 2 */}
+      <div className="pt-2.5 sm:pt-3 pb-1 px-1 flex-1 flex flex-col justify-between space-y-2">
+        <div className="space-y-1">
+          {/* Subtitle: Category or Brand */}
+          <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400 truncate">
+            {category ? category.toUpperCase() : "THORANAM SAREES"}
+          </p>
 
-        {/* Price & Optional Stock / Availability */}
-        <div className="flex items-center justify-between pt-0.5 sm:pt-1">
-          <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
-            <span className="text-xs sm:text-base font-extrabold text-[#800F17] dark:text-rose-400 tracking-tight">
+          {/* Title */}
+          <Link
+            href={productHref}
+            prefetch={false}
+            className="block group-hover:text-[#800F17] transition-colors duration-200"
+          >
+            <h3 className="text-xs sm:text-sm font-serif font-medium text-stone-800 dark:text-stone-100 line-clamp-1 leading-snug">
+              {title}
+            </h3>
+          </Link>
+
+          {/* Price */}
+          <div className="flex items-baseline gap-2 pt-0.5">
+            <span className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100 tracking-tight">
               {displayPrice}
             </span>
             {displayOriginalPrice && (
@@ -167,6 +174,57 @@ export default function ProductCard({
               </span>
             )}
           </div>
+
+          {/* Availability / Urgency Warning Row */}
+          <div className="min-h-[18px] flex items-center">
+            {isSoldOut ? (
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-stone-500 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-stone-400 shrink-0" />
+                <span>Sold Out</span>
+              </div>
+            ) : isLowStock ? (
+              <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-amber-700 dark:text-amber-400 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                <span>Only {parsedStock} left</span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {/* Action Button: Full-width matching Screenshots 1 & 2 */}
+        <div className="pt-1">
+          {isSoldOut ? (
+            <button
+              type="button"
+              disabled
+              aria-disabled="true"
+              className="w-full py-2.5 px-3 rounded-lg bg-[#800F17]/45 text-white/90 text-xs font-bold uppercase tracking-wider cursor-not-allowed text-center select-none shadow-none"
+            >
+              SOLD OUT
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className={`w-full py-2.5 px-3 rounded-lg text-xs font-bold uppercase tracking-wider transition-all duration-200 shadow-xs hover:shadow-md active:scale-[0.98] cursor-pointer flex items-center justify-center gap-1.5 ${
+                isAdded
+                  ? "bg-emerald-600 text-white"
+                  : "bg-[#800F17] hover:bg-[#680C13] text-white"
+              }`}
+            >
+              {isAdded ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-white stroke-[2.5]" />
+                  <span>ADDED</span>
+                </>
+              ) : (
+                <>
+                  <ShoppingBag className="w-3.5 h-3.5" />
+                  <span>ADD TO CART</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
