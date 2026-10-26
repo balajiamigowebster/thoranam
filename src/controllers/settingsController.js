@@ -6,7 +6,7 @@ let settingsCacheExpiry = 0;
 
 export const settingsController = {
   async getSettings() {
-    const now = Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     if (settingsCache && now < settingsCacheExpiry) {
       return settingsCache;
     }

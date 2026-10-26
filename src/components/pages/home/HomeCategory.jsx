@@ -7,8 +7,10 @@ import Container from "@/components/ui/Container";
 import { HOMEPAGE_BROWSE_CATEGORIES, getStoredBrowseCategories } from "@/lib/categories";
 import { getApiUrl, getAssetUrl } from "@/config";
 
-export default function HomeCategory() {
-  const [categories, setCategories] = useState(HOMEPAGE_BROWSE_CATEGORIES);
+export default function HomeCategory({ initialCategories = [] }) {
+  const [categories, setCategories] = useState(() =>
+    initialCategories.length > 0 ? initialCategories : HOMEPAGE_BROWSE_CATEGORIES
+  );
 
   useEffect(() => {
     // 1. Keep 8 saree circular categories synchronized from localStorage if edited in dashboard
@@ -24,41 +26,43 @@ export default function HomeCategory() {
       } catch (e) {}
     };
 
-    // Read cached categories client-side after mount to prevent hydration mismatch
-    syncCategories();
+    // If initialCategories was provided from server, avoid immediate duplicate network requests
+    if (initialCategories.length === 0) {
+      syncCategories();
 
-    // 2. Fetch live categories from database
-    async function loadBrowseCategories() {
-      try {
-        const res = await fetch(getApiUrl("/api/categories/browse"));
-        const json = await res.json().catch(() => null);
-        if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          setCategories(json.data);
-          try {
-            localStorage.setItem("thoranam_browse_categories", JSON.stringify(json.data));
-          } catch (e) {}
-        } else {
-          // Fallback to /api/settings where store_settings resides on live cPanel backend
-          try {
-            const settRes = await fetch(getApiUrl("/api/settings"));
-            const settJson = await settRes.json();
-            let list = settJson?.data?.homepage_browse_categories;
-            if (typeof list === "string") {
-              try { list = JSON.parse(list); } catch {}
-            }
-            if (Array.isArray(list) && list.length > 0) {
-              setCategories(list);
-              try {
-                localStorage.setItem("thoranam_browse_categories", JSON.stringify(list));
-              } catch (e) {}
-            }
-          } catch (innerErr) {}
+      // Fetch live categories from database
+      async function loadBrowseCategories() {
+        try {
+          const res = await fetch(getApiUrl("/api/categories/browse"));
+          const json = await res.json().catch(() => null);
+          if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+            setCategories(json.data);
+            try {
+              localStorage.setItem("thoranam_browse_categories", JSON.stringify(json.data));
+            } catch (e) {}
+          } else {
+            // Fallback to /api/settings where store_settings resides on live cPanel backend
+            try {
+              const settRes = await fetch(getApiUrl("/api/settings"));
+              const settJson = await settRes.json();
+              let list = settJson?.data?.homepage_browse_categories;
+              if (typeof list === "string") {
+                try { list = JSON.parse(list); } catch {}
+              }
+              if (Array.isArray(list) && list.length > 0) {
+                setCategories(list);
+                try {
+                  localStorage.setItem("thoranam_browse_categories", JSON.stringify(list));
+                } catch (e) {}
+              }
+            } catch (innerErr) {}
+          }
+        } catch (e) {
+          console.error("Failed to load browse categories from API:", e);
         }
-      } catch (e) {
-        console.error("Failed to load browse categories from API:", e);
       }
+      loadBrowseCategories();
     }
-    loadBrowseCategories();
 
     window.addEventListener("thoranam_browse_categories_updated", syncCategories);
     window.addEventListener("storage", syncCategories);

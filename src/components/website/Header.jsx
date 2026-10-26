@@ -21,30 +21,32 @@ export default function Header() {
   const { totalCartCount, badgeBump, openCart, isMounted } = useCart();
 
   useEffect(() => {
-    async function loadCats() {
-      let timer = null;
-      try {
-        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-        if (controller) timer = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(getApiUrl("/api/categories"), {
-          signal: controller?.signal,
-        });
-        if (timer) clearTimeout(timer);
-        const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          setCategories(json.data);
-          try {
-            localStorage.setItem("thoranam_categories", JSON.stringify(json.data));
-          } catch (e) {
-            console.error(e);
+    const idleTimer = setTimeout(() => {
+      async function loadCats() {
+        let timer = null;
+        try {
+          const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+          if (controller) timer = setTimeout(() => controller.abort(), 5000);
+          const res = await fetch(getApiUrl("/api/categories"), {
+            signal: controller?.signal,
+          });
+          if (timer) clearTimeout(timer);
+          const json = await res.json();
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+            setCategories(json.data);
+            try {
+              localStorage.setItem("thoranam_categories", JSON.stringify(json.data));
+            } catch (e) {
+              console.error(e);
+            }
           }
+        } catch (e) {
+          if (timer) clearTimeout(timer);
+          // Silently use INITIAL_CATEGORIES
         }
-      } catch (e) {
-        if (timer) clearTimeout(timer);
-        // Silently use INITIAL_CATEGORIES
       }
-    }
-    loadCats();
+      loadCats();
+    }, 1000);
 
     const handleSync = () => {
       setCategories(getStoredCategories());
@@ -78,6 +80,7 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
+      clearTimeout(idleTimer);
       window.removeEventListener("thoranam_categories_updated", handleSync);
       window.removeEventListener("thoranam_customer_auth_changed", syncCustomer);
       window.removeEventListener("storage", handleSync);

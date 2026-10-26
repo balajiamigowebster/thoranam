@@ -8,12 +8,14 @@ const DEFAULT_SLIDES = [
   {
     id: 1,
     imageSrc: "/images/hero-1.webp",
+    mobileImageSrc: "/images/hero-1-mobile.webp",
     imageAlt: "Semi Mangalagiri Saree Collection Banner",
     link: "/products",
   },
   {
     id: 2,
     imageSrc: "/images/hero-2.webp",
+    mobileImageSrc: "/images/hero-2-mobile.webp",
     imageAlt: "Heirloom Festive Silk Sarees Banner",
     link: "/products",
   },
@@ -31,21 +33,22 @@ export default function HomeHero({ initialSlides = null }) {
   useEffect(() => {
     let mounted = true;
 
-    // Load cached slides on client mount without causing SSR hydration mismatch
-    if (!initialSlides) {
+    // If initialSlides was already pre-rendered by the server, avoid redundant client fetch
+    if (initialSlides && initialSlides.length > 0) {
+      return;
+    }
+
+    async function loadHeroSlides() {
       try {
         const cached = localStorage.getItem(CACHE_KEY);
         if (cached) {
           const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
+          if (Array.isArray(parsed) && parsed.length > 0 && mounted) {
             setSlides(parsed);
           }
         }
       } catch (e) {}
-    }
 
-    async function loadHeroSlides() {
       try {
         const res = await fetch(getApiUrl("/api/settings"));
         const json = await res.json();

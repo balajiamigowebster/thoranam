@@ -29,7 +29,6 @@ export default function ProductCard({
   const { triggerAddToCartAnimation } = useCart();
   const [isAdded, setIsAdded] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isImgLoaded, setIsImgLoaded] = useState(false);
 
   const productHref = href || `/products/${id}`;
   const displayImage = getAssetUrl(image) || "/images/product-1.jpg";
@@ -76,25 +75,14 @@ export default function ProductCard({
       {/* Top Product Image Showcase Frame (Tall Luxury 4:5 Portrait Aspect Ratio with Lazy Loading) */}
       <div className="relative aspect-[4/5] w-full rounded-lg sm:rounded-xl overflow-hidden bg-stone-100 dark:bg-slate-800">
         <Link href={productHref} prefetch={false} className="block w-full h-full relative">
-          {/* Shimmer skeleton while image lazy loads */}
-          {!isImgLoaded && (
-            <div className="absolute inset-0 bg-stone-200/80 dark:bg-slate-800 animate-pulse flex items-center justify-center">
-              <div className="w-5 h-5 rounded-full border-2 border-[#800F17]/30 border-t-[#800F17] animate-spin" />
-            </div>
-          )}
-
           <img
             src={displayImage}
             alt={title || "Thoranam Saree"}
             loading="lazy"
             decoding="async"
-            onLoad={() => setIsImgLoaded(true)}
-            className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-all duration-500 ease-out ${
-              isImgLoaded ? "opacity-100" : "opacity-0"
-            }`}
+            className="w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ease-out"
             onError={(e) => {
-              setIsImgLoaded(true);
-              e.target.src = "/images/product-1.jpg";
+              e.currentTarget.src = "/images/product-1.jpg";
             }}
           />
 

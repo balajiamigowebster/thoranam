@@ -28,7 +28,7 @@ const FALLBACK_CATEGORIES = INITIAL_CATEGORIES.map((c, idx) => ({
 
 export const categoryController = {
   async getAllCategories() {
-    const now = Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     if (categoriesCache && now < categoriesCacheExpiry) {
       return categoriesCache;
     }
@@ -155,7 +155,7 @@ export const categoryController = {
   },
 
   async getBrowseCategories() {
-    const now = Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     if (browseCategoriesCache && now < browseCategoriesCacheExpiry) {
       return browseCategoriesCache;
     }

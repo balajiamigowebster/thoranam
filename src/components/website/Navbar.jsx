@@ -14,17 +14,18 @@ export default function Navbar({ className = "" }) {
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
   useEffect(() => {
-    // Optionally fetch categories from API to populate showcases or dynamic counts
-    async function enrichCategories() {
-      let timer = null;
-      try {
-        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-        if (controller) timer = setTimeout(() => controller.abort(), 5000);
-        const res = await fetch(getApiUrl("/api/categories"), {
-          signal: controller?.signal,
-        });
-        if (timer) clearTimeout(timer);
-        const json = await res.json();
+    // Defer non-critical category showcase enrichment until main thread is idle
+    const idleTimer = setTimeout(() => {
+      async function enrichCategories() {
+        let timer = null;
+        try {
+          const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+          if (controller) timer = setTimeout(() => controller.abort(), 5000);
+          const res = await fetch(getApiUrl("/api/categories"), {
+            signal: controller?.signal,
+          });
+          if (timer) clearTimeout(timer);
+          const json = await res.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           // Keep the 6 main menus as top-level and enrich subcategories or showcases
           const catMap = new Map();
@@ -69,7 +70,10 @@ export default function Navbar({ className = "" }) {
       }
     }
     enrichCategories();
-  }, []);
+  }, 1200);
+
+  return () => clearTimeout(idleTimer);
+}, []);
 
   return (
     <nav

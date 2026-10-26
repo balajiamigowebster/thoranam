@@ -5,8 +5,10 @@ import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
-export default function HomeShop() {
-  const [products, setProducts] = useState(getStoredProducts);
+export default function HomeShop({ initialProducts = [] }) {
+  const [products, setProducts] = useState(() =>
+    initialProducts.length > 0 ? initialProducts : getStoredProducts()
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -16,7 +18,11 @@ export default function HomeShop() {
         setProducts(data);
       }
     }
-    load();
+
+    if (initialProducts.length === 0) {
+      load();
+    }
+
     const handleSync = () => load();
     window.addEventListener("thoranam_products_updated", handleSync);
     window.addEventListener("storage", handleSync);
@@ -25,7 +31,7 @@ export default function HomeShop() {
       window.removeEventListener("thoranam_products_updated", handleSync);
       window.removeEventListener("storage", handleSync);
     };
-  }, []);
+  }, [initialProducts.length]);
 
   const bestsellers = (products || []).filter((p) => Boolean(p.isBestseller)).slice(0, 4);
 

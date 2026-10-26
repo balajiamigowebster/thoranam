@@ -1,4 +1,7 @@
+import { Suspense } from "react";
 import Home from "@/components/pages/home/Home";
+import { productController, categoryController, settingsController } from "@/controllers";
+import { connection } from "next/server";
 
 export const metadata = {
   title: "Thoranam | Luxury Saree Boutique",
@@ -11,6 +14,55 @@ export const metadata = {
   },
 };
 
+async function HomeContent() {
+  await connection();
+
+  let initialProducts = [];
+  let initialBrowseCategories = [];
+  let initialSettings = {};
+
+  try {
+    const [productsRes, settingsRes, categoriesRes] = await Promise.allSettled([
+      productController.getAllProducts(),
+      settingsController.getSettings(),
+      categoryController.getBrowseCategories(),
+    ]);
+
+    if (productsRes.status === "fulfilled" && Array.isArray(productsRes.value)) {
+      initialProducts = productsRes.value;
+    }
+    if (settingsRes.status === "fulfilled" && settingsRes.value) {
+      initialSettings = settingsRes.value;
+      if (initialSettings.homepage_browse_categories) {
+        let b = initialSettings.homepage_browse_categories;
+        if (typeof b === "string") {
+          try { b = JSON.parse(b); } catch {}
+        }
+        if (Array.isArray(b) && b.length > 0) {
+          initialBrowseCategories = b;
+        }
+      }
+    }
+    if (initialBrowseCategories.length === 0 && categoriesRes.status === "fulfilled" && Array.isArray(categoriesRes.value)) {
+      initialBrowseCategories = categoriesRes.value;
+    }
+  } catch (e) {
+    console.warn("HomePage server data loading notice:", e);
+  }
+
+  return (
+    <Home
+      initialProducts={initialProducts}
+      initialBrowseCategories={initialBrowseCategories}
+      initialSettings={initialSettings}
+    />
+  );
+}
+
 export default function HomePage() {
-  return <Home />;
+  return (
+    <Suspense fallback={<Home />}>
+      <HomeContent />
+    </Suspense>
+  );
 }

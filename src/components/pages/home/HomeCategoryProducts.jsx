@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Container from "@/components/ui/Container";
@@ -21,9 +21,11 @@ const PARENT_CATEGORY_KEYS = [
   "thoranam-exclusive",
 ];
 
-export default function HomeCategoryProducts() {
-  const [products, setProducts] = useState(getStoredProducts);
-  const [isLoading, setIsLoading] = useState(true);
+export default function HomeCategoryProducts({ initialProducts = [] }) {
+  const [products, setProducts] = useState(() =>
+    initialProducts.length > 0 ? initialProducts : getStoredProducts()
+  );
+  const [isLoading, setIsLoading] = useState(() => initialProducts.length === 0);
   const [visibleCount, setVisibleCount] = useState(2);
   const sentinelRef = useRef(null);
 
@@ -43,7 +45,9 @@ export default function HomeCategoryProducts() {
       }
     }
 
-    loadData();
+    if (initialProducts.length === 0) {
+      loadData();
+    }
 
     const handleSync = () => loadData();
     window.addEventListener("thoranam_products_updated", handleSync);
@@ -54,7 +58,7 @@ export default function HomeCategoryProducts() {
       window.removeEventListener("thoranam_products_updated", handleSync);
       window.removeEventListener("storage", handleSync);
     };
-  }, []);
+  }, [initialProducts.length]);
 
   // Filter REAL products strictly matching each submenu
   const getSubmenuProducts = (submenu) => {
@@ -107,53 +111,58 @@ export default function HomeCategoryProducts() {
     return matched.slice(0, 4);
   };
 
-  // Only consider submenus (the 17 specific weave subcategories), excluding umbrella parent menus
-  const submenus = INITIAL_CATEGORIES.filter((c) => {
-    const id = (c.id || "").toLowerCase();
-    const label = (c.label || c.name || "").toLowerCase();
-    return !PARENT_CATEGORY_KEYS.includes(id) && !PARENT_CATEGORY_KEYS.includes(label);
-  });
+  // Memoize activeSubmenus so filtering doesn't re-run on every scroll/state update
+  const activeSubmenus = useMemo(() => {
+    // Only consider submenus (the 17 specific weave subcategories), excluding umbrella parent menus
+    const submenus = INITIAL_CATEGORIES.filter((c) => {
+      const id = (c.id || "").toLowerCase();
+      const label = (c.label || c.name || "").toLowerCase();
+      return !PARENT_CATEGORY_KEYS.includes(id) && !PARENT_CATEGORY_KEYS.includes(label);
+    });
 
-  const coveredProductIds = new Set();
-  const activeSubmenus = [];
+    const coveredProductIds = new Set();
+    const result = [];
 
-  submenus.forEach((submenu) => {
-    const items = getSubmenuProducts(submenu);
-    if (items && items.length > 0) {
-      items.forEach((p) => coveredProductIds.add(p.id));
-      activeSubmenus.push({
-        submenu,
-        items,
-      });
-    }
-  });
-
-  // Also include any user-created category from Dashboard that has products in MySQL
-  const remainingProducts = products.filter((p) => !coveredProductIds.has(p.id));
-  if (remainingProducts.length > 0) {
-    const customGrouped = {};
-    remainingProducts.forEach((p) => {
-      const catName = (p.category || "").trim();
-      const catKey = catName.toLowerCase();
-      // Skip umbrella parent names
-      if (!PARENT_CATEGORY_KEYS.includes(catKey) && catName) {
-        if (!customGrouped[catName]) customGrouped[catName] = [];
-        customGrouped[catName].push(p);
+    submenus.forEach((submenu) => {
+      const items = getSubmenuProducts(submenu);
+      if (items && items.length > 0) {
+        items.forEach((p) => coveredProductIds.add(p.id));
+        result.push({
+          submenu,
+          items,
+        });
       }
     });
 
-    Object.entries(customGrouped).forEach(([catName, items]) => {
-      activeSubmenus.push({
-        submenu: {
-          id: catName.toLowerCase().replace(/\s+/g, "-"),
-          label: catName,
-          name: catName,
-          href: `/products?cat=${encodeURIComponent(catName)}`,
-        },
-        items: items.slice(0, 4),
+    // Also include any user-created category from Dashboard that has products in MySQL
+    const remainingProducts = products.filter((p) => !coveredProductIds.has(p.id));
+    if (remainingProducts.length > 0) {
+      const customGrouped = {};
+      remainingProducts.forEach((p) => {
+        const catName = (p.category || "").trim();
+        const catKey = catName.toLowerCase();
+        // Skip umbrella parent names
+        if (!PARENT_CATEGORY_KEYS.includes(catKey) && catName) {
+          if (!customGrouped[catName]) customGrouped[catName] = [];
+          customGrouped[catName].push(p);
+        }
       });
-    });
-  }
+
+      Object.entries(customGrouped).forEach(([catName, items]) => {
+        result.push({
+          submenu: {
+            id: catName.toLowerCase().replace(/\s+/g, "-"),
+            label: catName,
+            name: catName,
+            href: `/products?cat=${encodeURIComponent(catName)}`,
+          },
+          items: items.slice(0, 4),
+        });
+      });
+    }
+
+    return result;
+  }, [products]);
 
   // IntersectionObserver to lazy load subsequent categories progressively as user scrolls down
   useEffect(() => {

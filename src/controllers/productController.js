@@ -34,7 +34,7 @@ export const productController = {
   // Get all products directly from MySQL database with optional filters
   async getAllProducts(query = {}) {
     const isUnfiltered = (!query.category || query.category === "all") && !query.search;
-    const now = Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
 
     // Serve from memory cache if query is unfiltered and cache is fresh
     if (isUnfiltered && productsCache.data && now - productsCache.timestamp < CACHE_TTL_MS) {
@@ -87,7 +87,7 @@ export const productController = {
   async getProductById(id) {
     if (!id) return null;
     const key = String(id);
-    const now = Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
     const cached = productsCache.singleMap.get(key);
     if (cached && now - cached.timestamp < CACHE_TTL_MS) {
       return cached.data;

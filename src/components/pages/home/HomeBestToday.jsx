@@ -5,9 +5,9 @@ import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { fetchProductsFromDb, getStoredProducts } from "@/lib/products";
 
-export default function HomeBestToday() {
+export default function HomeBestToday({ initialProducts = [] }) {
   const [products, setProducts] = useState(() => {
-    const data = getStoredProducts();
+    const data = initialProducts.length > 0 ? initialProducts : getStoredProducts();
     const featured = (data || []).filter((p) => Boolean(p.isFeatured));
     return featured.slice(0, 4).map((p, idx) => ({
       id: p.id,
@@ -18,7 +18,7 @@ export default function HomeBestToday() {
     }));
   });
   const [isLoading, setIsLoading] = useState(() => {
-    const data = getStoredProducts();
+    const data = initialProducts.length > 0 ? initialProducts : getStoredProducts();
     const featured = (data || []).filter((p) => Boolean(p.isFeatured));
     return featured.length === 0;
   });
@@ -50,7 +50,11 @@ export default function HomeBestToday() {
       }
     }
 
-    loadProducts();
+    // Only fetch on mount if initialProducts was not pre-rendered from server
+    if (initialProducts.length === 0) {
+      loadProducts();
+    }
+
     window.addEventListener("thoranam_products_updated", loadProducts);
     window.addEventListener("storage", loadProducts);
 
@@ -59,7 +63,7 @@ export default function HomeBestToday() {
       window.removeEventListener("thoranam_products_updated", loadProducts);
       window.removeEventListener("storage", loadProducts);
     };
-  }, []);
+  }, [initialProducts.length]);
 
   // Section Heading is always rendered immediately as H1 without any lazy loading
   return (

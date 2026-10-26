@@ -34,13 +34,16 @@ export async function withTimeout(promise, ms = 4000, fallback = null) {
 
 export function getSequelize() {
   if (!sequelizeInstance) {
-    const dbName = process.env.DB_NAME || "amigoweb_thoranam-db";
-    const dbUser = process.env.DB_USER || "amigoweb_thoranam-user";
+    const isLocal = !process.env.DB_HOST || process.env.DB_HOST === "127.0.0.1" || process.env.DB_HOST === "localhost";
+    const dbName = process.env.DB_NAME || (isLocal ? "thoranam-db" : "amigoweb_thoranam-db");
+    const dbUser = process.env.DB_USER || (isLocal ? "root" : "amigoweb_thoranam-user");
     const dbPassword =
-      process.env.DB_PASSWORD !== undefined && process.env.DB_PASSWORD !== ""
+      process.env.DB_PASSWORD !== undefined
         ? process.env.DB_PASSWORD
+        : isLocal
+        ? ""
         : "Thoranam-password-12";
-    const dbHost = process.env.DB_HOST || "amigowebster.in";
+    const dbHost = process.env.DB_HOST || (isLocal ? "127.0.0.1" : "amigowebster.in");
     const dbPort = Number(process.env.DB_PORT) || 3306;
 
     sequelizeInstance = new Sequelize(dbName, dbUser, dbPassword, {
