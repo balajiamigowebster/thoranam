@@ -61,7 +61,7 @@ const getCachedBrowseCategories = unstable_cache(
 
 export const categoryController = {
   async getAllCategories() {
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : 0;
     if (categoriesCache && now < categoriesCacheExpiry) {
       return categoriesCache;
     }
@@ -188,7 +188,7 @@ export const categoryController = {
   },
 
   async getBrowseCategories() {
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : 0;
     if (browseCategoriesCache && now < browseCategoriesCacheExpiry) {
       return browseCategoriesCache;
     }
@@ -218,7 +218,7 @@ export const categoryController = {
         });
       }
       browseCategoriesCache = list;
-      browseCategoriesCacheExpiry = Date.now() + 60000;
+      browseCategoriesCacheExpiry = (typeof performance !== "undefined" ? performance.now() : 0) + 60000;
       return { success: true };
     } catch (e) {
       console.warn("[BrowseCategories] Database sync error:", e);

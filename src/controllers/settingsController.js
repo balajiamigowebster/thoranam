@@ -35,7 +35,7 @@ const getCachedDbSettings = unstable_cache(
 
 export const settingsController = {
   async getSettings() {
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : 0;
     if (settingsCache && now < settingsCacheExpiry) {
       return settingsCache;
     }

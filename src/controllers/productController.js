@@ -9,7 +9,7 @@ let productsCache = {
   singleMap: new Map(), // string id -> { data, timestamp }
 };
 
-const CACHE_TTL_MS = 5 * 1000; // 5 seconds TTL
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds TTL for fast responses
 
 export function invalidateProductsCache() {
   productsCache.data = null;
@@ -51,7 +51,7 @@ const getCachedDbProducts = unstable_cache(
   },
   ["thoranam-db-products-global-v1"],
   {
-    revalidate: 5,
+    revalidate: 60,
     tags: ["products"],
   }
 );
@@ -61,7 +61,7 @@ export const productController = {
   // Get all products directly from MySQL database with optional filters
   async getAllProducts(query = {}) {
     const isUnfiltered = (!query.category || query.category === "all") && !query.search;
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : 0;
 
     // 1. Serve from in-memory RAM cache if available and fresh
     if (isUnfiltered && productsCache.data && now - productsCache.timestamp < CACHE_TTL_MS) {
@@ -131,7 +131,7 @@ export const productController = {
   async getProductById(id) {
     if (!id) return null;
     const key = String(id);
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const now = typeof performance !== "undefined" ? performance.now() : 0;
     const cached = productsCache.singleMap.get(key);
     if (cached && now - cached.timestamp < CACHE_TTL_MS) {
       return cached.data;
