@@ -15,6 +15,7 @@ export const metadata = {
 };
 
 async function HomeContent() {
+  await connection();
   let initialProducts = [];
   let initialBrowseCategories = [];
   let initialSettings = {};

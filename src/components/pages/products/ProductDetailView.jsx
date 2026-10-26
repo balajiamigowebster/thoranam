@@ -20,6 +20,10 @@ import {
   Info,
   ArrowRight,
   FileText,
+  X,
+  ZoomIn,
+  ZoomOut,
+  ChevronLeft,
 } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
@@ -56,6 +60,12 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
   const [copied, setCopied] = useState(false);
   const [isAddedToCart, setIsAddedToCart] = useState(false);
   const [addedItems, setAddedItems] = useState({});
+
+  // Lightbox & Fullscreen Zoom Modal state
+  const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [zoomIndex, setZoomIndex] = useState(0);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [zoomPosition, setZoomPosition] = useState({ x: 50, y: 50 });
 
   const [relatedProducts, setRelatedProducts] = useState(() => {
     const stored = getStoredProducts();
@@ -145,6 +155,90 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
     ...(Array.isArray(product.galleryImages) ? product.galleryImages : []),
   ].filter(Boolean);
 
+  const openZoomModal = (imgUrl) => {
+    const target = imgUrl || selectedImage || product?.mainImage;
+    const idx = allImages.findIndex((img) => img === target);
+    setZoomIndex(idx >= 0 ? idx : 0);
+    setZoomScale(1);
+    setZoomPosition({ x: 50, y: 50 });
+    setIsZoomOpen(true);
+  };
+
+  const closeZoomModal = () => {
+    setIsZoomOpen(false);
+    setZoomScale(1);
+    setZoomPosition({ x: 50, y: 50 });
+  };
+
+  const handlePrevZoom = (e) => {
+    e?.stopPropagation?.();
+    setZoomIndex((prev) => (prev > 0 ? prev - 1 : (allImages.length > 0 ? allImages.length - 1 : 0)));
+    setZoomScale(1);
+    setZoomPosition({ x: 50, y: 50 });
+  };
+
+  const handleNextZoom = (e) => {
+    e?.stopPropagation?.();
+    setZoomIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+    setZoomScale(1);
+    setZoomPosition({ x: 50, y: 50 });
+  };
+
+  const toggleZoom = (e) => {
+    e?.stopPropagation?.();
+    if (zoomScale > 1) {
+      setZoomScale(1);
+      setZoomPosition({ x: 50, y: 50 });
+    } else {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setZoomPosition({
+        x: Math.max(0, Math.min(100, x)),
+        y: Math.max(0, Math.min(100, y)),
+      });
+      setZoomScale(2.2);
+    }
+  };
+
+  const handleMouseMoveZoom = (e) => {
+    if (zoomScale <= 1) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({
+      x: Math.max(0, Math.min(100, x)),
+      y: Math.max(0, Math.min(100, y)),
+    });
+  };
+
+  // Keyboard navigation & body scroll lock
+  useEffect(() => {
+    if (!isZoomOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        closeZoomModal();
+      } else if (e.key === "ArrowLeft") {
+        setZoomIndex((prev) => (prev > 0 ? prev - 1 : (allImages.length > 0 ? allImages.length - 1 : 0)));
+        setZoomScale(1);
+        setZoomPosition({ x: 50, y: 50 });
+      } else if (e.key === "ArrowRight") {
+        setZoomIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+        setZoomScale(1);
+        setZoomPosition({ x: 50, y: 50 });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isZoomOpen, allImages.length]);
+
   const parsedStock =
     product?.stock !== undefined && product?.stock !== null && !isNaN(Number(product.stock))
       ? Number(product.stock)
@@ -219,11 +313,15 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
           {/* LEFT COLUMN: Main Image & Gallery Downward */}
           <div className="lg:col-span-6 space-y-4">
             {/* Big Main Image Container */}
-            <div className="relative aspect-[3/4] w-full rounded-3xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-xs group">
+            <div
+              onClick={() => openZoomModal(selectedImage || product.mainImage)}
+              className="relative aspect-[3/4] w-full rounded-3xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-xs group cursor-zoom-in"
+              title="Click to view full image and zoom"
+            >
               <img
                 src={getAssetUrl(selectedImage || product.mainImage || "/images/product-1.jpg")}
                 alt={product.title}
-                className="w-full h-full object-cover object-center transition-all duration-300"
+                className="w-full h-full object-cover object-center transition-all duration-300 group-hover:scale-102"
                 onError={(e) => {
                   const currentSrc = e.currentTarget.getAttribute("src") || "";
                   if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
@@ -235,18 +333,33 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
                   e.currentTarget.src = "/images/product-1.jpg";
                 }}
               />
-              <div className="absolute top-4 left-4 z-10">
+              <div className="absolute top-4 left-4 z-10 pointer-events-none">
                 <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/90 text-[#800F17] shadow-xs backdrop-blur-xs">
                   {product.category || "Exclusive Saree"}
                 </span>
               </div>
               {isSoldOut && (
-                <div className="absolute top-4 right-4 z-10">
+                <div className="absolute top-4 right-4 z-10 pointer-events-none">
                   <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md bg-stone-800/90 text-white shadow-xs backdrop-blur-xs">
                     SOLD OUT
                   </span>
                 </div>
               )}
+
+              {/* Click to Zoom Pill Indicator */}
+              <div className="absolute bottom-4 right-4 z-10">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openZoomModal(selectedImage || product.mainImage);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-900/80 hover:bg-stone-900 text-white text-xs font-medium backdrop-blur-md shadow-md transition-all group-hover:scale-105 cursor-pointer"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                  <span>Click to zoom</span>
+                </button>
+              </div>
             </div>
 
             {/* Down Gallery Thumbnails */}
@@ -628,6 +741,191 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
           </div>
         )}
       </Container>
+
+      {/* ================= LIGHTBOX / FULLSCREEN IMAGE ZOOM MODAL ================= */}
+      {isZoomOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Product Image Preview and Zoom"
+          className="fixed inset-0 z-[9999] bg-stone-950/95 backdrop-blur-md flex flex-col justify-between select-none animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeZoomModal();
+            }
+          }}
+        >
+          {/* Top Bar: Subtle Counter, Zoom Controls & Prominent Close (X) Icon */}
+          <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 sm:py-4 border-b border-white/10 z-30 bg-black/40 backdrop-blur-sm">
+            {/* Left: Saree Image Counter */}
+            <div className="text-white/70 text-xs sm:text-sm font-medium tracking-wider uppercase flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+              {allImages.length > 1 ? `Image ${zoomIndex + 1} of ${allImages.length}` : "Product View"}
+            </div>
+
+            {/* Center: Zoom In / Zoom Out / Reset Controls */}
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-white/10 backdrop-blur-md rounded-full px-3 py-1.5 border border-white/10">
+              <button
+                type="button"
+                onClick={() => setZoomScale((prev) => Math.max(1, +(prev - 0.4).toFixed(1)))}
+                disabled={zoomScale <= 1}
+                className="p-1 text-white/80 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Zoom Out (-)"
+                aria-label="Zoom Out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <span className="text-xs text-white/90 font-mono min-w-[3rem] text-center select-none">
+                {Math.round(zoomScale * 100)}%
+              </span>
+              <button
+                type="button"
+                onClick={() => setZoomScale((prev) => Math.min(3, +(prev + 0.4).toFixed(1)))}
+                disabled={zoomScale >= 3}
+                className="p-1 text-white/80 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                title="Zoom In (+)"
+                aria-label="Zoom In"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              {zoomScale > 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setZoomScale(1);
+                    setZoomPosition({ x: 50, y: 50 });
+                  }}
+                  className="p-1 text-amber-300 hover:text-white transition-colors border-l border-white/20 pl-2 ml-1 flex items-center gap-1 text-[11px] cursor-pointer"
+                  title="Reset 100%"
+                  aria-label="Reset Zoom"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span className="hidden sm:inline">Reset</span>
+                </button>
+              )}
+            </div>
+
+            {/* Right: Prominent Cross (X) Close Icon matching user's reference */}
+            <button
+              type="button"
+              onClick={closeZoomModal}
+              className="flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all hover:scale-105 active:scale-95 focus:outline-none cursor-pointer"
+              title="Close (Esc)"
+              aria-label="Close image preview"
+            >
+              <X className="w-6 h-6 stroke-[2.2]" />
+            </button>
+          </div>
+
+          {/* Center Stage: Pure Visual / Image Only (No text, click to toggle zoom, mouse pan) */}
+          <div
+            className="flex-1 relative overflow-hidden flex items-center justify-center p-2 sm:p-6"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                closeZoomModal();
+              }
+            }}
+          >
+            {/* Previous Navigation Arrow */}
+            {allImages.length > 1 && (
+              <button
+                type="button"
+                onClick={handlePrevZoom}
+                className="absolute left-3 sm:left-6 z-30 p-2.5 sm:p-3 rounded-full bg-black/60 hover:bg-black/90 text-white/90 hover:text-white border border-white/20 backdrop-blur-md transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-lg"
+                title="Previous Image (Left Arrow)"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7" />
+              </button>
+            )}
+
+            {/* Next Navigation Arrow */}
+            {allImages.length > 1 && (
+              <button
+                type="button"
+                onClick={handleNextZoom}
+                className="absolute right-3 sm:right-6 z-30 p-2.5 sm:p-3 rounded-full bg-black/60 hover:bg-black/90 text-white/90 hover:text-white border border-white/20 backdrop-blur-md transition-all hover:scale-110 active:scale-95 cursor-pointer shadow-lg"
+                title="Next Image (Right Arrow)"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7" />
+              </button>
+            )}
+
+            {/* Zoomable Image Viewport */}
+            <div
+              className={`relative max-h-[72vh] sm:max-h-[78vh] max-w-full flex items-center justify-center overflow-hidden rounded-xl ${
+                zoomScale > 1 ? "cursor-zoom-out" : "cursor-zoom-in"
+              }`}
+              onMouseMove={handleMouseMoveZoom}
+              onClick={toggleZoom}
+              title={zoomScale > 1 ? "Click to zoom out" : "Click to zoom in"}
+            >
+              <img
+                src={getAssetUrl(allImages[zoomIndex] || "/images/product-1.jpg")}
+                alt="Product visual inspection"
+                style={{
+                  transform: `scale(${zoomScale})`,
+                  transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                  transition: zoomScale === 1 ? "transform 0.25s ease-out" : "none",
+                }}
+                className="max-h-[72vh] sm:max-h-[78vh] w-auto max-w-[88vw] object-contain rounded-lg shadow-2xl select-none pointer-events-auto"
+                onError={(e) => {
+                  const currentSrc = e.currentTarget.getAttribute("src") || "";
+                  if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
+                    e.currentTarget.dataset.retried = "true";
+                    e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
+                    return;
+                  }
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = "/images/product-1.jpg";
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Bottom Thumbnails Carousel (Only if multiple images) */}
+          {allImages.length > 1 && (
+            <div className="py-3 px-4 bg-black/70 border-t border-white/10 z-30 flex justify-center items-center">
+              <div className="flex gap-2 sm:gap-3 overflow-x-auto max-w-full py-1 px-2 scrollbar-thin">
+                {allImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setZoomIndex(idx);
+                      setZoomScale(1);
+                      setZoomPosition({ x: 50, y: 50 });
+                    }}
+                    className={`relative w-14 sm:w-16 aspect-[3/4] rounded-lg overflow-hidden border-2 transition-all shrink-0 cursor-pointer ${
+                      zoomIndex === idx
+                        ? "border-amber-400 ring-2 ring-amber-400/50 scale-105 shadow-md opacity-100"
+                        : "border-white/30 hover:border-white/70 opacity-60 hover:opacity-100"
+                    }`}
+                    title={`View image ${idx + 1}`}
+                  >
+                    <img
+                      src={getAssetUrl(img)}
+                      alt={`Thumbnail ${idx + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const currentSrc = e.currentTarget.getAttribute("src") || "";
+                        if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
+                          e.currentTarget.dataset.retried = "true";
+                          e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
+                          return;
+                        }
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = "/images/product-2.jpg";
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
