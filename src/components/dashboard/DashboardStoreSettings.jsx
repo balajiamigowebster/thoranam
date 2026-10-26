@@ -21,6 +21,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { getApiUrl, getAssetUrl } from "@/config";
+import { compressImageForUpload } from "@/lib/imageOptimizer";
 
 export default function DashboardStoreSettings() {
   const [activeSubTab, setActiveSubTab] = useState("hero"); // 'hero' | 'seo'
@@ -122,15 +123,18 @@ export default function DashboardStoreSettings() {
     }
   };
 
-  // Upload handler for slide image (desktop or mobile)
+  // Upload handler for slide image (desktop or mobile) with automatic WebP compression
   const handleUploadSlideImage = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       setIsUploading(true);
+      // Automatically compress banner to lightweight WebP (1920x1080 max)
+      const optimized = await compressImageForUpload(file, 1920, 1080, 0.85);
+
       const formData = new FormData();
-      formData.append("files", file);
+      formData.append("files", optimized);
 
       const res = await fetch(getApiUrl("/api/upload"), {
         method: "POST",

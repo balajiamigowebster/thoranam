@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getApiUrl, getAssetUrl } from "@/config";
 import { INITIAL_CATEGORIES, getStoredCategories, getUnifiedCategories } from "@/lib/categories";
+import { compressImageForUpload } from "@/lib/imageOptimizer";
 
 const getInitialFormData = (product, categories = []) => {
   const catList = categories && categories.length >= 10 ? categories : INITIAL_CATEGORIES;
@@ -143,21 +144,26 @@ export default function ProductModal({
     });
   };
 
-  // Upload main image file with percentage
+  // Upload main image file with percentage & automatic WebP compression
   const handleMainFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     try {
       setIsUploadingMain(true);
-      setMainUploadPercent(5);
+      setMainUploadPercent(15);
+
+      // Automatically compress and convert to lightweight WebP in browser
+      const optimizedFile = await compressImageForUpload(file, 1200, 1600, 0.82);
+      setMainUploadPercent(35);
+
       const data = new FormData();
-      data.append("files", file);
+      data.append("files", optimizedFile);
 
       const json = await uploadWithProgress(
         getApiUrl("/api/upload"),
         data,
-        (pct) => setMainUploadPercent(pct)
+        (pct) => setMainUploadPercent(35 + Math.round(pct * 0.65))
       );
 
       if (json.success && json.url) {
@@ -178,23 +184,30 @@ export default function ProductModal({
     }
   };
 
-  // Upload multiple gallery images files with percentage
+  // Upload multiple gallery images files with percentage & automatic WebP compression
   const handleGalleryFilesUpload = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     try {
       setIsUploadingGallery(true);
-      setGalleryUploadPercent(5);
+      setGalleryUploadPercent(10);
+
+      // Automatically compress all selected gallery files in parallel
+      const optimizedFiles = await Promise.all(
+        Array.from(files).map((f) => compressImageForUpload(f, 1200, 1600, 0.82))
+      );
+      setGalleryUploadPercent(35);
+
       const data = new FormData();
-      for (let i = 0; i < files.length; i++) {
-        data.append("files", files[i]);
+      for (let i = 0; i < optimizedFiles.length; i++) {
+        data.append("files", optimizedFiles[i]);
       }
 
       const json = await uploadWithProgress(
         getApiUrl("/api/upload"),
         data,
-        (pct) => setGalleryUploadPercent(pct)
+        (pct) => setGalleryUploadPercent(35 + Math.round(pct * 0.65))
       );
 
       if (json.success && json.urls) {

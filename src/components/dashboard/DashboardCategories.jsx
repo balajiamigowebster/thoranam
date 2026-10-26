@@ -11,6 +11,7 @@ import {
   saveStoredBrowseCategories,
 } from "@/lib/categories";
 import { getApiUrl, getAssetUrl } from "@/config";
+import { compressImageForUpload } from "@/lib/imageOptimizer";
 
 export default function DashboardCategories() {
   const [activeTab, setActiveTab] = useState("browse"); // "browse" or "menu"
@@ -176,8 +177,9 @@ export default function DashboardCategories() {
 
     try {
       try {
+        const optimized = await compressImageForUpload(file, 400, 400, 0.85);
         const formData = new FormData();
-        formData.append("files", file);
+        formData.append("files", optimized);
         const res = await fetch(getApiUrl("/api/upload"), {
           method: "POST",
           body: formData,
