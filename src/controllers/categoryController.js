@@ -1,6 +1,7 @@
 import { Category, StoreSetting, syncDatabase } from "@/models";
 import { INITIAL_CATEGORIES, HOMEPAGE_BROWSE_CATEGORIES } from "@/lib/categories";
 import { withTimeout } from "@/lib/sequelize";
+import { unstable_cache, revalidateTag } from "next/cache";
 
 // In-memory caching for category queries to prevent repetitive DB connections
 let categoriesCache = null;
@@ -13,6 +14,9 @@ export function invalidateCategoriesCache() {
   categoriesCacheExpiry = 0;
   browseCategoriesCache = null;
   browseCategoriesCacheExpiry = 0;
+  try {
+    revalidateTag("categories");
+  } catch (e) {}
 }
 
 const FALLBACK_CATEGORIES = INITIAL_CATEGORIES.map((c, idx) => ({
@@ -25,6 +29,35 @@ const FALLBACK_CATEGORIES = INITIAL_CATEGORIES.map((c, idx) => ({
   subcategories: c.subcategories || [],
   showcase: c.showcase || [],
 }));
+
+const getCachedBrowseCategories = unstable_cache(
+  async () => {
+    try {
+      const setting = await withTimeout(
+        StoreSetting.findByPk("homepage_browse_categories"),
+        6000
+      );
+      if (setting && setting.setting_value) {
+        let val = setting.setting_value;
+        if (typeof val === "string") {
+          try { val = JSON.parse(val); } catch { val = null; }
+        }
+        if (typeof val === "string") {
+          try { val = JSON.parse(val); } catch {}
+        }
+        if (Array.isArray(val) && val.length > 0) {
+          return val;
+        }
+      }
+    } catch (e) {}
+    return HOMEPAGE_BROWSE_CATEGORIES;
+  },
+  ["thoranam-db-browse-categories-global-v1"],
+  {
+    revalidate: 300,
+    tags: ["categories"],
+  }
+);
 
 export const categoryController = {
   async getAllCategories() {
@@ -161,27 +194,14 @@ export const categoryController = {
     }
 
     try {
-      const setting = await withTimeout(
-        StoreSetting.findByPk("homepage_browse_categories"),
-        3500
-      );
-      if (setting && setting.setting_value) {
-        let val = setting.setting_value;
-        if (typeof val === "string") {
-          try { val = JSON.parse(val); } catch { val = null; }
-        }
-        if (typeof val === "string") {
-          try { val = JSON.parse(val); } catch {}
-        }
-        if (Array.isArray(val) && val.length > 0) {
-          browseCategoriesCache = val;
-          browseCategoriesCacheExpiry = now + 60000;
-          return val;
-        }
+      const cached = await getCachedBrowseCategories();
+      if (Array.isArray(cached) && cached.length > 0) {
+        browseCategoriesCache = cached;
+        browseCategoriesCacheExpiry = now + 60000;
+        return cached;
       }
-    } catch (e) {
-      console.warn("[BrowseCategories] Error getting browse categories from DB:", e.message);
-    }
+    } catch (e) {}
+
     return browseCategoriesCache || HOMEPAGE_BROWSE_CATEGORIES;
   },
 

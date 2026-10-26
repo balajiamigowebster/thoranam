@@ -1,5 +1,6 @@
 import { Product, syncDatabase } from "@/models";
 import { Op } from "sequelize";
+import { unstable_cache, revalidateTag } from "next/cache";
 
 // In-memory cache for ultra-fast product retrieval without hitting MySQL on every request
 let productsCache = {
@@ -14,6 +15,9 @@ export function invalidateProductsCache() {
   productsCache.data = null;
   productsCache.timestamp = 0;
   productsCache.singleMap.clear();
+  try {
+    revalidateTag("products");
+  } catch (e) {}
 }
 
 // Helper to ensure database queries never hang the serverless runtime or client indefinitely
@@ -29,6 +33,29 @@ async function withTimeout(promise, ms = 4500) {
   }
 }
 
+// Global Next.js Data Cache for products across Vercel serverless lambdas
+const getCachedDbProducts = unstable_cache(
+  async () => {
+    try {
+      const products = await withTimeout(
+        Product.findAll({
+          order: [["id", "ASC"]],
+        }),
+        6000
+      );
+      return (products || []).map((p) => formatProduct(p.toJSON()));
+    } catch (e) {
+      console.warn("[Products DB] Data cache fetch err:", e.message);
+      return [];
+    }
+  },
+  ["thoranam-db-products-global-v1"],
+  {
+    revalidate: 120,
+    tags: ["products"],
+  }
+);
+
 // Controller for Product operations - STRICTLY CONNECTS ONLY TO MYSQL DATABASE
 export const productController = {
   // Get all products directly from MySQL database with optional filters
@@ -36,9 +63,26 @@ export const productController = {
     const isUnfiltered = (!query.category || query.category === "all") && !query.search;
     const now = typeof performance !== "undefined" ? performance.now() : Date.now();
 
-    // Serve from memory cache if query is unfiltered and cache is fresh
+    // 1. Serve from in-memory RAM cache if available and fresh
     if (isUnfiltered && productsCache.data && now - productsCache.timestamp < CACHE_TTL_MS) {
       return productsCache.data;
+    }
+
+    // 2. If unfiltered, query Next.js Data Cache (persists across Vercel Lambdas)
+    if (isUnfiltered) {
+      try {
+        const cached = await getCachedDbProducts();
+        if (Array.isArray(cached) && cached.length > 0) {
+          productsCache.data = cached;
+          productsCache.timestamp = now;
+          cached.forEach((item) => {
+            productsCache.singleMap.set(String(item.id), { data: item, timestamp: now });
+          });
+          return cached;
+        }
+      } catch (cacheErr) {
+        console.warn("[Products] Data cache miss:", cacheErr.message);
+      }
     }
 
     const where = {};

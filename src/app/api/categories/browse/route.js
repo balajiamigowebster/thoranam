@@ -4,7 +4,14 @@ import { categoryController } from "@/controllers";
 export async function GET() {
   try {
     const categories = await categoryController.getBrowseCategories();
-    return NextResponse.json({ success: true, data: categories });
+    return NextResponse.json(
+      { success: true, data: categories },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=300, stale-while-revalidate=86400",
+        },
+      }
+    );
   } catch (error) {
     console.error("API GET /api/categories/browse error:", error);
     return NextResponse.json(

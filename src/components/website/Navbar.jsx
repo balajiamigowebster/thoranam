@@ -70,10 +70,10 @@ export default function Navbar({ className = "" }) {
       }
     }
     enrichCategories();
-  }, 1200);
+    }, 4500);
 
-  return () => clearTimeout(idleTimer);
-}, []);
+    return () => clearTimeout(idleTimer);
+  }, []);
 
   return (
     <nav

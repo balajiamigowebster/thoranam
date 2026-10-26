@@ -70,7 +70,7 @@ export default function HomeCategory({ initialCategories = [] }) {
       window.removeEventListener("thoranam_browse_categories_updated", syncCategories);
       window.removeEventListener("storage", syncCategories);
     };
-  }, []);
+  }, [initialCategories.length]);
 
   return (
     <section className="py-8 sm:py-12 bg-white dark:bg-slate-950 overflow-hidden">
@@ -113,7 +113,7 @@ export default function HomeCategory({ initialCategories = [] }) {
                         unoptimized={categoryImage.startsWith("http") || categoryImage.startsWith("data:")}
                         sizes="(max-width: 640px) 80px, (max-width: 1024px) 96px, 110px"
                         className="object-cover object-center group-hover:scale-110 transition-transform duration-500 ease-out"
-                        priority={idx < 4}
+                        loading="lazy"
                       />
                       {/* Subtle hover golden highlight */}
                       <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full pointer-events-none" />

@@ -46,7 +46,7 @@ export default function Header() {
         }
       }
       loadCats();
-    }, 1000);
+    }, 4000);
 
     const handleSync = () => {
       setCategories(getStoredCategories());

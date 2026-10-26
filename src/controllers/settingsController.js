@@ -1,18 +1,14 @@
 import { StoreSetting, syncDatabase } from "@/models";
 import { withTimeout } from "@/lib/sequelize";
+import { unstable_cache, revalidateTag } from "next/cache";
 
 let settingsCache = null;
 let settingsCacheExpiry = 0;
 
-export const settingsController = {
-  async getSettings() {
-    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
-    if (settingsCache && now < settingsCacheExpiry) {
-      return settingsCache;
-    }
-
+const getCachedDbSettings = unstable_cache(
+  async () => {
     try {
-      const rows = await withTimeout(StoreSetting.findAll(), 3500, []);
+      const rows = await withTimeout(StoreSetting.findAll(), 6000, []);
       const settings = {};
       rows.forEach((r) => {
         const data = r.toJSON ? r.toJSON() : r;
@@ -25,13 +21,35 @@ export const settingsController = {
           settings[data.setting_key] = data.setting_value;
         }
       });
-      settingsCache = settings;
-      settingsCacheExpiry = now + 60000; // 60s cache
       return settings;
-    } catch (dbErr) {
-      console.warn("[Settings] DB error, returning empty settings:", dbErr.message);
-      return settingsCache || {};
+    } catch (e) {
+      return {};
     }
+  },
+  ["thoranam-db-settings-global-v1"],
+  {
+    revalidate: 300,
+    tags: ["settings"],
+  }
+);
+
+export const settingsController = {
+  async getSettings() {
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (settingsCache && now < settingsCacheExpiry) {
+      return settingsCache;
+    }
+
+    try {
+      const cached = await getCachedDbSettings();
+      if (cached && Object.keys(cached).length > 0) {
+        settingsCache = cached;
+        settingsCacheExpiry = now + 60000;
+        return cached;
+      }
+    } catch (e) {}
+
+    return settingsCache || {};
   },
 
   async updateSettings(settingsObject) {
@@ -49,6 +67,9 @@ export const settingsController = {
     }
     settingsCache = null;
     settingsCacheExpiry = 0;
+    try {
+      revalidateTag("settings");
+    } catch (e) {}
     return { success: true };
   },
 };
