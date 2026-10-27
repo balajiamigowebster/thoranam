@@ -309,13 +309,13 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
         </nav>
 
         {/* ================= MAIN PRODUCT ROW ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-14 items-start">
           {/* LEFT COLUMN: Main Image & Gallery Downward (Sticky on Desktop until content end) */}
-          <div className="lg:col-span-6 lg:sticky lg:top-36 lg:self-start space-y-4">
-            {/* Big Main Image Container */}
+          <div className="lg:col-span-5 xl:col-span-5 lg:sticky lg:top-[144px] lg:self-start space-y-3.5">
+            {/* Big Main Image Container - Proportionately sized so thumbnails are visible in initial view */}
             <div
               onClick={() => openZoomModal(selectedImage || product.mainImage)}
-              className="relative aspect-[3/4] w-full rounded-3xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-xs group cursor-zoom-in"
+              className="relative aspect-[4/5] sm:aspect-[3/4] max-h-[460px] sm:max-h-[480px] w-full max-w-[430px] mx-auto lg:mx-0 rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-xs group cursor-zoom-in"
               title="Click to view full image and zoom"
             >
               <img
@@ -333,47 +333,47 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
                   e.currentTarget.src = "/images/product-1.jpg";
                 }}
               />
-              <div className="absolute top-4 left-4 z-10 pointer-events-none">
-                <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/90 text-[#800F17] shadow-xs backdrop-blur-xs">
+              <div className="absolute top-3.5 left-3.5 z-10 pointer-events-none">
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-full bg-white/90 text-[#800F17] shadow-xs backdrop-blur-xs">
                   {product.category || "Exclusive Saree"}
                 </span>
               </div>
               {isSoldOut && (
-                <div className="absolute top-4 right-4 z-10 pointer-events-none">
-                  <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-md bg-stone-800/90 text-white shadow-xs backdrop-blur-xs">
+                <div className="absolute top-3.5 right-3.5 z-10 pointer-events-none">
+                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-md bg-stone-800/90 text-white shadow-xs backdrop-blur-xs">
                     SOLD OUT
                   </span>
                 </div>
               )}
 
               {/* Click to Zoom Pill Indicator */}
-              <div className="absolute bottom-4 right-4 z-10">
+              <div className="absolute bottom-3.5 right-3.5 z-10">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     openZoomModal(selectedImage || product.mainImage);
                   }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-900/80 hover:bg-stone-900 text-white text-xs font-medium backdrop-blur-md shadow-md transition-all group-hover:scale-105 cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-stone-900/80 hover:bg-stone-900 text-white text-[11px] sm:text-xs font-medium backdrop-blur-md shadow-md transition-all group-hover:scale-105 cursor-pointer"
                 >
-                  <ZoomIn className="w-3.5 h-3.5" />
+                  <ZoomIn className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                   <span>Click to zoom</span>
                 </button>
               </div>
             </div>
 
-            {/* Down Gallery Thumbnails */}
+            {/* Down Gallery Thumbnails - Positioned directly below the compact image */}
             {allImages.length > 1 && (
-              <div className="space-y-2 pt-1">
+              <div className="space-y-1.5 pt-0.5 max-w-[430px] mx-auto lg:mx-0">
                 <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   Saree Gallery Views ({allImages.length})
                 </p>
-                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin">
+                <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
                   {allImages.map((img, idx) => (
                     <button
                       key={idx}
                       onClick={() => setSelectedImage(img)}
-                      className={`relative w-20 sm:w-24 aspect-[3/4] rounded-2xl overflow-hidden border-2 transition-all shrink-0 bg-stone-100 cursor-pointer ${
+                      className={`relative w-16 sm:w-18 aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-stone-100 cursor-pointer ${
                         selectedImage === img
                           ? "border-[#800F17] ring-2 ring-[#800F17]/30 scale-102"
                           : "border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100"
@@ -402,7 +402,7 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
           </div>
 
           {/* RIGHT COLUMN: Title, Pricing, Actions, Highlights & Specs */}
-          <div className="lg:col-span-6 space-y-6">
+          <div className="lg:col-span-7 xl:col-span-7 space-y-6">
             {/* Title & Share Icons */}
             <div className="space-y-3">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-slate-900 leading-tight">
