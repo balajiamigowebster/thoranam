@@ -309,9 +309,9 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
         </nav>
 
         {/* ================= MAIN PRODUCT ROW ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14">
-          {/* LEFT COLUMN: Main Image & Gallery Downward */}
-          <div className="lg:col-span-6 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+          {/* LEFT COLUMN: Main Image & Gallery Downward (Sticky on Desktop until content end) */}
+          <div className="lg:col-span-6 lg:sticky lg:top-36 lg:self-start space-y-4">
             {/* Big Main Image Container */}
             <div
               onClick={() => openZoomModal(selectedImage || product.mainImage)}
