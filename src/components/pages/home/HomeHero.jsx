@@ -21,7 +21,7 @@ const DEFAULT_SLIDES = [
   },
 ];
 
-import { getApiUrl, getAssetUrl } from "@/config";
+import { getApiUrl, getAssetUrl, LIVE_BACKEND_URL } from "@/config";
 
 const CACHE_KEY = "thoranam_hero_slides_cache";
 
@@ -125,7 +125,36 @@ export default function HomeHero({ initialSlides = null }) {
                   loading={index === 0 ? "eager" : "lazy"}
                   className="w-full h-full object-cover object-center"
                   onError={(e) => {
-                    e.currentTarget.src = "/images/hero-1.webp";
+                    const img = e.currentTarget;
+                    const picture = img.closest("picture");
+                    const failedSrc = img.currentSrc || img.getAttribute("src") || "";
+
+                    // If a relative /uploads/ path failed, retry loading from live backend server
+                    if (failedSrc.includes("/uploads/") && !img.dataset.retried) {
+                      img.dataset.retried = "true";
+                      const remoteUrl = failedSrc.startsWith("http")
+                        ? failedSrc
+                        : `${LIVE_BACKEND_URL.replace(/\/$/, "")}${failedSrc.startsWith("/") ? "" : "/"}${failedSrc}`;
+
+                      if (picture) {
+                        picture.querySelectorAll("source").forEach((s) => {
+                          s.srcset = remoteUrl;
+                        });
+                      }
+                      img.src = remoteUrl;
+                      return;
+                    }
+
+                    // Otherwise gracefully fallback to built-in mobile/desktop hero assets
+                    const defaultMobile = index === 1 ? "/images/hero-2-mobile.webp" : "/images/hero-1-mobile.webp";
+                    const defaultDesktop = index === 1 ? "/images/hero-2.webp" : "/images/hero-1.webp";
+
+                    if (picture) {
+                      picture.querySelectorAll("source").forEach((s) => {
+                        s.srcset = defaultMobile;
+                      });
+                    }
+                    img.src = defaultDesktop;
                   }}
                 />
               </picture>

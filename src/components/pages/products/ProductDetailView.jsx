@@ -122,6 +122,45 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
     };
   }, [productId, cachedProduct]);
 
+  // Combine main image + gallery images
+  const allImages = [
+    product?.mainImage,
+    ...(Array.isArray(product?.galleryImages) ? product.galleryImages : []),
+  ].filter(Boolean);
+
+  const closeZoomModal = () => {
+    setIsZoomOpen(false);
+    setZoomScale(1);
+    setZoomPosition({ x: 50, y: 50 });
+  };
+
+  // Keyboard navigation & body scroll lock
+  useEffect(() => {
+    if (!isZoomOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        closeZoomModal();
+      } else if (e.key === "ArrowLeft") {
+        setZoomIndex((prev) => (prev > 0 ? prev - 1 : (allImages.length > 0 ? allImages.length - 1 : 0)));
+        setZoomScale(1);
+        setZoomPosition({ x: 50, y: 50 });
+      } else if (e.key === "ArrowRight") {
+        setZoomIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
+        setZoomScale(1);
+        setZoomPosition({ x: 50, y: 50 });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isZoomOpen, allImages.length]);
+
   if (isLoading) {
     return (
       <div className="py-24 text-center">
@@ -149,12 +188,6 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
     );
   }
 
-  // Combine main image + gallery images
-  const allImages = [
-    product.mainImage,
-    ...(Array.isArray(product.galleryImages) ? product.galleryImages : []),
-  ].filter(Boolean);
-
   const openZoomModal = (imgUrl) => {
     const target = imgUrl || selectedImage || product?.mainImage;
     const idx = allImages.findIndex((img) => img === target);
@@ -162,12 +195,6 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
     setZoomScale(1);
     setZoomPosition({ x: 50, y: 50 });
     setIsZoomOpen(true);
-  };
-
-  const closeZoomModal = () => {
-    setIsZoomOpen(false);
-    setZoomScale(1);
-    setZoomPosition({ x: 50, y: 50 });
   };
 
   const handlePrevZoom = (e) => {
@@ -211,33 +238,6 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
       y: Math.max(0, Math.min(100, y)),
     });
   };
-
-  // Keyboard navigation & body scroll lock
-  useEffect(() => {
-    if (!isZoomOpen) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        closeZoomModal();
-      } else if (e.key === "ArrowLeft") {
-        setZoomIndex((prev) => (prev > 0 ? prev - 1 : (allImages.length > 0 ? allImages.length - 1 : 0)));
-        setZoomScale(1);
-        setZoomPosition({ x: 50, y: 50 });
-      } else if (e.key === "ArrowRight") {
-        setZoomIndex((prev) => (prev < allImages.length - 1 ? prev + 1 : 0));
-        setZoomScale(1);
-        setZoomPosition({ x: 50, y: 50 });
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isZoomOpen, allImages.length]);
 
   const parsedStock =
     product?.stock !== undefined && product?.stock !== null && !isNaN(Number(product.stock))

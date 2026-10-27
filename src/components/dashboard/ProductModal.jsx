@@ -76,13 +76,14 @@ export default function ProductModal({
   const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [galleryUploadPercent, setGalleryUploadPercent] = useState(0);
 
-  // Re-sync form state whenever modal is opened or product changes
-  useEffect(() => {
-    if (isOpen) {
-      setFormData(getInitialFormData(editingProduct, categories));
-      setActiveTab("details");
-    }
-  }, [isOpen, editingProduct, categories]);
+  const [prevProduct, setPrevProduct] = useState(editingProduct);
+
+  // Re-sync form state whenever editingProduct changes during render without triggering cascading effect renders
+  if (editingProduct !== prevProduct) {
+    setPrevProduct(editingProduct);
+    setFormData(getInitialFormData(editingProduct, categories));
+    setActiveTab("details");
+  }
 
   // Dynamically merge live DB categories (e.g. Chinyan Cotton Saree), 17 baseline weaves, and current product category
   const categoryOptions = React.useMemo(() => {

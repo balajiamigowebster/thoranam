@@ -20,7 +20,7 @@ import {
   Smartphone,
   Monitor,
 } from "lucide-react";
-import { getApiUrl, getAssetUrl } from "@/config";
+import { getApiUrl, getAssetUrl, LIVE_BACKEND_URL } from "@/config";
 import { compressImageForUpload } from "@/lib/imageOptimizer";
 
 export default function DashboardStoreSettings() {
@@ -354,7 +354,14 @@ export default function DashboardStoreSettings() {
                             alt={slide.imageAlt || `Banner ${index + 1}`}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              e.target.src = "/images/hero-1.webp";
+                              const img = e.currentTarget;
+                              const currentSrc = img.getAttribute("src") || "";
+                              if (currentSrc.startsWith("/uploads/") && !img.dataset.retried) {
+                                img.dataset.retried = "true";
+                                img.src = `${LIVE_BACKEND_URL.replace(/\/$/, "")}${currentSrc}`;
+                                return;
+                              }
+                              img.src = "/images/hero-1.webp";
                             }}
                           />
                           <button
@@ -380,7 +387,14 @@ export default function DashboardStoreSettings() {
                                 alt="Mobile Banner"
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
-                                  e.target.src = getAssetUrl(slide.imageSrc) || "/images/hero-1.webp";
+                                  const img = e.currentTarget;
+                                  const currentSrc = img.getAttribute("src") || "";
+                                  if (currentSrc.startsWith("/uploads/") && !img.dataset.retried) {
+                                    img.dataset.retried = "true";
+                                    img.src = `${LIVE_BACKEND_URL.replace(/\/$/, "")}${currentSrc}`;
+                                    return;
+                                  }
+                                  img.src = getAssetUrl(slide.imageSrc) || "/images/hero-1.webp";
                                 }}
                               />
                               <div className="absolute inset-0 bg-black/50 text-white text-[10px] font-semibold opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1 transition-opacity backdrop-blur-2xs">
