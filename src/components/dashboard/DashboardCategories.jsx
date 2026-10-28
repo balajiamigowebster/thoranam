@@ -230,6 +230,25 @@ export default function DashboardCategories() {
     const updated = [...categories, newCategory];
     handleUpdate(updated);
     setSelectedCat(newCategory);
+
+    // Also sync to homepage browse categories automatically
+    const newBrowseItem = {
+      id: slug,
+      name: newCatName.trim(),
+      label: newCatName.trim(),
+      href: `/products?cat=${slug}`,
+      image: newCatImage || "/images/product-1.jpg",
+    };
+    if (
+      !browseCategories.some(
+        (b) =>
+          b.id === slug ||
+          (b.label || b.name)?.toLowerCase() === newCatName.trim().toLowerCase()
+      )
+    ) {
+      handleBrowseUpdate([...browseCategories, newBrowseItem]);
+    }
+
     setNewCatName("");
     setNewCatImage("");
     setShowAddCat(false);
@@ -246,6 +265,11 @@ export default function DashboardCategories() {
     handleUpdate(updated);
     if (selectedCat?.id === catId) {
       setSelectedCat(updated[0]);
+    }
+
+    // Also remove from homepage browse categories if present
+    if (browseCategories.some((b) => b.id === catId)) {
+      handleBrowseUpdate(browseCategories.filter((b) => b.id !== catId));
     }
   };
 
@@ -272,6 +296,14 @@ export default function DashboardCategories() {
       return cat;
     });
     handleUpdate(updated);
+
+    // Also sync image to browse categories if matching item exists
+    if (browseCategories.some((b) => b.id === selectedCat.id)) {
+      const updatedBrowse = browseCategories.map((b) =>
+        b.id === selectedCat.id ? { ...b, image: imageUrl } : b
+      );
+      handleBrowseUpdate(updatedBrowse);
+    }
   };
 
   const handleAddSubcategory = () => {

@@ -7,46 +7,46 @@ import AnnouncementBar from "./AnnouncementBar";
 import Navbar from "./Navbar";
 import ThoranamLogo from "@/components/ui/ThoranamLogo";
 import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
-import { MAIN_NAV_MENUS } from "@/lib/navigation";
+import { MAIN_NAV_MENUS, buildNavMenus } from "@/lib/navigation";
 import { useCart } from "@/context/CartContext";
 import { getApiUrl } from "@/config";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+  const [categories, setCategories] = useState(() =>
+    typeof window !== "undefined" ? getStoredCategories() : INITIAL_CATEGORIES
+  );
   const [customer, setCustomer] = useState(null);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
   const { totalCartCount, badgeBump, openCart, isMounted } = useCart();
 
   useEffect(() => {
-    const idleTimer = setTimeout(() => {
-      async function loadCats() {
-        let timer = null;
-        try {
-          const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-          if (controller) timer = setTimeout(() => controller.abort(), 5000);
-          const res = await fetch(getApiUrl("/api/categories"), {
-            signal: controller?.signal,
-          });
-          if (timer) clearTimeout(timer);
-          const json = await res.json();
-          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-            setCategories(json.data);
-            try {
-              localStorage.setItem("thoranam_categories", JSON.stringify(json.data));
-            } catch (e) {
-              console.error(e);
-            }
+    let timer = null;
+    async function loadCats() {
+      try {
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        if (controller) timer = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(getApiUrl("/api/categories"), {
+          signal: controller?.signal,
+        });
+        if (timer) clearTimeout(timer);
+        const json = await res.json();
+        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setCategories(json.data);
+          try {
+            localStorage.setItem("thoranam_categories", JSON.stringify(json.data));
+          } catch (e) {
+            console.error(e);
           }
-        } catch (e) {
-          if (timer) clearTimeout(timer);
-          // Silently use INITIAL_CATEGORIES
         }
+      } catch (e) {
+        if (timer) clearTimeout(timer);
+        // Silently use stored categories
       }
-      loadCats();
-    }, 4000);
+    }
+    loadCats();
 
     const handleSync = () => {
       setCategories(getStoredCategories());
@@ -99,6 +99,8 @@ export default function Header() {
     setUserMenuOpen(false);
     window.dispatchEvent(new Event("thoranam_customer_auth_changed"));
   };
+
+  const navMenus = buildNavMenus(categories);
 
   return (
     <header className="w-full sticky top-0 z-40 bg-white shadow-xs">
@@ -239,7 +241,7 @@ export default function Header() {
       {/* 3. Category Navbar (Desktop / Tablet only - hidden on mobile view) */}
       <Suspense fallback={<div className="hidden md:block h-10 bg-white" />}>
         <div className="hidden md:block">
-          <Navbar />
+          <Navbar categories={categories} />
         </div>
       </Suspense>
 
@@ -253,12 +255,12 @@ export default function Header() {
                   Collections & Sarees
                 </span>
                 <span className="text-[10px] bg-rose-50 text-[#890e0e] px-2 py-0.5 rounded-full font-semibold">
-                  {MAIN_NAV_MENUS.length} Categories
+                  {navMenus.length} Categories
                 </span>
               </div>
 
               <ul className="space-y-1">
-                {MAIN_NAV_MENUS.map((item, idx) => (
+                {navMenus.map((item, idx) => (
                   <li key={item.id || idx} className="rounded-xl overflow-hidden border border-rose-50/60 bg-stone-50/30">
                     <Link
                       href={item.href}

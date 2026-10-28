@@ -5,8 +5,9 @@ import Link from "next/link";
 import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
-import { INITIAL_CATEGORIES } from "@/lib/categories";
+import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
 import { getStoredProducts, fetchProductsFromDb } from "@/lib/products";
+import { getApiUrl } from "@/config";
 
 // Top-level umbrella parent menu categories that should NOT appear as collection sections
 const PARENT_CATEGORY_KEYS = [
@@ -192,20 +193,46 @@ function CategorySection({ submenu, items, idx }) {
   );
 }
 
-export default function HomeCategoryProducts({ initialProducts = [] }) {
+export default function HomeCategoryProducts({
+  initialProducts = [],
+  initialCategories = [],
+}) {
   const [products, setProducts] = useState(() =>
     initialProducts.length > 0 ? initialProducts : getStoredProducts()
   );
+  const [categories, setCategories] = useState(() => {
+    if (initialCategories && initialCategories.length > 0) return initialCategories;
+    const stored = typeof window !== "undefined" ? getStoredCategories() : [];
+    return stored.length > 0 ? stored : INITIAL_CATEGORIES;
+  });
   const [isLoading, setIsLoading] = useState(() => initialProducts.length === 0 && products.length === 0);
+
+  const [prevInitCategories, setPrevInitCategories] = useState(initialCategories);
+
+  if (initialCategories !== prevInitCategories) {
+    setPrevInitCategories(initialCategories);
+    if (initialCategories && initialCategories.length > 0) {
+      setCategories(initialCategories);
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadData() {
       try {
-        const prodData = await fetchProductsFromDb(true);
-        if (isMounted && Array.isArray(prodData) && prodData.length > 0) {
-          setProducts(prodData);
+        const [prodData, catRes] = await Promise.all([
+          fetchProductsFromDb(true),
+          fetch(getApiUrl("/api/categories")),
+        ]);
+        if (isMounted) {
+          if (Array.isArray(prodData) && prodData.length > 0) {
+            setProducts(prodData);
+          }
+          const catJson = await catRes.json().catch(() => null);
+          if (catJson && catJson.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
+            setCategories(catJson.data);
+          }
           setIsLoading(false);
         }
       } catch (err) {
@@ -214,16 +241,17 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       }
     }
 
-    // Always fetch fresh products on mount to reflect newly added dashboard products immediately
     loadData();
 
     const handleSync = () => loadData();
     window.addEventListener("thoranam_products_updated", handleSync);
+    window.addEventListener("thoranam_categories_updated", handleSync);
     window.addEventListener("storage", handleSync);
 
     return () => {
       isMounted = false;
       window.removeEventListener("thoranam_products_updated", handleSync);
+      window.removeEventListener("thoranam_categories_updated", handleSync);
       window.removeEventListener("storage", handleSync);
     };
   }, []);
@@ -248,11 +276,22 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       const pCat = (p.category || "").trim().toLowerCase();
       const pCatNorm = norm(pCat);
 
-      if (pCatNorm === subNorm || pCatNorm === subIdNorm) {
+      // 1. Direct Category Match has first and absolute priority
+      if (pCatNorm && (pCatNorm === subNorm || pCatNorm === subIdNorm)) {
         return true;
       }
 
-      // Exact submenu matches
+      // Check if this product has another explicit category that matches a known submenu;
+      // if so, do not allow fuzzy title matching to steal it
+      const hasExplicitOtherCategory =
+        Boolean(pCatNorm) && pCatNorm !== subNorm && pCatNorm !== subIdNorm;
+
+      if (hasExplicitOtherCategory) {
+        // If product category explicitly matches another weave/category, skip title fuzzy match
+        return false;
+      }
+
+      // 2. Exact fallback matches for items with no explicit category
       const pTitle = (p.title || "").toLowerCase();
       if ((subId === "fancy-saree" || subNorm.includes("fancy")) && (pCatNorm.includes("fancy") || pTitle.includes("fancy"))) return true;
       if ((subId === "bamboo-cotton-silk" || subNorm.includes("bamboo")) && (pCatNorm.includes("bamboo") || pTitle.includes("bamboo"))) return true;
@@ -263,7 +302,7 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       if (subId === "banarasi-silk-cotton" && (pCatNorm.includes("banarasi") || pTitle.includes("banarasi"))) return true;
       if (subId === "linen-cotton" && (pCatNorm.includes("linen") || pTitle.includes("linen"))) return true;
       if (subId === "garden-silk-saree" && (pCatNorm.includes("garden") || pTitle.includes("garden") || pTitle.includes("crepe"))) return true;
-      if (subId === "crushed-organza-pure" && (pCatNorm.includes("organza") || pTitle.includes("organza") || pTitle.includes("kota"))) return true;
+      if (subId === "crushed-organza-pure" && (pCatNorm.includes("organza") || (!pCatNorm && pTitle.includes("organza")))) return true;
       if (subId === "cotton-printed-sarees" && (pCatNorm.includes("printed") || pTitle.includes("printed"))) return true;
       if (subId === "digital-print-saree-with-blouse" && (pCatNorm.includes("digital") || pTitle.includes("digital"))) return true;
       if (subId === "bengali-cotton-with-zari-border" && (pCatNorm.includes("bengali") || pTitle.includes("bengali"))) return true;
@@ -275,17 +314,36 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       return false;
     });
 
-    // Return ALL matching products without artificial limit
     return matched;
   };
 
   // Group products strictly into UNIQUE category collections (NO duplicates)
   const activeSubmenus = useMemo(() => {
-    const submenus = INITIAL_CATEGORIES.filter((c) => {
-      const id = (c.id || "").toLowerCase();
-      const label = (c.label || c.name || "").toLowerCase();
-      return !PARENT_CATEGORY_KEYS.includes(id) && !PARENT_CATEGORY_KEYS.includes(label);
-    });
+    // 1. Build unified submenus starting with live DB categories, then baseline
+    const submenus = [];
+    const seenCatKeys = new Set();
+
+    const addSubmenu = (c) => {
+      if (!c) return;
+      const id = (c.id || "").toLowerCase().trim();
+      const label = (c.label || c.name || "").trim();
+      const key = label.toLowerCase();
+      if (!label || PARENT_CATEGORY_KEYS.includes(id) || PARENT_CATEGORY_KEYS.includes(key)) return;
+      if (!seenCatKeys.has(key)) {
+        seenCatKeys.add(key);
+        submenus.push({
+          id: c.id || key.replace(/\s+/g, "-"),
+          label: label,
+          name: label,
+          href: c.href || `/products?cat=${encodeURIComponent(c.id || label)}`,
+        });
+      }
+    };
+
+    // Live categories from DB table first (e.g. Kotta Cotton Saree, Jai Puri Cotton Saree, etc.)
+    (categories || []).forEach(addSubmenu);
+    // Baseline categories second
+    INITIAL_CATEGORIES.forEach(addSubmenu);
 
     const coveredProductIds = new Set();
     const result = [];
@@ -317,7 +375,6 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
       });
 
       Object.entries(customGrouped).forEach(([catName, items]) => {
-        // If this category already exists in result, merge the items
         const existing = result.find(
           (r) =>
             (r.submenu.label || r.submenu.name || "").trim().toLowerCase() ===
@@ -340,7 +397,7 @@ export default function HomeCategoryProducts({ initialProducts = [] }) {
     }
 
     return result;
-  }, [products]);
+  }, [products, categories]);
 
   // Shimmer skeleton cards while loading
   if (isLoading && products.length === 0) {

@@ -4,76 +4,77 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronRight, Sparkles } from "lucide-react";
-import { MAIN_NAV_MENUS } from "@/lib/navigation";
+import { MAIN_NAV_MENUS, buildNavMenus } from "@/lib/navigation";
+import { getStoredCategories } from "@/lib/categories";
 import { getApiUrl } from "@/config";
 
-export default function Navbar({ className = "" }) {
+export default function Navbar({ className = "", categories: propsCategories = null }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [navMenus, setNavMenus] = useState(MAIN_NAV_MENUS);
+  const [navMenus, setNavMenus] = useState(() => {
+    if (propsCategories && propsCategories.length > 0) {
+      return buildNavMenus(propsCategories);
+    }
+    const stored = typeof window !== "undefined" ? getStoredCategories() : [];
+    return stored.length > 0 ? buildNavMenus(stored) : MAIN_NAV_MENUS;
+  });
   const [hoveredMenu, setHoveredMenu] = useState(null);
 
   useEffect(() => {
-    // Defer non-critical category showcase enrichment until main thread is idle
-    const idleTimer = setTimeout(() => {
-      async function enrichCategories() {
-        let timer = null;
-        try {
-          const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-          if (controller) timer = setTimeout(() => controller.abort(), 5000);
-          const res = await fetch(getApiUrl("/api/categories"), {
-            signal: controller?.signal,
-          });
-          if (timer) clearTimeout(timer);
-          const json = await res.json();
-        if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          // Keep the 6 main menus as top-level and enrich subcategories or showcases
-          const catMap = new Map();
-          json.data.forEach((c) => {
-            catMap.set(c.id, c);
-            catMap.set(c.label?.toLowerCase(), c);
-          });
+    let isMounted = true;
 
-          setNavMenus((prev) =>
-            prev.map((menu) => {
-              const enrichedSub = (menu.subcategories || []).map((sub) => {
-                const match = catMap.get(sub.label?.toLowerCase());
-                return {
-                  ...sub,
-                  image: match?.image || "",
-                  count: match?.product_count,
-                };
-              });
-
-              // Also collect showcase items
-              const showcase = [];
-              enrichedSub.forEach((sub) => {
-                if (sub.image && showcase.length < 3) {
-                  showcase.push({
-                    title: sub.label,
-                    image: sub.image,
-                    href: sub.href,
-                  });
-                }
-              });
-
-              return {
-                ...menu,
-                subcategories: enrichedSub,
-                showcase: showcase.length > 0 ? showcase : undefined,
-              };
-            })
-          );
+    async function loadAndEnrichCategories() {
+      let timer = null;
+      try {
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        if (controller) timer = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(getApiUrl("/api/categories"), {
+          signal: controller?.signal,
+        });
+        if (timer) clearTimeout(timer);
+        const json = await res.json();
+        if (isMounted && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setNavMenus(buildNavMenus(json.data));
+          try {
+            localStorage.setItem("thoranam_categories", JSON.stringify(json.data));
+          } catch (e) {}
         }
       } catch (err) {
-        console.warn("Could not enrich navbar menus:", err);
+        if (timer) clearTimeout(timer);
+        const stored = getStoredCategories();
+        if (isMounted && stored.length > 0) {
+          setNavMenus(buildNavMenus(stored));
+        }
       }
     }
-    enrichCategories();
-    }, 4500);
 
-    return () => clearTimeout(idleTimer);
+    loadAndEnrichCategories();
+
+    const handleSync = () => {
+      const stored = getStoredCategories();
+      if (stored && stored.length > 0) {
+        setNavMenus(buildNavMenus(stored));
+      }
+    };
+
+    window.addEventListener("thoranam_categories_updated", handleSync);
+    window.addEventListener("storage", handleSync);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener("thoranam_categories_updated", handleSync);
+      window.removeEventListener("storage", handleSync);
+    };
   }, []);
+
+  const [prevPropsCategories, setPrevPropsCategories] = useState(propsCategories);
+
+  if (propsCategories !== prevPropsCategories) {
+    setPrevPropsCategories(propsCategories);
+    if (propsCategories && propsCategories.length > 0) {
+      setNavMenus(buildNavMenus(propsCategories));
+    }
+  }
 
   return (
     <nav

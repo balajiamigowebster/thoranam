@@ -17,17 +17,22 @@ export const metadata = {
 async function HomeContent() {
   let initialProducts = [];
   let initialBrowseCategories = [];
+  let initialAllCategories = [];
   let initialSettings = {};
 
   try {
-    const [productsRes, settingsRes, categoriesRes] = await Promise.allSettled([
+    const [productsRes, settingsRes, categoriesRes, allCatsRes] = await Promise.allSettled([
       productController.getAllProducts(),
       settingsController.getSettings(),
       categoryController.getBrowseCategories(),
+      categoryController.getAllCategories(),
     ]);
 
     if (productsRes.status === "fulfilled" && Array.isArray(productsRes.value)) {
       initialProducts = productsRes.value;
+    }
+    if (allCatsRes.status === "fulfilled" && Array.isArray(allCatsRes.value)) {
+      initialAllCategories = allCatsRes.value;
     }
     if (settingsRes.status === "fulfilled" && settingsRes.value) {
       initialSettings = settingsRes.value;
@@ -52,6 +57,7 @@ async function HomeContent() {
     <Home
       initialProducts={initialProducts}
       initialBrowseCategories={initialBrowseCategories}
+      initialAllCategories={initialAllCategories}
       initialSettings={initialSettings}
     />
   );

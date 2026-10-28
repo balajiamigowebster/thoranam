@@ -6,6 +6,7 @@ import HomeCategoryProducts from "./HomeCategoryProducts";
 export default function Home({
   initialProducts = [],
   initialBrowseCategories = [],
+  initialAllCategories = [],
   initialSettings = {},
 }) {
   return (
@@ -20,7 +21,10 @@ export default function Home({
       <HomeCategory initialCategories={initialBrowseCategories} />
 
       {/* 4. Shop Our Bestsellers & Category Showcase starting from Collection 01 */}
-      <HomeCategoryProducts initialProducts={initialProducts} />
+      <HomeCategoryProducts
+        initialProducts={initialProducts}
+        initialCategories={initialAllCategories}
+      />
     </div>
   );
 }

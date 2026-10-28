@@ -87,6 +87,98 @@ export const MAIN_NAV_MENUS = [
 
 export const CATEGORY_LINKS = MAIN_NAV_MENUS;
 
+export function buildNavMenus(rawCategories = []) {
+  if (!Array.isArray(rawCategories) || rawCategories.length === 0) {
+    return MAIN_NAV_MENUS;
+  }
+
+  const catMap = new Map();
+  rawCategories.forEach((c) => {
+    if (!c) return;
+    if (c.id) catMap.set(String(c.id).toLowerCase(), c);
+    if (c.label) catMap.set(String(c.label).toLowerCase(), c);
+    if (c.name) catMap.set(String(c.name).toLowerCase(), c);
+  });
+
+  return MAIN_NAV_MENUS.map((menu) => {
+    if (menu.id === "thoranam-collection") {
+      // Under Thoranam Collection main menu: include ALL categories created in the DB table
+      const subMap = new Map();
+
+      // 1. Add baseline subcategories
+      (menu.subcategories || []).forEach((sub) => {
+        const normKey = (sub.label || "").trim().toLowerCase();
+        const match =
+          catMap.get(normKey) ||
+          catMap.get((sub.href?.split("cat=")[1] || "").toLowerCase());
+        subMap.set(normKey, {
+          label: sub.label,
+          href: sub.href || `/products?cat=${encodeURIComponent(sub.label)}`,
+          image: match?.image || "",
+          count: match?.product_count,
+        });
+      });
+
+      // 2. Add all categories created in DB / Dashboard
+      rawCategories.forEach((c) => {
+        const label = c.label || c.name;
+        if (!label) return;
+        const normKey = label.trim().toLowerCase();
+        const slug = c.id || label.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+        const existing = subMap.get(normKey);
+        if (existing) {
+          subMap.set(normKey, {
+            ...existing,
+            image: c.image || existing.image,
+            count: c.product_count ?? existing.count,
+          });
+        } else {
+          subMap.set(normKey, {
+            label: label,
+            href: c.href || `/products?cat=${encodeURIComponent(slug)}`,
+            image: c.image || "",
+            count: c.product_count,
+          });
+        }
+      });
+
+      const allSubs = Array.from(subMap.values());
+
+      return {
+        ...menu,
+        subcategories: allSubs,
+      };
+    }
+
+    // For other menus, enrich existing subcategories
+    const enrichedSub = (menu.subcategories || []).map((sub) => {
+      const match = catMap.get(sub.label?.toLowerCase());
+      return {
+        ...sub,
+        image: match?.image || "",
+        count: match?.product_count,
+      };
+    });
+
+    const showcase = [];
+    enrichedSub.forEach((sub) => {
+      if (sub.image && showcase.length < 3) {
+        showcase.push({
+          title: sub.label,
+          image: sub.image,
+          href: sub.href,
+        });
+      }
+    });
+
+    return {
+      ...menu,
+      subcategories: enrichedSub,
+      showcase: showcase.length > 0 ? showcase : undefined,
+    };
+  });
+}
+
 export const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },

@@ -12,8 +12,18 @@ export default function HomeCategory({ initialCategories = [] }) {
     initialCategories.length > 0 ? initialCategories : HOMEPAGE_BROWSE_CATEGORIES
   );
 
+  const [prevInit, setPrevInit] = useState(initialCategories);
+
+  if (initialCategories !== prevInit) {
+    setPrevInit(initialCategories);
+    if (initialCategories.length > 0) {
+      setCategories(initialCategories);
+    }
+  }
+
   useEffect(() => {
-    // 1. Keep 8 saree circular categories synchronized from localStorage if edited in dashboard
+    let isMounted = true;
+
     const syncCategories = () => {
       try {
         const stored = localStorage.getItem("thoranam_browse_categories");
@@ -21,56 +31,57 @@ export default function HomeCategory({ initialCategories = [] }) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setCategories(parsed);
+            return;
+          }
+        }
+        const fullCats = localStorage.getItem("thoranam_categories");
+        if (fullCats) {
+          const parsedCats = JSON.parse(fullCats);
+          if (Array.isArray(parsedCats) && parsedCats.length > 0) {
+            setCategories(parsedCats);
           }
         }
       } catch (e) {}
     };
 
-    // If initialCategories was provided from server, avoid immediate duplicate network requests
-    if (initialCategories.length === 0) {
-      syncCategories();
-
-      // Fetch live categories from database
-      async function loadBrowseCategories() {
-        try {
-          const res = await fetch(getApiUrl("/api/categories/browse"));
-          const json = await res.json().catch(() => null);
-          if (json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-            setCategories(json.data);
-            try {
-              localStorage.setItem("thoranam_browse_categories", JSON.stringify(json.data));
-            } catch (e) {}
-          } else {
-            // Fallback to /api/settings where store_settings resides on live cPanel backend
-            try {
-              const settRes = await fetch(getApiUrl("/api/settings"));
-              const settJson = await settRes.json();
-              let list = settJson?.data?.homepage_browse_categories;
-              if (typeof list === "string") {
-                try { list = JSON.parse(list); } catch {}
-              }
-              if (Array.isArray(list) && list.length > 0) {
-                setCategories(list);
-                try {
-                  localStorage.setItem("thoranam_browse_categories", JSON.stringify(list));
-                } catch (e) {}
-              }
-            } catch (innerErr) {}
-          }
-        } catch (e) {
-          console.error("Failed to load browse categories from API:", e);
+    async function loadBrowseCategories() {
+      try {
+        const res = await fetch(getApiUrl("/api/categories/browse"));
+        const json = await res.json().catch(() => null);
+        if (isMounted && json && json.success && Array.isArray(json.data) && json.data.length > 0) {
+          setCategories(json.data);
+          try {
+            localStorage.setItem("thoranam_browse_categories", JSON.stringify(json.data));
+          } catch (e) {}
+        } else {
+          // Fallback to /api/settings or /api/categories
+          try {
+            const catRes = await fetch(getApiUrl("/api/categories"));
+            const catJson = await catRes.json();
+            if (isMounted && catJson?.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
+              setCategories(catJson.data);
+            }
+          } catch (innerErr) {}
         }
+      } catch (e) {
+        console.warn("Failed to load browse categories from API:", e);
       }
-      loadBrowseCategories();
     }
 
+    loadBrowseCategories();
+
+    window.addEventListener("thoranam_categories_updated", syncCategories);
+    window.addEventListener("thoranam_categories_updated", loadBrowseCategories);
     window.addEventListener("thoranam_browse_categories_updated", syncCategories);
     window.addEventListener("storage", syncCategories);
     return () => {
+      isMounted = false;
+      window.removeEventListener("thoranam_categories_updated", syncCategories);
+      window.removeEventListener("thoranam_categories_updated", loadBrowseCategories);
       window.removeEventListener("thoranam_browse_categories_updated", syncCategories);
       window.removeEventListener("storage", syncCategories);
     };
-  }, [initialCategories.length]);
+  }, []);
 
   return (
     <section className="py-8 sm:py-12 bg-white dark:bg-slate-950 overflow-hidden">
