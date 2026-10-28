@@ -14,7 +14,7 @@ export function resetSequelize() {
 }
 
 // Global safety timeout wrapper to ensure NO remote query can stall the serverless runtime
-export async function withTimeout(promise, ms = 4000, fallback = null) {
+export async function withTimeout(promise, ms = 12000, fallback = null) {
   let timer;
   const timeoutPromise = new Promise((resolve, reject) => {
     timer = setTimeout(() => {
@@ -50,17 +50,18 @@ export function getSequelize() {
       dialectModule: mysql2,
       logging: false,
       pool: {
-        max: 3,
+        max: 5,
         min: 0,
-        acquire: 4000,
-        idle: 1500,
-        evict: 1500,
+        acquire: 15000,
+        idle: 5000,
+        evict: 5000,
       },
       retry: {
-        max: 2,
+        max: 3,
       },
       dialectOptions: {
-        connectTimeout: 4000,
+        connectTimeout: 10000,
+
         enableKeepAlive: true,
         keepAliveInitialDelay: 5000,
       },
