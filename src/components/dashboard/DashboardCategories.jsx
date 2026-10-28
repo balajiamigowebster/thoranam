@@ -230,25 +230,6 @@ export default function DashboardCategories() {
     const updated = [...categories, newCategory];
     handleUpdate(updated);
     setSelectedCat(newCategory);
-
-    // Also sync to homepage browse categories automatically
-    const newBrowseItem = {
-      id: slug,
-      name: newCatName.trim(),
-      label: newCatName.trim(),
-      href: `/products?cat=${slug}`,
-      image: newCatImage || "/images/product-1.jpg",
-    };
-    if (
-      !browseCategories.some(
-        (b) =>
-          b.id === slug ||
-          (b.label || b.name)?.toLowerCase() === newCatName.trim().toLowerCase()
-      )
-    ) {
-      handleBrowseUpdate([...browseCategories, newBrowseItem]);
-    }
-
     setNewCatName("");
     setNewCatImage("");
     setShowAddCat(false);

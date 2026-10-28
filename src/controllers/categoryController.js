@@ -56,48 +56,13 @@ const getCachedBrowseCategories = unstable_cache(
       browseList = [...HOMEPAGE_BROWSE_CATEGORIES];
     }
 
-    // Always ensure all categories created in DB table are included in the browse categories
-    try {
-      const dbCategories = await withTimeout(
-        Category.findAll({
-          order: [
-            ["sort_order", "ASC"],
-            ["created_at", "ASC"],
-          ],
-        }),
-        3500
-      );
-
-      if (dbCategories && dbCategories.length > 0) {
-        const seenKeys = new Set(
-          browseList.map((b) => (b.id || b.label || b.name || "").toLowerCase().trim())
-        );
-
-        dbCategories.forEach((cat) => {
-          const item = cat.toJSON ? cat.toJSON() : cat;
-          const key = (item.id || item.label || item.name || "").toLowerCase().trim();
-          const labelKey = (item.label || item.name || "").toLowerCase().trim();
-
-          if (!seenKeys.has(key) && !seenKeys.has(labelKey)) {
-            seenKeys.add(key);
-            seenKeys.add(labelKey);
-            browseList.push({
-              id: item.id,
-              name: item.label || item.name,
-              label: item.label || item.name,
-              href: item.href || `/products?cat=${item.id}`,
-              image: item.image || "/images/product-1.jpg",
-            });
-          }
-        });
-      }
-    } catch (dbErr) {
-      console.warn("[BrowseCategories] Category.findAll sync notice:", dbErr.message);
-    }
+    // Note: Do NOT automatically merge full DB categories into the Homepage "Browse Our Categories" section.
+    // As per design, the homepage circular section only displays the curated 8 categories.
+    // All custom/DB categories will show inside the "Thoranam Collection" menu and their product collections.
 
     return browseList;
   },
-  ["thoranam-db-browse-categories-global-v2"],
+  ["thoranam-db-browse-categories-curated-v3"],
   {
     revalidate: 60,
     tags: ["categories"],

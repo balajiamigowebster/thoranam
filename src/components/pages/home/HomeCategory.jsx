@@ -31,14 +31,6 @@ export default function HomeCategory({ initialCategories = [] }) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
             setCategories(parsed);
-            return;
-          }
-        }
-        const fullCats = localStorage.getItem("thoranam_categories");
-        if (fullCats) {
-          const parsedCats = JSON.parse(fullCats);
-          if (Array.isArray(parsedCats) && parsedCats.length > 0) {
-            setCategories(parsedCats);
           }
         }
       } catch (e) {}
@@ -53,15 +45,6 @@ export default function HomeCategory({ initialCategories = [] }) {
           try {
             localStorage.setItem("thoranam_browse_categories", JSON.stringify(json.data));
           } catch (e) {}
-        } else {
-          // Fallback to /api/settings or /api/categories
-          try {
-            const catRes = await fetch(getApiUrl("/api/categories"));
-            const catJson = await catRes.json();
-            if (isMounted && catJson?.success && Array.isArray(catJson.data) && catJson.data.length > 0) {
-              setCategories(catJson.data);
-            }
-          } catch (innerErr) {}
         }
       } catch (e) {
         console.warn("Failed to load browse categories from API:", e);
