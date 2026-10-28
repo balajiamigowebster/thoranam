@@ -86,7 +86,7 @@ export async function fetchProductsFromDb(force = false) {
     try {
       const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
       if (controller) {
-        timeoutId = setTimeout(() => controller.abort(), 6000);
+        timeoutId = setTimeout(() => controller.abort(), 15000);
       }
       const res = await fetch(getApiUrl("/api/products"), {
         signal: controller?.signal,

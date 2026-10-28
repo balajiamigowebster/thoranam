@@ -10,11 +10,15 @@ export async function GET(request) {
     const search = searchParams.get("search");
 
     const products = await productController.getAllProducts({ category, search });
+    const hasProducts = Array.isArray(products) && products.length > 0;
+
     return NextResponse.json(
       { success: true, data: products },
       {
         headers: {
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+          "Cache-Control": hasProducts
+            ? "public, s-maxage=60, stale-while-revalidate=300"
+            : "no-store, max-age=0",
         },
       }
     );
@@ -22,7 +26,12 @@ export async function GET(request) {
     console.error("API GET /api/products error:", error);
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
     );
   }
 }
