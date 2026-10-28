@@ -288,7 +288,10 @@ export function getStoredBrowseCategories() {
     const saved = localStorage.getItem("thoranam_browse_categories");
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const clean = parsed.filter(c => !String(c.id||"").toLowerCase().includes("munga") && !String(c.label||c.name||"").toLowerCase().includes("munga")).slice(0, 8);
+        return clean.length > 0 ? clean : HOMEPAGE_BROWSE_CATEGORIES;
+      }
     }
   } catch (e) {
     console.error("Error reading browse categories from localStorage", e);

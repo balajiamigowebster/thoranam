@@ -56,13 +56,17 @@ const getCachedBrowseCategories = unstable_cache(
       browseList = [...HOMEPAGE_BROWSE_CATEGORIES];
     }
 
-    // Note: Do NOT automatically merge full DB categories into the Homepage "Browse Our Categories" section.
-    // As per design, the homepage circular section only displays the curated 8 categories.
-    // All custom/DB categories will show inside the "Thoranam Collection" menu and their product collections.
-
-    return browseList;
+    // Strictly enforce curated 8 circular categories on the homepage and exclude any munga silk
+    return browseList
+      .filter((c) => {
+        if (!c) return false;
+        const id = String(c.id || "").toLowerCase();
+        const name = String(c.name || c.label || "").toLowerCase();
+        return !id.includes("munga") && !name.includes("munga");
+      })
+      .slice(0, 8);
   },
-  ["thoranam-db-browse-categories-curated-v3"],
+  ["thoranam-db-browse-categories-curated-v5"],
   {
     revalidate: 60,
     tags: ["categories"],

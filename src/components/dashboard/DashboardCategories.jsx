@@ -61,11 +61,14 @@ export default function DashboardCategories() {
         }
         const browseJson = await browseRes.json().catch(() => null);
         if (browseJson && browseJson.success && Array.isArray(browseJson.data) && browseJson.data.length > 0) {
-          setBrowseCategories(browseJson.data);
-          saveStoredBrowseCategories(browseJson.data);
+          const clean = browseJson.data
+            .filter((c) => !String(c.id || "").toLowerCase().includes("munga") && !String(c.label || c.name || "").toLowerCase().includes("munga"))
+            .slice(0, 8);
+          setBrowseCategories(clean);
+          saveStoredBrowseCategories(clean);
           setSelectedBrowseCat((prev) => {
-            if (!prev) return browseJson.data[0];
-            return browseJson.data.find((c) => c.id === prev.id) || browseJson.data[0];
+            if (!prev) return clean[0];
+            return clean.find((c) => c.id === prev.id) || clean[0];
           });
         } else {
           // Fallback to settings endpoint where store_settings is hosted on cPanel
@@ -74,10 +77,13 @@ export default function DashboardCategories() {
             const settingsJson = await settingsRes.json();
             const list = settingsJson?.data?.homepage_browse_categories;
             if (Array.isArray(list) && list.length > 0) {
-              setBrowseCategories(list);
-              saveStoredBrowseCategories(list);
+              const clean = list
+                .filter((c) => !String(c.id || "").toLowerCase().includes("munga") && !String(c.label || c.name || "").toLowerCase().includes("munga"))
+                .slice(0, 8);
+              setBrowseCategories(clean);
+              saveStoredBrowseCategories(clean);
               setSelectedBrowseCat((prev) => {
-                if (!prev) return list[0];
+                if (!prev) return clean[0];
                 return list.find((c) => c.id === prev.id) || list[0];
               });
             }

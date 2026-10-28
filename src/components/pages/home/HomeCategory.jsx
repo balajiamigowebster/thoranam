@@ -4,12 +4,23 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Container from "@/components/ui/Container";
-import { HOMEPAGE_BROWSE_CATEGORIES, getStoredBrowseCategories } from "@/lib/categories";
+import { HOMEPAGE_BROWSE_CATEGORIES } from "@/lib/categories";
 import { getApiUrl, getAssetUrl } from "@/config";
+
+function sanitizeBrowseCategories(list) {
+  if (!Array.isArray(list) || list.length === 0) return HOMEPAGE_BROWSE_CATEGORIES;
+  const filtered = list.filter((c) => {
+    if (!c) return false;
+    const id = String(c.id || "").toLowerCase();
+    const name = String(c.name || c.label || "").toLowerCase();
+    return !id.includes("munga") && !name.includes("munga");
+  });
+  return (filtered.length > 0 ? filtered : HOMEPAGE_BROWSE_CATEGORIES).slice(0, 8);
+}
 
 export default function HomeCategory({ initialCategories = [] }) {
   const [categories, setCategories] = useState(() =>
-    initialCategories.length > 0 ? initialCategories : HOMEPAGE_BROWSE_CATEGORIES
+    sanitizeBrowseCategories(initialCategories.length > 0 ? initialCategories : HOMEPAGE_BROWSE_CATEGORIES)
   );
 
   const [prevInit, setPrevInit] = useState(initialCategories);
@@ -17,7 +28,7 @@ export default function HomeCategory({ initialCategories = [] }) {
   if (initialCategories !== prevInit) {
     setPrevInit(initialCategories);
     if (initialCategories.length > 0) {
-      setCategories(initialCategories);
+      setCategories(sanitizeBrowseCategories(initialCategories));
     }
   }
 
@@ -30,7 +41,9 @@ export default function HomeCategory({ initialCategories = [] }) {
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            setCategories(parsed);
+            const clean = sanitizeBrowseCategories(parsed);
+            setCategories(clean);
+            localStorage.setItem("thoranam_browse_categories", JSON.stringify(clean));
           }
         }
       } catch (e) {}
@@ -41,9 +54,10 @@ export default function HomeCategory({ initialCategories = [] }) {
         const res = await fetch(getApiUrl("/api/categories/browse"));
         const json = await res.json().catch(() => null);
         if (isMounted && json && json.success && Array.isArray(json.data) && json.data.length > 0) {
-          setCategories(json.data);
+          const clean = sanitizeBrowseCategories(json.data);
+          setCategories(clean);
           try {
-            localStorage.setItem("thoranam_browse_categories", JSON.stringify(json.data));
+            localStorage.setItem("thoranam_browse_categories", JSON.stringify(clean));
           } catch (e) {}
         }
       } catch (e) {
@@ -51,7 +65,10 @@ export default function HomeCategory({ initialCategories = [] }) {
       }
     }
 
-    loadBrowseCategories();
+    // Only fetch if initial categories were missing, for instantaneous fast render
+    if (!initialCategories || initialCategories.length === 0) {
+      loadBrowseCategories();
+    }
 
     window.addEventListener("thoranam_categories_updated", syncCategories);
     window.addEventListener("thoranam_categories_updated", loadBrowseCategories);
@@ -64,7 +81,9 @@ export default function HomeCategory({ initialCategories = [] }) {
       window.removeEventListener("thoranam_browse_categories_updated", syncCategories);
       window.removeEventListener("storage", syncCategories);
     };
-  }, []);
+  }, [initialCategories]);
+
+  const displayCategories = sanitizeBrowseCategories(categories);
 
   return (
     <section className="py-8 sm:py-12 bg-white dark:bg-slate-950 overflow-hidden">
@@ -86,7 +105,7 @@ export default function HomeCategory({ initialCategories = [] }) {
         */}
         <div className="w-full overflow-x-auto no-scrollbar scroll-smooth pb-3 px-1">
           <div className="flex lg:grid lg:grid-cols-8 items-start justify-start lg:justify-items-center gap-4 sm:gap-6 lg:gap-3 min-w-max lg:min-w-0">
-            {categories.map((cat, idx) => {
+            {displayCategories.map((cat, idx) => {
               const rawImage = cat.image || `/images/product-${(idx % 4) + 1}.jpg`;
               const categoryImage = getAssetUrl(rawImage);
               const label = cat.label || cat.name;
@@ -107,7 +126,8 @@ export default function HomeCategory({ initialCategories = [] }) {
                         unoptimized={categoryImage.startsWith("http") || categoryImage.startsWith("data:")}
                         sizes="(max-width: 640px) 80px, (max-width: 1024px) 96px, 110px"
                         className="object-cover object-center group-hover:scale-110 transition-transform duration-500 ease-out"
-                        loading="lazy"
+                        priority={idx < 4}
+                        loading={idx < 4 ? undefined : "lazy"}
                       />
                       {/* Subtle hover golden highlight */}
                       <div className="absolute inset-0 bg-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full pointer-events-none" />
@@ -127,4 +147,3 @@ export default function HomeCategory({ initialCategories = [] }) {
     </section>
   );
 }
-
