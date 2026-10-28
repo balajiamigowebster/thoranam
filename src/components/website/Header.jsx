@@ -273,20 +273,34 @@ export default function Header() {
                       </span>
                     </Link>
 
-                    {item.subcategories && item.subcategories.length > 0 && (
-                      <div className="bg-white/70 px-3 py-1.5 border-t border-rose-50 space-y-1">
-                        {item.subcategories.map((sub, sIdx) => (
-                          <Link
-                            key={sIdx}
-                            href={sub.href}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="block py-1 px-1.5 text-[11px] sm:text-xs text-stone-600 hover:text-[#890e0e] hover:translate-x-1 transition-all"
-                          >
-                            • {sub.label}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                    {item.subcategories && item.subcategories.length > 0 && (() => {
+                      const isCapped = item.id === "thoranam-collection" || item.subcategories.length > 10;
+                      const subs = isCapped ? item.subcategories.slice(0, 10) : item.subcategories;
+
+                      return (
+                        <div className="bg-white/70 px-3 py-1.5 border-t border-rose-50 space-y-1">
+                          {subs.map((sub, sIdx) => (
+                            <Link
+                              key={sIdx}
+                              href={sub.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block py-1 px-1.5 text-[11px] sm:text-xs text-stone-600 hover:text-[#890e0e] hover:translate-x-1 transition-all"
+                            >
+                              • {sub.label}
+                            </Link>
+                          ))}
+                          {isCapped && (
+                            <Link
+                              href={item.href}
+                              onClick={() => setMobileMenuOpen(false)}
+                              className="block py-1.5 px-2 text-center text-[11px] font-semibold text-[#890e0e] bg-rose-50/80 hover:bg-rose-100/80 rounded-lg mt-1 transition-colors"
+                            >
+                              Browse All {item.label} ({item.subcategories.length}) →
+                            </Link>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </li>
                 ))}
               </ul>

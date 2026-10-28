@@ -52,7 +52,7 @@ export default function Products() {
   // Derive active category from URL search parameter or user clicks
   const selectedCat = (() => {
     if (customSelectedCat !== null) return customSelectedCat;
-    if (!urlCat) return "all";
+    if (!urlCat || urlCat.toLowerCase() === "thoranam-collection") return "all";
     const found = categories.find(
       (c) =>
         c.id?.toLowerCase() === urlCat.toLowerCase() ||
@@ -74,7 +74,7 @@ export default function Products() {
   };
 
   const filtered = products.filter((p) => {
-    if (selectedCat === "all") return true;
+    if (selectedCat === "all" || selectedCat.toLowerCase() === "thoranam-collection") return true;
     const catLow = selectedCat.toLowerCase();
     const pCatLow = (p.category || "").toLowerCase();
     // Check direct equality or match against category id/label

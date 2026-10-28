@@ -128,61 +128,82 @@ export default function Navbar({ className = "", categories: propsCategories = n
       </div>
 
       {/* Luxury Dropdown Mega Menu for Submenus */}
-      {hoveredMenu && hoveredMenu.subcategories && hoveredMenu.subcategories.length > 0 && (
-        <div
-          className="hidden md:block absolute top-full left-0 right-0 bg-white/98 backdrop-blur-md border-b border-rose-100 shadow-2xl z-50 transition-all duration-200 animate-in fade-in slide-in-from-top-1"
-          onMouseEnter={() => setHoveredMenu(hoveredMenu)}
-          onMouseLeave={() => setHoveredMenu(null)}
-        >
-          <div className="max-w-7xl mx-auto px-8 py-7">
-            <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-5">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#890e0e]" />
-                <h3 className="text-sm font-bold uppercase tracking-wider text-[#890e0e]">
-                  {hoveredMenu.label} Collections
-                </h3>
-                <span className="text-xs bg-rose-50 text-[#890e0e] px-2.5 py-0.5 rounded-full font-semibold border border-rose-200/60">
-                  {hoveredMenu.subcategories.length} varieties
-                </span>
-              </div>
-              <Link
-                href={hoveredMenu.href}
-                className="text-xs text-[#890e0e] hover:underline font-semibold flex items-center gap-1"
-              >
-                <span>Browse All {hoveredMenu.label}</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+      {hoveredMenu && hoveredMenu.subcategories && hoveredMenu.subcategories.length > 0 && (() => {
+        const isCapped = hoveredMenu.id === "thoranam-collection" || hoveredMenu.subcategories.length > 10;
+        const displayedSubs = isCapped
+          ? hoveredMenu.subcategories.slice(0, 10)
+          : hoveredMenu.subcategories;
+        const totalCount = hoveredMenu.subcategories.length;
 
-            {/* Submenu Links Grid */}
-            <div
-              className={`grid gap-x-8 gap-y-3 ${
-                hoveredMenu.subcategories.length > 8
-                  ? "grid-cols-3"
-                  : hoveredMenu.subcategories.length > 4
-                  ? "grid-cols-2"
-                  : "grid-cols-2 max-w-2xl"
-              }`}
-            >
-              {hoveredMenu.subcategories.map((sub, idx) => (
+        return (
+          <div
+            className="hidden md:block absolute top-full left-0 right-0 bg-white/98 backdrop-blur-md border-b border-rose-100 shadow-2xl z-50 transition-all duration-200 animate-in fade-in slide-in-from-top-1"
+            onMouseEnter={() => setHoveredMenu(hoveredMenu)}
+            onMouseLeave={() => setHoveredMenu(null)}
+          >
+            <div className="max-w-7xl mx-auto px-8 py-6">
+              <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#890e0e]" />
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#890e0e]">
+                    {hoveredMenu.label} Collections
+                  </h3>
+                  <span className="text-xs bg-rose-50 text-[#890e0e] px-2.5 py-0.5 rounded-full font-semibold border border-rose-200/60">
+                    {isCapped ? `Showing 10 of ${totalCount} varieties` : `${totalCount} varieties`}
+                  </span>
+                </div>
                 <Link
-                  key={idx}
-                  href={sub.href}
-                  className="group flex items-center justify-between p-2.5 rounded-xl border border-transparent hover:border-rose-100 hover:bg-rose-50/50 transition-all"
+                  href={hoveredMenu.href}
+                  className="text-xs text-[#890e0e] hover:underline font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50/70 hover:bg-rose-100/70 border border-rose-200/60 transition-all"
                 >
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-rose-300 group-hover:bg-[#890e0e] transition-colors" />
-                    <span className="text-xs sm:text-sm font-medium text-stone-700 group-hover:text-[#890e0e] group-hover:font-semibold transition-colors">
-                      {sub.label}
-                    </span>
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-stone-300 group-hover:text-[#890e0e] group-hover:translate-x-0.5 transition-all" />
+                  <span>Browse All Collections ({totalCount})</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
-              ))}
+              </div>
+
+              {/* Submenu Links Grid (compact 2 columns for 10 items) */}
+              <div
+                className={`grid gap-x-8 gap-y-2.5 ${
+                  displayedSubs.length > 5
+                    ? "grid-cols-2 max-w-4xl"
+                    : "grid-cols-2 max-w-2xl"
+                }`}
+              >
+                {displayedSubs.map((sub, idx) => (
+                  <Link
+                    key={idx}
+                    href={sub.href}
+                    className="group flex items-center justify-between p-2 rounded-xl border border-transparent hover:border-rose-100 hover:bg-rose-50/50 transition-all"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-300 group-hover:bg-[#890e0e] transition-colors" />
+                      <span className="text-xs sm:text-sm font-medium text-stone-700 group-hover:text-[#890e0e] group-hover:font-semibold transition-colors">
+                        {sub.label}
+                      </span>
+                    </div>
+                    <ChevronRight className="w-3.5 h-3.5 text-stone-300 group-hover:text-[#890e0e] group-hover:translate-x-0.5 transition-all" />
+                  </Link>
+                ))}
+              </div>
+
+              {isCapped && (
+                <div className="mt-4 pt-3 border-t border-rose-100/70 flex items-center justify-between">
+                  <p className="text-xs text-stone-500">
+                    Explore all heirloom weaves, exotic cottons, and handcrafted festive sarees.
+                  </p>
+                  <Link
+                    href={hoveredMenu.href}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-[#890e0e] hover:from-rose-700 hover:to-[#6f0b0b] text-white font-semibold text-xs shadow-xs hover:shadow transition-all"
+                  >
+                    <span>Browse All {hoveredMenu.label} ({totalCount} Varieties)</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </nav>
   );
 }
