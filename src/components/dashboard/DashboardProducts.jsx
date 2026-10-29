@@ -1,7 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Search, Edit3, Trash2, Eye, Sparkles, Database, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit3,
+  Trash2,
+  Eye,
+  Sparkles,
+  Database,
+  Loader2,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import ProductModal from "./ProductModal";
 import {
   getStoredProducts,
@@ -24,6 +38,22 @@ export function formatRupeePrice(priceStr) {
   return `₹ ${cleaned}`;
 }
 
+// Pagination helper generating smart numbers with ellipsis
+function getPaginationPages(currentPage, totalPages) {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const pages = [];
+  if (currentPage <= 4) {
+    pages.push(1, 2, 3, 4, 5, "...", totalPages);
+  } else if (currentPage >= totalPages - 3) {
+    pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+  } else {
+    pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+  }
+  return pages;
+}
+
 export default function DashboardProducts() {
   const [products, setProducts] = useState(getStoredProducts);
   const [categories, setCategories] = useState(getStoredCategories);
@@ -40,6 +70,10 @@ export default function DashboardProducts() {
 
   // Small loading progress indicator area state (left side of Add New Saree button)
   const [uploadState, setUploadState] = useState({ isUploading: false, percent: 0, message: "" });
+
+  // Pagination states (15 products per page)
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 15;
 
   // Unified category list combining DB categories, 17 baseline weaves, and all products' categories
   const filterCategoryOptions = React.useMemo(() => {
@@ -168,6 +202,13 @@ export default function DashboardProducts() {
     return matchesSearch && matchesCat;
   });
 
+  const totalProducts = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(totalProducts / ITEMS_PER_PAGE));
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
+  const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = Math.min(startIndex + ITEMS_PER_PAGE, totalProducts);
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
   return (
     <div className="space-y-6">
       {/* Top Banner & Control Area */}
@@ -234,13 +275,19 @@ export default function DashboardProducts() {
               type="text"
               placeholder="Search sarees by name or category..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17]"
             />
           </div>
           <select
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => {
+              setSelectedCategory(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full sm:w-auto px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#800F17]/20 font-medium cursor-pointer"
           >
             <option value="all">All Categories</option>
@@ -267,7 +314,7 @@ export default function DashboardProducts() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredProducts.map((item) => (
+              {paginatedProducts.map((item) => (
                 <tr key={item.id} className="hover:bg-slate-50/60 transition-colors group">
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-3">
@@ -402,6 +449,102 @@ export default function DashboardProducts() {
             </tbody>
           </table>
         </div>
+
+        {/* Bottom Pagination Bar: 15 items per page with <<, <, numbers, >, >> */}
+        {totalProducts > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 text-xs">
+            <div className="text-slate-500 font-medium">
+              Showing{" "}
+              <span className="font-semibold text-slate-800">
+                {startIndex + 1}–{endIndex}
+              </span>{" "}
+              of{" "}
+              <span className="font-semibold text-slate-800">
+                {totalProducts}
+              </span>{" "}
+              products
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5 select-none">
+                {/* First Page (<<) */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={safeCurrentPage === 1}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  title="First Page (<<)"
+                >
+                  <ChevronsLeft className="w-4 h-4" />
+                </button>
+
+                {/* Previous Page (<) */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                  disabled={safeCurrentPage === 1}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  title="Previous Page (<)"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                {/* Page Numbers in center */}
+                <div className="flex items-center gap-1">
+                  {getPaginationPages(safeCurrentPage, totalPages).map((p, idx) => {
+                    if (p === "...") {
+                      return (
+                        <span
+                          key={`ellipsis-${idx}`}
+                          className="px-2 py-1 text-slate-400 select-none font-semibold"
+                        >
+                          ...
+                        </span>
+                      );
+                    }
+                    const isCurrent = p === safeCurrentPage;
+                    return (
+                      <button
+                        type="button"
+                        key={p}
+                        onClick={() => setCurrentPage(p)}
+                        className={`min-w-[32px] h-8 px-2 flex items-center justify-center rounded-lg text-xs font-semibold transition-all ${
+                          isCurrent
+                            ? "bg-[#800F17] text-white shadow-xs font-bold"
+                            : "border border-slate-200 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Next Page (>) */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                  disabled={safeCurrentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  title="Next Page (>)"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+
+                {/* Last Page (>>) */}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={safeCurrentPage === totalPages}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  title="Last Page (>>)"
+                >
+                  <ChevronsRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Quick Detail Viewer Slide-over / Card */}
