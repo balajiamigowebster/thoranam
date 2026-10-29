@@ -180,6 +180,7 @@ export default function Checkout() {
   // Discount code states
   const [discountCode, setDiscountCode] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountMsg, setDiscountMsg] = useState("");
   const [isApplyingCode, setIsApplyingCode] = useState(false);
 
@@ -211,28 +212,52 @@ export default function Checkout() {
   // Free shipping over ₹999, else ₹99 or free promotional
   const shippingFee = subtotal > 999 || subtotal === 0 ? 0 : 99;
   const estimatedTaxes = Math.round(subtotal * 0.18 * 100) / 100; // 18% GST display
-  const discountAmount = appliedDiscount > 0 ? (subtotal * appliedDiscount) / 100 : 0;
+  const discountAmount = appliedCoupon?.discount_amount !== undefined
+    ? Number(appliedCoupon.discount_amount)
+    : appliedDiscount > 0
+    ? (subtotal * appliedDiscount) / 100
+    : 0;
   const finalTotal = Math.max(0, subtotal - discountAmount + (shippingFee || 0));
 
-  const handleApplyDiscount = (e) => {
+  const handleApplyDiscount = async (e) => {
     e.preventDefault();
     if (!discountCode.trim()) return;
     setIsApplyingCode(true);
 
-    setTimeout(() => {
+    try {
+      const code = discountCode.trim().toUpperCase();
+      const res = await fetch(getApiUrl(`/api/promotions?code=${encodeURIComponent(code)}&subtotal=${subtotal}`));
+      const data = await res.json();
+
+      if (data.success && data.valid) {
+        setAppliedCoupon(data);
+        setAppliedDiscount(data.discount_value);
+        setDiscountMsg(data.message || "Discount applied successfully!");
+      } else {
+        setAppliedCoupon(null);
+        setAppliedDiscount(0);
+        setDiscountMsg(data.message || "Invalid coupon code.");
+      }
+    } catch (err) {
+      console.error("Coupon validation error:", err);
       const code = discountCode.trim().toUpperCase();
       if (code === "THORANAM20" || code === "WELCOME20") {
         setAppliedDiscount(20);
+        setAppliedCoupon({
+          code,
+          discount_type: "percentage",
+          discount_value: 20,
+          discount_amount: (subtotal * 20) / 100,
+        });
         setDiscountMsg("20% Boutique Privilege Discount Applied!");
-      } else if (code === "FESTIVE10" || code === "SILK10") {
-        setAppliedDiscount(10);
-        setDiscountMsg("10% Festive Discount Applied!");
       } else {
         setAppliedDiscount(0);
-        setDiscountMsg("Invalid coupon code. Try THORANAM20");
+        setAppliedCoupon(null);
+        setDiscountMsg("Invalid coupon code.");
       }
+    } finally {
       setIsApplyingCode(false);
-    }, 400);
+    }
   };
 
   const validateForm = () => {
