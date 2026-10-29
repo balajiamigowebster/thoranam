@@ -13,6 +13,8 @@ export default function Products() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const urlCat = searchParams.get("cat");
+  const urlSub = searchParams.get("sub");
+  const effectiveCatParam = urlSub || urlCat;
 
   const [products, setProducts] = useState(getStoredProducts);
   const [categories, setCategories] = useState([]);

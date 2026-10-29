@@ -8,6 +8,7 @@ import {
   getStoredCategories,
   saveStoredCategories,
   getStoredBrowseCategories,
+  getUnifiedCategories,
   saveStoredBrowseCategories,
 } from "@/lib/categories";
 import { getApiUrl, getAssetUrl } from "@/config";
@@ -16,6 +17,9 @@ import { compressImageForUpload } from "@/lib/imageOptimizer";
 export default function DashboardCategories() {
   const [activeTab, setActiveTab] = useState("browse"); // "browse" or "menu"
   const [categories, setCategories] = useState(getStoredCategories);
+  const categoryOptions = React.useMemo(() => {
+    return getUnifiedCategories(categories);
+  }, [categories]);
   const [selectedCat, setSelectedCat] = useState(() => {
     const list = getStoredCategories();
     return list.length > 0 ? list[0] : null;
@@ -710,19 +714,61 @@ export default function DashboardCategories() {
                           <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider block mb-1">
                             Link Destination (HREF)
                           </label>
-                          <input
-                            type="text"
-                            value={selectedBrowseCat.href || ""}
-                            placeholder="/products?cat=exotic-cotton&sub=handloom-cotton"
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const updated = browseCategories.map((c) =>
-                                c.id === selectedBrowseCat.id ? { ...c, href: val } : c
-                              );
-                              handleBrowseUpdate(updated);
-                            }}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs outline-none focus:ring-1 focus:ring-[#800F17]"
-                          />
+
+                          <div className="space-y-1.5">
+                            {/* Category Menu Dropdown (like Product Form) */}
+                            <select
+                              value={(() => {
+                                const href = selectedBrowseCat.href || "";
+                                const match = categoryOptions.find((name) => {
+                                  const catObj = categories.find((c) => (c.label || c.name || "").toLowerCase() === name.toLowerCase());
+                                  if (catObj?.href && catObj.href === href) return true;
+                                  const slug = (catObj?.id || name.toLowerCase().replace(/[-_\s]+/g, "-"));
+                                  if (href.includes(slug)) return true;
+                                  return false;
+                                });
+                                return match || (href ? "custom" : "");
+                              })()}
+                              onChange={(e) => {
+                                const selectedName = e.target.value;
+                                if (selectedName === "custom") return;
+                                const matchedCat = categories.find(
+                                  (c) => (c.label || c.name || "").toLowerCase() === selectedName.toLowerCase()
+                                );
+                                const newHref = matchedCat?.href || `/products?cat=${matchedCat?.id || selectedName.toLowerCase().replace(/\s+/g, "-")}`;
+                                const updated = browseCategories.map((c) =>
+                                  c.id === selectedBrowseCat.id ? { ...c, href: newHref } : c
+                                );
+                                handleBrowseUpdate(updated);
+                              }}
+                              className="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-[#800F17]/20 focus:border-[#800F17] cursor-pointer"
+                            >
+                              <option value="">-- Choose Category from Store Menus --</option>
+                              {categoryOptions.map((name) => (
+                                <option key={name} value={name}>
+                                  {name}
+                                </option>
+                              ))}
+                              <option value="custom">-- Custom Link URL --</option>
+                            </select>
+
+                            <input
+                              type="text"
+                              value={selectedBrowseCat.href || ""}
+                              placeholder="/products?cat=handloom-cotton-sarees"
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const updated = browseCategories.map((c) =>
+                                  c.id === selectedBrowseCat.id ? { ...c, href: val } : c
+                                );
+                                handleBrowseUpdate(updated);
+                              }}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs font-mono text-slate-700 outline-none focus:ring-1 focus:ring-[#800F17]"
+                            />
+                          </div>
+                          <p className="text-[10px] text-slate-400 mt-1">
+                            Choose a category from the dropdown above to link directly to that collection, or enter a custom URL.
+                          </p>
                         </div>
 
                         <div>

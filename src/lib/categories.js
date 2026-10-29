@@ -194,61 +194,61 @@ export const INITIAL_CATEGORIES = [
 // 8 Saree Categories for Homepage "Browse Our Categories" Circles
 export const HOMEPAGE_BROWSE_CATEGORIES = [
   {
-    id: "handloom-cotton",
-    name: "Handloom cotton sarees",
-    label: "Handloom cotton sarees",
-    href: "/products?cat=exotic-cotton&sub=handloom-cotton",
-    image: "/images/product-1.jpg",
+    "id": "handloom-cotton-sarees",
+    "name": "Handloom cotton sarees",
+    "label": "Handloom cotton sarees",
+    "href": "/products?cat=handloom-cotton-sarees",
+    "image": "/uploads/browse-cat-handloom-cotton.jpg"
   },
   {
-    id: "banarasi-silk",
-    name: "Banarasi silk cotton",
-    label: "Banarasi silk cotton",
-    href: "/products?cat=silk-sarees&sub=banarasi-silk",
-    image: "/images/product-2.jpg",
+    "id": "banarasi-silk-cotton",
+    "name": "Banarasi silk cotton",
+    "label": "Banarasi silk cotton",
+    "href": "/products?cat=banarasi-silk-cotton",
+    "image": "/uploads/browse-cat-banarasi-silk.jpg"
   },
   {
-    id: "illampillai-cotton",
-    name: "Illampillai Cotton",
-    label: "Illampillai Cotton",
-    href: "/products?cat=exotic-cotton&sub=illampillai",
-    image: "/images/product-3.jpg",
+    "id": "illampillai-cotton",
+    "name": "Illampillai Cotton",
+    "label": "Illampillai Cotton",
+    "href": "/products?cat=illampillai-cotton",
+    "image": "/uploads/browse-cat-illampillai-cotton.jpg"
   },
   {
-    id: "pure-cotton",
-    name: "Pure cotton",
-    label: "Pure cotton",
-    href: "/products?cat=pure-cotton",
-    image: "/images/product-4.jpg",
+    "id": "pure-cotton",
+    "name": "Pure cotton",
+    "label": "Pure cotton",
+    "href": "/products?cat=pure-cotton",
+    "image": "/uploads/browse-cat-pure-cotton.jpg"
   },
   {
-    id: "chettinad-cotton",
-    name: "Chettinad Cotton",
-    label: "Chettinad Cotton",
-    href: "/products?cat=exotic-cotton&sub=chettinad",
-    image: "/images/bestseller-1.jpg",
+    "id": "chettinad-cotton",
+    "name": "Chettinad Cotton",
+    "label": "Chettinad Cotton",
+    "href": "/products?cat=chettinad-cotton",
+    "image": "/uploads/browse-cat-chettinad-cotton.jpg"
   },
   {
-    id: "cotton-printed",
-    name: "cotton printed sarees",
-    label: "cotton printed sarees",
-    href: "/products?cat=thoranam-collection&sub=cotton-printed",
-    image: "/images/bestseller-2.jpg",
+    "id": "cotton-printed-sarees",
+    "name": "cotton printed sarees",
+    "label": "cotton printed sarees",
+    "href": "/products?cat=cotton-printed-sarees",
+    "image": "/uploads/browse-cat-cotton-printed.jpg"
   },
   {
-    id: "coimbatore-cotton",
-    name: "Coimbatore Cotton",
-    label: "Coimbatore Cotton",
-    href: "/products?cat=thoranam-collection&sub=coimbatore-cotton",
-    image: "/images/product-1.jpg",
+    "id": "coimbatore-cotton",
+    "name": "Coimbatore Cotton",
+    "label": "Coimbatore Cotton",
+    "href": "/products?cat=coimbatore-cotton",
+    "image": "/uploads/browse-cat-coimbatore-cotton.jpg"
   },
   {
-    id: "mul-cotton",
-    name: "MUL Cotton sarees",
-    label: "MUL Cotton sarees",
-    href: "/products?cat=exotic-cotton&sub=mul-cotton",
-    image: "/images/product-2.jpg",
-  },
+    "id": "mul-cotton-sarees",
+    "name": "MUL Cotton sarees",
+    "label": "MUL Cotton sarees",
+    "href": "/products?cat=mul-cotton-sarees",
+    "image": "/uploads/browse-cat-mul-cotton.jpg"
+  }
 ];
 
 // Helper to get active categories from localStorage or API (with fallback to INITIAL_CATEGORIES)
