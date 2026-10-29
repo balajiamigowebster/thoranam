@@ -46,6 +46,20 @@ const INDIAN_STATES = [
   "Madhya Pradesh",
 ];
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined") return resolve(false);
+    if (window.Razorpay) return resolve(true);
+
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 export default function Checkout() {
   const router = useRouter();
   const { cartItems: contextItems, clearCart } = useCart();
@@ -285,6 +299,106 @@ export default function Checkout() {
       })),
     };
 
+    if (paymentMethod === "razorpay") {
+      try {
+        const isLoaded = await loadRazorpayScript();
+        if (!isLoaded) {
+          alert("Could not load Razorpay secure checkout. Please check your internet connection.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 1. Create order on server
+        const createRes = await fetch("/api/razorpay/create-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: finalTotal,
+            receipt: `rcpt_${Date.now()}`,
+          }),
+        });
+
+        const createData = await createRes.json();
+        if (!createData.success || !createData.order) {
+          alert(createData.message || "Failed to initialize Razorpay payment. Please try again.");
+          setIsSubmitting(false);
+          return;
+        }
+
+        // 2. Open Razorpay Checkout modal
+        const options = {
+          key: createData.keyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+          amount: createData.order.amount,
+          currency: createData.order.currency || "INR",
+          name: "Thoranam Luxury Saree Boutique",
+          description: `Order for ${totalCartCount} item(s)`,
+          image: "/images/logo.png",
+          order_id: createData.order.id,
+          handler: async function (response) {
+            try {
+              setIsSubmitting(true);
+              const verifyRes = await fetch("/api/razorpay/verify-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  orderData: {
+                    ...orderData,
+                    payment_id: response.razorpay_payment_id,
+                  },
+                }),
+              });
+
+              const verifyData = await verifyRes.json();
+              if (verifyData.success) {
+                setOrderSuccess(verifyData.order || {
+                  ...orderData,
+                  id: response.razorpay_order_id,
+                  payment_id: response.razorpay_payment_id,
+                });
+                clearCart();
+              } else {
+                alert(verifyData.message || "Payment verification failed. Please contact support.");
+              }
+            } catch (vErr) {
+              console.error("Verification error:", vErr);
+              alert("Error verifying payment response. Please contact support.");
+            } finally {
+              setIsSubmitting(false);
+            }
+          },
+          prefill: {
+            name: `${firstName} ${lastName}`.trim() || customer?.name || "",
+            email: customer?.email || (contact.includes("@") ? contact : ""),
+            contact: contact.replace(/[^0-9]/g, "").slice(-10),
+          },
+          theme: {
+            color: "#800F17",
+          },
+          modal: {
+            ondismiss: function () {
+              setIsSubmitting(false);
+            },
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", function (response) {
+          setIsSubmitting(false);
+          alert(`Payment failed: ${response.error?.description || "Transaction was declined."}`);
+        });
+        rzp.open();
+      } catch (err) {
+        console.error("Razorpay error:", err);
+        alert("Failed to initiate Razorpay payment. Please try again.");
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // Cash on Delivery flow
     try {
       const saved = await saveOrderToDb(orderData);
       setOrderSuccess(saved || orderData);

@@ -80,7 +80,7 @@ export default function Header() {
     document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      clearTimeout(idleTimer);
+      if (timer) clearTimeout(timer);
       window.removeEventListener("thoranam_categories_updated", handleSync);
       window.removeEventListener("thoranam_customer_auth_changed", syncCustomer);
       window.removeEventListener("storage", handleSync);
