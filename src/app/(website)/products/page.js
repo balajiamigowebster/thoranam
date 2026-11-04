@@ -2,8 +2,28 @@ import { Suspense } from "react";
 import Products from "@/components/pages/products/Products";
 
 export const metadata = {
-  title: "Products | Thoranam",
-  description: "Browse our products and solutions.",
+  title: "Handcrafted Sarees Collection | Thoranam Luxury Boutique",
+  description:
+    "Explore our complete curated catalog of authentic handloom silks, festive cottons, Banarasi weaves, and heirloom sarees. Express insured shipping across India.",
+  keywords: [
+    "sarees online",
+    "handloom sarees",
+    "silk sarees boutique",
+    "Thoranam collection",
+    "pure cotton sarees",
+    "Banarasi sarees",
+    "Indian wedding wear",
+  ],
+  alternates: {
+    canonical: "https://thoranam.co/products",
+  },
+  openGraph: {
+    title: "Handcrafted Sarees Collection | Thoranam Luxury Boutique",
+    description:
+      "Explore our complete curated catalog of authentic handloom silks, festive cottons, Banarasi weaves, and heirloom sarees.",
+    url: "https://thoranam.co/products",
+    images: [{ url: "https://thoranam.co/images/hero-1.webp", width: 1200, height: 630 }],
+  },
 };
 
 export default function ProductsPage() {
@@ -20,4 +40,3 @@ export default function ProductsPage() {
     </Suspense>
   );
 }
-
