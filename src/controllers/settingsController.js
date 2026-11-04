@@ -55,13 +55,14 @@ export const settingsController = {
   async updateSettings(settingsObject) {
     await syncDatabase();
     for (const [key, val] of Object.entries(settingsObject)) {
+      const strVal = typeof val === "string" ? val : JSON.stringify(val);
       const existing = await StoreSetting.findByPk(key);
       if (existing) {
-        await existing.update({ setting_value: val });
+        await existing.update({ setting_value: strVal });
       } else {
         await StoreSetting.create({
           setting_key: key,
-          setting_value: val,
+          setting_value: strVal,
         });
       }
     }

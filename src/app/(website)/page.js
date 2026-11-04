@@ -43,6 +43,20 @@ export async function generateMetadata() {
     title,
     description,
     keywords,
+    authors: [{ name: "Thoranam Luxury Boutique", url: baseUrl }],
+    creator: "Thoranam Luxury Boutique",
+    publisher: "Thoranam Luxury Boutique",
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
     alternates: {
       canonical: baseUrl,
     },

@@ -13,6 +13,20 @@ export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://thoranam.co"),
   title: "Thoranam | Luxury Saree Boutique",
   description: "Crafting premium saree collections and digital experiences.",
+  authors: [{ name: "Thoranam Luxury Boutique", url: "https://thoranam.co" }],
+  creator: "Thoranam Luxury Boutique",
+  publisher: "Thoranam Luxury Boutique",
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon.ico" },
