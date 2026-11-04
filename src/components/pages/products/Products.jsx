@@ -174,6 +174,7 @@ export default function Products() {
                   title={item.title}
                   price={item.price}
                   image={item.mainImage || "/images/product-1.jpg"}
+                  galleryImages={item.galleryImages || item.gallery_images}
                   category={item.category || "Exclusive"}
                   stock={item.stock}
                   href={`/products/${item.id}`}

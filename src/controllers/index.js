@@ -5,3 +5,4 @@ export { default as customerController } from "./customerController";
 export { default as promotionController } from "./promotionController";
 export { default as settingsController } from "./settingsController";
 export { default as authController } from "./authController";
+export { default as wishlistController } from "./wishlistController";

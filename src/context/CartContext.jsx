@@ -10,7 +10,6 @@ import React, {
 
 const CartContext = createContext(null);
 
-
 const emptySubscribe = () => () => {};
 
 export function CartProvider({ children }) {
@@ -54,15 +53,73 @@ export function CartProvider({ children }) {
         } catch (err) {}
       }
     };
+    const handleCustomUpdate = () => {
+      try {
+        const stored = localStorage.getItem("thoranam_cart");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setCartItems(parsed);
+          }
+        }
+      } catch (err) {}
+    };
     window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    window.addEventListener("thoranam_cart_updated", handleCustomUpdate);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("thoranam_cart_updated", handleCustomUpdate);
+    };
   }, []);
 
   const saveCart = (items) => {
     setCartItems(items);
     try {
       localStorage.setItem("thoranam_cart", JSON.stringify(items));
+      window.dispatchEvent(new Event("thoranam_cart_updated"));
     } catch (e) {}
+  };
+
+  /**
+   * addToCart - Immediate synchronous cart update with persistence
+   */
+  const addToCart = (item, quantity = 1) => {
+    if (!item) return [];
+
+    let current = [];
+    try {
+      const stored = localStorage.getItem("thoranam_cart");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) current = parsed;
+      }
+    } catch (e) {
+      current = [...cartItems];
+    }
+
+    const itemId = String(item.id);
+    const existingIdx = current.findIndex((p) => String(p.id) === itemId);
+    let updated;
+    if (existingIdx > -1) {
+      updated = current.map((p, idx) =>
+        idx === existingIdx
+          ? { ...p, quantity: (p.quantity || 1) + quantity }
+          : p
+      );
+    } else {
+      updated = [...current, { ...item, quantity }];
+    }
+
+    try {
+      localStorage.setItem("thoranam_cart", JSON.stringify(updated));
+      window.dispatchEvent(new Event("thoranam_cart_updated"));
+    } catch (e) {}
+
+    setCartItems(updated);
+    setBadgeBump(true);
+    setTimeout(() => setBadgeBump(false), 900);
+
+    return updated;
   };
 
   /**
@@ -79,6 +136,11 @@ export function CartProvider({ children }) {
     item = {},
     quantity = 1,
   }) => {
+    // Immediately persist item so navigation/state is never delayed
+    addToCart(item, quantity);
+
+    if (typeof window === "undefined") return;
+
     // 1. Calculate Start Rect
     let startRect = null;
     if (startElementOrRect instanceof HTMLElement) {
@@ -98,7 +160,8 @@ export function CartProvider({ children }) {
     }
 
     // 2. Find Target Cart Icon in Header
-    const cartTarget = document.getElementById("header-cart-icon-btn") ||
+    const cartTarget =
+      document.getElementById("header-cart-icon-btn") ||
       document.querySelector('a[aria-label="Shopping Cart"]');
 
     let endRect = {
@@ -140,33 +203,9 @@ export function CartProvider({ children }) {
       });
     });
 
-    // On completion (900ms match transition time)
+    // On completion (850ms match transition time)
     setTimeout(() => {
-      // Remove flyer
       setAnimatingFlyers((prev) => prev.filter((f) => f.id !== flyerId));
-
-      // Bump badge & shake cart
-      setBadgeBump(true);
-      setTimeout(() => setBadgeBump(false), 900);
-
-      // Add item to cart state
-      setCartItems((prev) => {
-        const existingIdx = prev.findIndex((p) => p.id === item.id);
-        let updated;
-        if (existingIdx > -1) {
-          updated = prev.map((p, idx) =>
-            idx === existingIdx
-              ? { ...p, quantity: (p.quantity || 1) + quantity }
-              : p
-          );
-        } else {
-          updated = [...prev, { ...item, quantity }];
-        }
-        try {
-          localStorage.setItem("thoranam_cart", JSON.stringify(updated));
-        } catch (e) {}
-        return updated;
-      });
     }, 850);
   };
 
@@ -184,7 +223,7 @@ export function CartProvider({ children }) {
     setCartItems((prev) => {
       const updated = prev
         .map((item) => {
-          if (item.id === id) {
+          if (String(item.id) === String(id)) {
             const newQty = (item.quantity || 1) + delta;
             return newQty > 0 ? { ...item, quantity: newQty } : null;
           }
@@ -193,6 +232,7 @@ export function CartProvider({ children }) {
         .filter(Boolean);
       try {
         localStorage.setItem("thoranam_cart", JSON.stringify(updated));
+        window.dispatchEvent(new Event("thoranam_cart_updated"));
       } catch (e) {}
       return updated;
     });
@@ -200,9 +240,10 @@ export function CartProvider({ children }) {
 
   const removeFromCart = (id) => {
     setCartItems((prev) => {
-      const updated = prev.filter((item) => item.id !== id);
+      const updated = prev.filter((item) => String(item.id) !== String(id));
       try {
         localStorage.setItem("thoranam_cart", JSON.stringify(updated));
+        window.dispatchEvent(new Event("thoranam_cart_updated"));
       } catch (e) {}
       return updated;
     });
@@ -212,6 +253,7 @@ export function CartProvider({ children }) {
     setCartItems([]);
     try {
       localStorage.removeItem("thoranam_cart");
+      window.dispatchEvent(new Event("thoranam_cart_updated"));
     } catch (e) {}
   };
 
@@ -221,6 +263,7 @@ export function CartProvider({ children }) {
         cartItems,
         totalCartCount,
         isMounted,
+        addToCart,
         triggerAddToCartAnimation,
         badgeBump,
         isCartOpen,
@@ -249,22 +292,18 @@ export function CartProvider({ children }) {
               }deg)`,
               opacity: isFlying ? 0.2 : 1,
               transition:
-                "left 850ms cubic-bezier(0.2, 0.8, 0.2, 1), top 850ms cubic-bezier(0.5, 0, 0.7, 1), transform 850ms cubic-bezier(0.25, 1, 0.5, 1), opacity 850ms ease-in",
+                "all 0.85s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.85s ease-in-out, opacity 0.85s ease-in",
             }}
           >
-            {/* Elegant glowing container & luxury saree image */}
-            <div className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-2xl overflow-hidden shadow-[0_12px_36px_rgba(128,15,23,0.45)] border-2 border-amber-300 ring-4 ring-[#800F17]/20 bg-white">
+            <div className="w-16 h-20 rounded-lg overflow-hidden shadow-2xl border-2 border-white ring-2 ring-[#800F17]/40">
               <img
-                src={flyer.image || "/images/product-1.jpg"}
-                alt="Adding to cart"
+                src={flyer.image}
+                alt="Flyer item"
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.target.src = "/images/product-1.jpg";
                 }}
               />
-              {/* Golden luxury particle burst */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-amber-400/30 to-transparent mix-blend-overlay pointer-events-none" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 animate-ping" />
             </div>
           </div>
         );
@@ -279,6 +318,7 @@ export function useCart() {
     return {
       cartItems: [],
       totalCartCount: 0,
+      addToCart: () => [],
       triggerAddToCartAnimation: () => {},
       badgeBump: false,
       isCartOpen: false,

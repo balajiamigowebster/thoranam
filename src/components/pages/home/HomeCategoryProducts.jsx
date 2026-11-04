@@ -181,6 +181,7 @@ function CategorySection({ submenu, items, idx }) {
                 title={item.title}
                 price={item.price}
                 image={item.mainImage || item.image || "/images/product-1.jpg"}
+                galleryImages={item.galleryImages || item.gallery_images}
                 category={item.category || submenuName}
                 stock={item.stock}
                 href={item.href || `/products/${item.id}`}

@@ -17,6 +17,7 @@ export default function HomeBestToday({ initialProducts = [] }) {
       stock: p.stock,
       category: p.category,
       image: p.mainImage || p.image || "/images/product-1.jpg",
+      galleryImages: p.galleryImages || p.gallery_images || [],
       tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
     }));
   });
@@ -41,6 +42,7 @@ export default function HomeBestToday({ initialProducts = [] }) {
             stock: p.stock,
             category: p.category,
             image: p.mainImage || p.image || "/images/product-1.jpg",
+            galleryImages: p.galleryImages || p.gallery_images || [],
             tag: idx === 0 ? "Trending" : idx === 1 ? "New" : idx === 2 ? "Handcrafted" : "Bestseller",
           }));
           setProducts(mapped);
@@ -73,15 +75,17 @@ export default function HomeBestToday({ initialProducts = [] }) {
       <Container>
         {/* Section Heading matching screenshot - Rendered immediately as H1 without lazyload */}
         <div className="mb-8 sm:mb-10">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-medium tracking-tight text-slate-800 dark:text-slate-100">
-            <span className="font-bold text-[#800F17]">
-              Discover the Best of the Bunch –
-            </span>{" "}
-            Shop Our Handpicked Favorites Today!
-          </h1>
+          <div className="space-y-1 sm:space-y-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-[#800F17] leading-snug">
+              Discover the Best of the Bunch – Shop Our Handpicked Favorites Today!
+            </h1>
+            <p className="text-xs sm:text-sm text-stone-500 font-medium">
+              Handpicked silk and bridal weaves curated for timeless elegance.
+            </p>
+          </div>
         </div>
 
-        {/* 4 Column Product Grid or Skeleton while products load */}
+        {/* Product Cards Grid: Exactly 4 products in 1 row on desktop, 2x2 on mobile matching screenshot */}
         {isLoading && products.length === 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 lg:gap-7 animate-pulse">
             {[1, 2, 3, 4].map((i) => (
@@ -108,6 +112,7 @@ export default function HomeBestToday({ initialProducts = [] }) {
                 stock={item.stock}
                 category={item.category}
                 image={item.image}
+                galleryImages={item.galleryImages}
                 tag={item.tag}
                 href={`/products/${item.id}`}
               />

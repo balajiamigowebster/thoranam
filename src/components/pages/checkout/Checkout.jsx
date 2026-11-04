@@ -67,14 +67,18 @@ export default function Checkout() {
   const rawCartString = React.useSyncExternalStore(
     (callback) => {
       window.addEventListener("storage", callback);
-      return () => window.removeEventListener("storage", callback);
+      window.addEventListener("thoranam_cart_updated", callback);
+      return () => {
+        window.removeEventListener("storage", callback);
+        window.removeEventListener("thoranam_cart_updated", callback);
+      };
     },
     () => {
-      if (contextItems && contextItems.length > 0) return JSON.stringify(contextItems);
       try {
         const stored = localStorage.getItem("thoranam_cart");
-        if (stored) return stored;
+        if (stored && stored !== "[]") return stored;
       } catch (e) {}
+      if (contextItems && contextItems.length > 0) return JSON.stringify(contextItems);
       return "[]";
     },
     () => JSON.stringify(contextItems || [])

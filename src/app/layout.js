@@ -33,6 +33,15 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${poppins.variable} font-sans h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Proza+Libre:wght@400;500;600;700;800&display=swap"
+        />
+      </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {children}
         <Toaster position="top-right" richColors />

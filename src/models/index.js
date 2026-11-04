@@ -6,6 +6,7 @@ import Customer from "./Customer";
 import Promotion from "./Promotion";
 import StoreSetting from "./StoreSetting";
 import AdminUser from "./AdminUser";
+import Wishlist from "./Wishlist";
 
 let isSynced = false;
 
@@ -22,6 +23,7 @@ export async function syncDatabase(options = {}) {
     Promotion,
     StoreSetting,
     AdminUser,
+    Wishlist,
   };
 
   if (isSynced && !options.force && !options.alter) {
@@ -79,4 +81,5 @@ export {
   Promotion,
   StoreSetting,
   AdminUser,
+  Wishlist,
 };

@@ -8,6 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins), "Poppins", sans-serif;
+  --font-proza: "Proza Libre", sans-serif;
   --font-mono: monospace;
   --font-heading: var(--font-poppins), "Poppins", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
@@ -115,6 +116,10 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+}
+
+.font-proza {
+  font-family: "Proza Libre", sans-serif;
 }
 
 @layer base {

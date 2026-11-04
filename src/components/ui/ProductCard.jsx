@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Check, Heart, Eye } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
+import { useQuickView } from "@/context/QuickViewContext";
 import { getAssetUrl } from "@/config";
 
 // Global Rupee Formatter to fix ? or corrupted currency strings
@@ -20,6 +22,9 @@ export default function ProductCard({
   price,
   originalPrice,
   image,
+  galleryImages,
+  gallery_images,
+  secondaryImage,
   tag,
   category,
   stock,
@@ -27,14 +32,44 @@ export default function ProductCard({
   className = "",
 }) {
   const { triggerAddToCartAnimation } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist() || {};
+  const { openQuickView } = useQuickView() || {};
   const [isAdded, setIsAdded] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const isWishlisted = isInWishlist ? isInWishlist(id) : false;
 
   const productHref = href || `/products/${id}`;
   const displayImage = getAssetUrl(image) || "/images/product-1.jpg";
   const displayTag = tag || category;
   const displayPrice = formatRupee(price);
   const displayOriginalPrice = originalPrice ? formatRupee(originalPrice) : null;
+
+  // Resolve secondary image from galleryImages / gallery_images for hover switch effect (matching Kalamandir reference)
+  const allGallery = galleryImages || gallery_images;
+  let parsedGallery = [];
+  if (Array.isArray(allGallery)) {
+    parsedGallery = allGallery;
+  } else if (typeof allGallery === "string" && allGallery.trim()) {
+    try {
+      const parsed = JSON.parse(allGallery);
+      if (Array.isArray(parsed)) parsedGallery = parsed;
+    } catch {
+      parsedGallery = [allGallery.trim()];
+    }
+  }
+
+  // Find a secondary image that is distinct from main image if possible
+  let rawSecondary = secondaryImage || null;
+  if (!rawSecondary && parsedGallery.length > 0) {
+    const candidate = parsedGallery.find(
+      (img) => img && String(img).trim() !== String(image).trim()
+    );
+    rawSecondary = candidate || parsedGallery[0];
+  }
+
+  const displaySecondaryImage = rawSecondary ? getAssetUrl(rawSecondary) : null;
+  const hasDistinctHover =
+    Boolean(displaySecondaryImage) && displaySecondaryImage !== displayImage;
 
   // Safe stock calculation
   const parsedStock =
@@ -72,7 +107,37 @@ export default function ProductCard({
   const handleToggleWishlist = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted((prev) => !prev);
+    if (toggleWishlist) {
+      toggleWishlist({
+        id,
+        title,
+        price,
+        image: displayImage,
+        mainImage: displayImage,
+        category,
+      });
+    }
+  };
+
+  const handleQuickView = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (openQuickView) {
+      openQuickView({
+        id,
+        title,
+        price,
+        originalPrice,
+        image: displayImage,
+        mainImage: displayImage,
+        galleryImages: allGallery,
+        gallery_images: allGallery,
+        category,
+        stock: parsedStock,
+        tag: displayTag,
+        href: productHref,
+      });
+    }
   };
 
   return (
@@ -85,14 +150,15 @@ export default function ProductCard({
       {/* Top Product Image Container */}
       <div className="relative aspect-[4/5] w-full rounded-lg sm:rounded-xl overflow-hidden bg-stone-100 dark:bg-slate-800">
         <Link href={productHref} prefetch={false} className="block w-full h-full relative">
+          {/* Main Primary Image */}
           <img
             src={displayImage}
             alt={title || "Thoranam Saree"}
             loading="lazy"
             decoding="async"
-            className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-transform duration-300 ease-out ${
-              isSoldOut ? "opacity-85 grayscale-[15%]" : ""
-            }`}
+            className={`w-full h-full object-cover object-center transform group-hover:scale-105 transition-all duration-500 ease-out ${
+              hasDistinctHover ? "group-hover:opacity-0" : ""
+            } ${isSoldOut ? "opacity-85 grayscale-[15%]" : ""}`}
             onError={(e) => {
               const currentSrc = e.currentTarget.getAttribute("src") || "";
               if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
@@ -104,8 +170,28 @@ export default function ProductCard({
             }}
           />
 
+          {/* Secondary Gallery Image shown on hover (like Kalamandir reference) */}
+          {hasDistinctHover && (
+            <img
+              src={displaySecondaryImage}
+              alt={`${title || "Thoranam Saree"} alternate view`}
+              loading="lazy"
+              decoding="async"
+              className="absolute inset-0 w-full h-full object-cover object-center opacity-0 group-hover:opacity-100 transform scale-100 group-hover:scale-105 transition-all duration-500 ease-out pointer-events-none"
+              onError={(e) => {
+                const currentSrc = e.currentTarget.getAttribute("src") || "";
+                if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
+                  e.currentTarget.dataset.retried = "true";
+                  e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
+                  return;
+                }
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          )}
+
           {/* Vignette on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
         </Link>
 
         {/* Top-Right Badge: SOLD OUT takes precedence */}
@@ -142,9 +228,24 @@ export default function ProductCard({
             />
           </button>
         )}
+
+        {/* Top-Right: Quick View Eye Button with Tooltip (matching Screenshot 1) */}
+        <div className="absolute top-10.5 sm:top-12 right-2 z-20 group/qv flex items-center">
+          <span className="pointer-events-none absolute right-full mr-2 opacity-0 group-hover/qv:opacity-100 transition-all duration-200 text-[10px] font-semibold text-white bg-black/90 px-2 py-1 rounded-md shadow-md whitespace-nowrap translate-x-1 group-hover/qv:translate-x-0">
+            Quick view
+          </span>
+          <button
+            type="button"
+            onClick={handleQuickView}
+            aria-label="Quick view product"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/90 dark:bg-slate-900/90 text-stone-600 dark:text-stone-300 hover:bg-[#800F17] hover:text-white flex items-center justify-center shadow-md backdrop-blur-md transition-all duration-300 hover:scale-110 active:scale-90 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 cursor-pointer"
+          >
+            <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2]" />
+          </button>
+        </div>
       </div>
 
-      {/* Saree Meta / Info Area matching Screenshots 1 & 2 */}
+      {/* Saree Meta / Info Area */}
       <div className="pt-2.5 sm:pt-3 pb-1 px-1 flex-1 flex flex-col justify-between space-y-2">
         <div className="space-y-1">
           {/* Subtitle: Category or Brand */}
@@ -152,13 +253,16 @@ export default function ProductCard({
             {category ? category.toUpperCase() : "THORANAM SAREES"}
           </p>
 
-          {/* Title */}
+          {/* Title with Proza Libre font and increased size */}
           <Link
             href={productHref}
             prefetch={false}
             className="block group-hover:text-[#800F17] transition-colors duration-200"
           >
-            <h3 className="text-xs sm:text-sm font-serif font-medium text-stone-800 dark:text-stone-100 line-clamp-1 leading-snug">
+            <h3
+              style={{ fontFamily: '"Proza Libre", sans-serif' }}
+              className="text-sm sm:text-base font-proza font-semibold text-stone-850 dark:text-stone-100 line-clamp-1 sm:line-clamp-2 leading-snug tracking-tight"
+            >
               {title}
             </h3>
           </Link>
@@ -191,7 +295,7 @@ export default function ProductCard({
           </div>
         </div>
 
-        {/* Action Button: Full-width matching Screenshots 1 & 2 */}
+        {/* Action Button: Full-width */}
         <div className="pt-1">
           {isSoldOut ? (
             <button

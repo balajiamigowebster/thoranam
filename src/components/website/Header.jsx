@@ -2,13 +2,14 @@
 
 import { Suspense, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { Search, User, ShoppingBag, Menu, X, ChevronDown, LogOut } from "lucide-react";
+import { Search, User, ShoppingBag, Menu, X, ChevronDown, LogOut, Heart } from "lucide-react";
 import AnnouncementBar from "./AnnouncementBar";
 import Navbar from "./Navbar";
 import ThoranamLogo from "@/components/ui/ThoranamLogo";
 import { INITIAL_CATEGORIES, getStoredCategories } from "@/lib/categories";
 import { MAIN_NAV_MENUS, buildNavMenus } from "@/lib/navigation";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { getApiUrl } from "@/config";
 
 export default function Header() {
@@ -21,6 +22,7 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
   const { totalCartCount, badgeBump, openCart, isMounted } = useCart();
+  const { totalCount: wishlistCount, badgeBump: wishlistBump } = useWishlist();
 
   useEffect(() => {
     let timer = null;
@@ -163,6 +165,15 @@ export default function Header() {
                     </div>
 
                     <Link
+                      href="/wishlist"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="w-full px-3.5 py-2 text-xs text-stone-700 hover:bg-rose-50 hover:text-[#890e0e] flex items-center gap-2 transition-colors"
+                    >
+                      <Heart className="w-3.5 h-3.5 text-stone-400" />
+                      <span>My Wishlist ({wishlistCount})</span>
+                    </Link>
+
+                    <Link
                       href="/checkout"
                       onClick={() => setUserMenuOpen(false)}
                       className="w-full px-3.5 py-2 text-xs text-stone-700 hover:bg-rose-50 hover:text-[#890e0e] flex items-center gap-2 transition-colors"
@@ -192,6 +203,32 @@ export default function Header() {
                 <span className="hidden sm:inline">LOGIN</span>
               </Link>
             )}
+
+            {/* Wishlist Header Icon with Counter Badge (matching Screenshot 2) */}
+            <Link
+              href="/wishlist"
+              className={`relative text-white/90 hover:text-white transition-all p-1.5 rounded-full cursor-pointer hover:bg-white/10 ${
+                wishlistBump ? "scale-125 text-amber-300 ring-2 ring-amber-400/50" : "hover:scale-105"
+              }`}
+              aria-label="View Wishlist"
+              title="My Wishlist"
+            >
+              <Heart
+                className={`w-5 h-5 stroke-[1.8] transition-transform duration-300 ${
+                  wishlistBump ? "scale-115 fill-white text-white" : ""
+                }`}
+              />
+              {isMounted && wishlistCount > 0 && (
+                <span
+                  suppressHydrationWarning
+                  className={`absolute -top-1 -right-1 bg-amber-400 text-[#890e0e] text-[10px] font-extrabold min-w-4 h-4 px-1 rounded-full flex items-center justify-center shadow-md transition-all duration-300 ${
+                    wishlistBump ? "scale-125 bg-amber-300" : ""
+                  }`}
+                >
+                  {wishlistCount}
+                </span>
+              )}
+            </Link>
 
             <button
               id="header-cart-icon-btn"

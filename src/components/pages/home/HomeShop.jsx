@@ -65,6 +65,7 @@ export default function HomeShop({ initialProducts = [] }) {
                 title={item.title}
                 price={item.price}
                 image={item.mainImage || item.image}
+                galleryImages={item.galleryImages || item.gallery_images}
                 tag="Bestseller"
                 href={`/products/${item.id}`}
               />

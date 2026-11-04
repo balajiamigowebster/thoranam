@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Heart,
   Share2,
@@ -28,6 +29,7 @@ import {
 import Container from "@/components/ui/Container";
 import ProductCard from "@/components/ui/ProductCard";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import { getApiUrl, getAssetUrl } from "@/config";
 import { getProductFromCache, getStoredProducts, fetchProductsFromDb } from "@/lib/products";
 
@@ -40,7 +42,45 @@ function formatRupee(priceStr) {
 }
 
 export default function ProductDetailView({ productId, initialProduct = null }) {
-  const { triggerAddToCartAnimation } = useCart();
+  const { triggerAddToCartAnimation, addToCart } = useCart();
+  const { isInWishlist, toggleWishlist } = useWishlist();
+  const router = useRouter();
+
+  const handleBuyNow = () => {
+    if (isSoldOut || !product) return;
+
+    const itemToBuy = {
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      mainImage: selectedImage || product.mainImage || "/images/product-1.jpg",
+      image: selectedImage || product.mainImage || "/images/product-1.jpg",
+      category: product.category,
+    };
+
+    if (addToCart) {
+      addToCart(itemToBuy, quantity || 1);
+    }
+
+    let isLoggedIn = false;
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("thoranam_customer_user");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && (parsed.email || parsed.id)) {
+            isLoggedIn = true;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (isLoggedIn) {
+      router.push("/checkout");
+    } else {
+      router.push("/login?redirect=/checkout");
+    }
+  };
 
   const cachedProduct =
     initialProduct ||
@@ -71,6 +111,20 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
     const stored = getStoredProducts();
     return stored.filter((p) => String(p.id) !== String(productId)).slice(0, 4);
   });
+
+  const [stickyTop, setStickyTop] = useState(220);
+
+  useEffect(() => {
+    const updateStickyTop = () => {
+      const header = document.querySelector("header");
+      if (header) {
+        setStickyTop(header.offsetHeight + 14);
+      }
+    };
+    updateStickyTop();
+    window.addEventListener("resize", updateStickyTop);
+    return () => window.removeEventListener("resize", updateStickyTop);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -293,14 +347,16 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
 
   return (
     <div className="bg-white min-h-screen pb-20">
-      {/* Top Free shipping promo banner matching Thoranam website */}
+      {/* Top Free shipping promo banner matching Thoranam website 
       <div className="bg-rose-50/60 border-b border-rose-100/60 text-center py-2 px-4 text-xs font-medium text-slate-700 flex items-center justify-center gap-2">
         <span>Complimentary express shipping on orders above ₹2,999</span>
       </div>
+      */}
+      
 
-      <Container className="pt-6 sm:pt-8">
+      <Container className="pt-4 sm:pt-5">
         {/* Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-xs text-slate-400 mb-6 flex-wrap">
+        <nav className="flex items-center gap-2 text-xs text-slate-400 mb-4 sm:mb-5 flex-wrap">
           <Link href="/" className="hover:text-slate-700">Home</Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <Link href="/products" className="hover:text-slate-700">Products</Link>
@@ -309,103 +365,107 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
         </nav>
 
         {/* ================= MAIN PRODUCT ROW ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-14 items-start">
-          {/* LEFT COLUMN: Main Image & Gallery Downward (Sticky on Desktop until content end) */}
-          <div className="lg:col-span-5 xl:col-span-5 lg:sticky lg:top-[144px] lg:self-start space-y-3.5">
-            {/* Big Main Image Container - Proportionately sized so thumbnails are visible in initial view */}
-            <div
-              onClick={() => openZoomModal(selectedImage || product.mainImage)}
-              className="relative aspect-[4/5] sm:aspect-[3/4] max-h-[460px] sm:max-h-[480px] w-full max-w-[430px] mx-auto lg:mx-0 rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-xs group cursor-zoom-in"
-              title="Click to view full image and zoom"
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 ">
+          {/* LEFT COLUMN: Gallery Thumbnails on Left + Main Image on Right (Sticky on Desktop) */}
+          <div className="lg:col-span-6 xl:col-span-6 relative">
+            <div 
+              data-gallery="sticky"
+              className="lg:sticky flex flex-col-reverse sm:flex-row gap-3.5 sm:gap-4 items-start justify-start z-20 self-start"
+              style={{ top: `${stickyTop}px` }}
             >
-              <img
-                src={getAssetUrl(selectedImage || product.mainImage || "/images/product-1.jpg")}
-                alt={product.title}
-                className="w-full h-full object-cover object-center transition-all duration-300 group-hover:scale-102"
-                onError={(e) => {
-                  const currentSrc = e.currentTarget.getAttribute("src") || "";
-                  if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
-                    e.currentTarget.dataset.retried = "true";
-                    e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
-                    return;
-                  }
-                  e.currentTarget.onerror = null;
-                  e.currentTarget.src = "/images/product-1.jpg";
-                }}
-              />
-              <div className="absolute top-3.5 left-3.5 z-10 pointer-events-none">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-full bg-white/90 text-[#800F17] shadow-xs backdrop-blur-xs">
-                  {product.category || "Exclusive Saree"}
-                </span>
-              </div>
-              {isSoldOut && (
-                <div className="absolute top-3.5 right-3.5 z-10 pointer-events-none">
-                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-md bg-stone-800/90 text-white shadow-xs backdrop-blur-xs">
-                    SOLD OUT
-                  </span>
+              {/* Left Side: Vertical Gallery Thumbnails (Matching Kalamandir Reference) */}
+              {allImages.length > 1 && (
+                <div className="w-full sm:w-auto shrink-0">
+                  <div className="flex sm:flex-col gap-2.5 sm:gap-3 overflow-x-auto sm:overflow-y-auto max-h-none sm:max-h-[480px] pb-1 sm:pb-0 no-scrollbar pr-1">
+                    {allImages.map((img, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedImage(img)}
+                        aria-label={`View photo ${idx + 1}`}
+                        className={`relative w-16 sm:w-18 aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-stone-100 cursor-pointer ${
+                          selectedImage === img
+                            ? "border-[#800F17] ring-2 ring-[#800F17]/30 scale-102"
+                            : "border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100"
+                        }`}
+                      >
+                        <img
+                          src={getAssetUrl(img)}
+                          alt={`Thumbnail ${idx + 1}`}
+                          className="w-full h-full object-cover object-center"
+                          onError={(e) => {
+                            const currentSrc = e.currentTarget.getAttribute("src") || "";
+                            if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
+                              e.currentTarget.dataset.retried = "true";
+                              e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
+                              return;
+                            }
+                            e.currentTarget.onerror = null;
+                            e.currentTarget.src = "/images/product-2.jpg";
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Click to Zoom Pill Indicator */}
-              <div className="absolute bottom-3.5 right-3.5 z-10">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openZoomModal(selectedImage || product.mainImage);
+              {/* Right of Thumbnails: Main Image Container - Size strictly preserved */}
+              <div
+                onClick={() => openZoomModal(selectedImage || product.mainImage)}
+                className="relative aspect-[4/5] sm:aspect-[3/4] max-h-[460px] sm:max-h-[480px] w-full max-w-[430px] rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 border border-slate-200/80 shadow-xs group cursor-zoom-in shrink-0"
+                title="Click to view full image and zoom"
+              >
+                <img
+                  src={getAssetUrl(selectedImage || product.mainImage || "/images/product-1.jpg")}
+                  alt={product.title}
+                  className="w-full h-full object-cover object-center transition-all duration-300 group-hover:scale-102"
+                  onError={(e) => {
+                    const currentSrc = e.currentTarget.getAttribute("src") || "";
+                    if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
+                      e.currentTarget.dataset.retried = "true";
+                      e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
+                      return;
+                    }
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/images/product-1.jpg";
                   }}
-                  className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-stone-900/80 hover:bg-stone-900 text-white text-[11px] sm:text-xs font-medium backdrop-blur-md shadow-md transition-all group-hover:scale-105 cursor-pointer"
-                >
-                  <ZoomIn className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                  <span>Click to zoom</span>
-                </button>
-              </div>
-            </div>
+                />
+                <div className="absolute top-3.5 left-3.5 z-10 pointer-events-none">
+                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-full bg-white/90 text-[#800F17] shadow-xs backdrop-blur-xs">
+                    {product.category || "Exclusive Saree"}
+                  </span>
+                </div>
+                {isSoldOut && (
+                  <div className="absolute top-3.5 right-3.5 z-10 pointer-events-none">
+                    <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1 rounded-md bg-stone-800/90 text-white shadow-xs backdrop-blur-xs">
+                      SOLD OUT
+                    </span>
+                  </div>
+                )}
 
-            {/* Down Gallery Thumbnails - Positioned directly below the compact image */}
-            {allImages.length > 1 && (
-              <div className="space-y-1.5 pt-0.5 max-w-[430px] mx-auto lg:mx-0">
-                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Saree Gallery Views ({allImages.length})
-                </p>
-                <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
-                  {allImages.map((img, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedImage(img)}
-                      className={`relative w-16 sm:w-18 aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all shrink-0 bg-stone-100 cursor-pointer ${
-                        selectedImage === img
-                          ? "border-[#800F17] ring-2 ring-[#800F17]/30 scale-102"
-                          : "border-slate-200 hover:border-slate-400 opacity-80 hover:opacity-100"
-                      }`}
-                    >
-                      <img
-                        src={getAssetUrl(img)}
-                        alt={`Thumbnail ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const currentSrc = e.currentTarget.getAttribute("src") || "";
-                          if (currentSrc.startsWith("/uploads/") && !e.currentTarget.dataset.retried) {
-                            e.currentTarget.dataset.retried = "true";
-                            e.currentTarget.src = `https://amigowebster.in/thoranam${currentSrc}`;
-                            return;
-                          }
-                          e.currentTarget.onerror = null;
-                          e.currentTarget.src = "/images/product-2.jpg";
-                        }}
-                      />
-                    </button>
-                  ))}
+                {/* Click to Zoom Pill Indicator */}
+                <div className="absolute bottom-3.5 right-3.5 z-10">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openZoomModal(selectedImage || product.mainImage);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-stone-900/80 hover:bg-stone-900 text-white text-[11px] sm:text-xs font-medium backdrop-blur-md shadow-md transition-all group-hover:scale-105 cursor-pointer"
+                  >
+                    <ZoomIn className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
+                    <span>Click to zoom</span>
+                  </button>
                 </div>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* RIGHT COLUMN: Title, Pricing, Actions, Highlights & Specs */}
-          <div className="lg:col-span-7 xl:col-span-7 space-y-6">
+          {/* RIGHT COLUMN: Content moved slightly towards right side */}
+          <div className="lg:col-span-6 xl:col-span-6 lg:pl-6 xl:pl-10 space-y-6">
             {/* Title & Share Icons */}
             <div className="space-y-3">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-slate-900 leading-tight">
+              <h1 style={{ fontFamily: '"Proza Libre", sans-serif' }} className="text-2xl sm:text-3xl lg:text-4xl font-proza font-bold text-slate-900 leading-tight tracking-tight">
                 {product.title}
               </h1>
 
@@ -450,11 +510,11 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
               <div className="text-3xl sm:text-4xl font-bold text-[#800F17]">
                 {formatRupee(product.price)}
               </div>
-              <div className="inline-block">
+            { /* <div className="inline-block">
                 <span className="bg-[#800F17] text-white text-xs font-semibold px-3 py-1 rounded-md">
                   Offer Ends 22nd March
                 </span>
-              </div>
+              </div>  */}
             </div>
 
             {/* Availability / Urgency Warning Row */}
@@ -530,19 +590,13 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
               {!isSoldOut && (
                 <button
                   type="button"
-                  onClick={() => {
-                    triggerAddToCartAnimation({
-                      image: selectedImage || product?.mainImage || "/images/product-1.jpg",
-                      item: product,
-                      quantity: quantity || 1,
-                    });
-                    setTimeout(() => {
-                      window.location.href = "/checkout";
-                    }, 300);
-                  }}
-                  className="w-full py-3.5 px-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-800 dark:border-slate-700 text-slate-900 dark:text-slate-100 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors uppercase cursor-pointer"
+                  onClick={handleBuyNow}
+                  className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#941820] to-[#730D14] hover:from-[#7e141a] hover:to-[#5e0a10] text-white font-bold text-sm hover:shadow-lg transition-all uppercase cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99]"
                 >
-                  BUY IT NOW
+                  <span>BUY IT NOW</span>
+                  <span className="bg-white/20 text-[10px] font-bold px-2 py-0.5 rounded tracking-wider">
+                    FAST CHECKOUT
+                  </span>
                 </button>
               )}
             </div>
@@ -732,6 +786,7 @@ export default function ProductDetailView({ productId, initialProduct = null }) 
                   title={item.title}
                   price={item.price}
                   image={item.mainImage || "/images/product-1.jpg"}
+                  galleryImages={item.galleryImages || item.gallery_images}
                   category={item.category || "Exclusive"}
                   stock={item.stock}
                   href={`/products/${item.id}`}
