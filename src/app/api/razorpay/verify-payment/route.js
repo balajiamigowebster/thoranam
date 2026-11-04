@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { orderController } from "@/controllers";
+import { sendOrderNotificationEmail } from "@/lib/email";
 
 export async function POST(request) {
   try {
@@ -62,6 +63,18 @@ export async function POST(request) {
       } catch (saveErr) {
         console.error("[Razorpay Verify] Failed to save order to DB:", saveErr);
         savedOrder = orderPayload;
+      }
+
+      // Send order notification email to owner (thoranamsarees@gmail.com) and cPanel archive (orders@amigowebster.in)
+      try {
+        sendOrderNotificationEmail(savedOrder, {
+          paymentId: razorpay_payment_id,
+          orderId: razorpay_order_id,
+        }).catch((emailErr) => {
+          console.error("[Razorpay Verify] Background email sending warning:", emailErr);
+        });
+      } catch (e) {
+        console.warn("[Razorpay Verify] Email trigger error:", e);
       }
     }
 
