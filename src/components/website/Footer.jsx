@@ -122,7 +122,7 @@ export default function Footer() {
               {/* Social icons row for a premium touch */}
               <div className="pt-2 flex items-center gap-3 text-amber-200/80">
                 <a
-                  href="https://instagram.com"
+                  href="https://instagra.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
