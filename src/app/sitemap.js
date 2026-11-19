@@ -1,4 +1,5 @@
 import { productController, categoryController } from "@/controllers";
+import { getAllBlogs } from "@/lib/blogs";
 
 export default async function sitemap() {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://thoranam.co";
@@ -18,6 +19,12 @@ export default async function sitemap() {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/blogs`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
+    {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
       changeFrequency: "monthly",
@@ -30,6 +37,21 @@ export default async function sitemap() {
       priority: 0.7,
     },
   ];
+
+  let blogRoutes = [];
+  try {
+    const blogs = getAllBlogs();
+    if (Array.isArray(blogs)) {
+      blogRoutes = blogs.map((b) => ({
+        url: `${baseUrl}/blogs/${b.slug}`,
+        lastModified: b.publishedAt ? new Date(b.publishedAt) : new Date(),
+        changeFrequency: "weekly",
+        priority: 0.8,
+      }));
+    }
+  } catch (err) {
+    console.error("Error generating sitemap blogs:", err);
+  }
 
   let productRoutes = [];
   try {
@@ -65,6 +87,6 @@ export default async function sitemap() {
     console.error("Error generating sitemap categories:", err);
   }
 
-  return [...staticRoutes, ...categoryRoutes, ...productRoutes];
+  return [...staticRoutes, ...blogRoutes, ...categoryRoutes, ...productRoutes];
 }
 

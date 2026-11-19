@@ -155,21 +155,38 @@ export default function Products() {
     return isNaN(num) ? 0 : num;
   };
 
-  // Category counts dictionary
+  // Category counts dictionary - exact 1:1 match with product filtering
   const categoryCounts = useMemo(() => {
     const counts = {};
+    if (!Array.isArray(products) || !Array.isArray(categories)) return counts;
+
     products.forEach((p) => {
-      const cat = p.category || "Exclusive";
-      counts[cat] = (counts[cat] || 0) + 1;
-      // Also match against category labels/ids
-      categories.forEach((c) => {
-        const cLabel = (c.label || c.name || "").toLowerCase();
-        const cId = (c.id || "").toLowerCase();
-        if (cat.toLowerCase() === cLabel || cat.toLowerCase() === cId) {
-          counts[c.label || c.name || c.id] = (counts[c.label || c.name || c.id] || 0) + 1;
-        }
+      const pCat = (p.category || "").trim();
+      if (!pCat) return;
+
+      const pCatLow = pCat.toLowerCase();
+
+      // Find matching category definition
+      const matchedCat = categories.find((c) => {
+        const cLabel = (c.label || "").trim().toLowerCase();
+        const cName = (c.name || "").trim().toLowerCase();
+        const cId = (c.id || "").trim().toLowerCase();
+        return pCatLow === cLabel || pCatLow === cName || pCatLow === cId;
       });
+
+      if (matchedCat) {
+        // Collect unique identifier keys without duplicate counting
+        const keys = new Set(
+          [matchedCat.label, matchedCat.name, matchedCat.id, pCat].filter(Boolean)
+        );
+        keys.forEach((k) => {
+          counts[k] = (counts[k] || 0) + 1;
+        });
+      } else {
+        counts[pCat] = (counts[pCat] || 0) + 1;
+      }
     });
+
     return counts;
   }, [products, categories]);
 

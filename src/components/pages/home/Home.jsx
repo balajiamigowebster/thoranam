@@ -2,6 +2,7 @@ import HomeHero from "./HomeHero";
 import HomeBestToday from "./HomeBestToday";
 import HomeCategory from "./HomeCategory";
 import HomeCategoryProducts from "./HomeCategoryProducts";
+import HomeBlogs from "./HomeBlogs";
 
 export default function Home({
   initialProducts = [],
@@ -25,6 +26,9 @@ export default function Home({
         initialProducts={initialProducts}
         initialCategories={initialAllCategories}
       />
+
+      {/* 5. The Saree Journal & Guides (Weavers' Lore & Buying Guides) */}
+      <HomeBlogs />
     </div>
   );
 }
