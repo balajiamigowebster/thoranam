@@ -122,7 +122,7 @@ export default function Footer() {
               {/* Social icons row for a premium touch */}
               <div className="pt-2 flex items-center gap-3 text-amber-200/80">
                 <a
-                  href="https://instag.com"
+                  href="https://www.instagram.com/thoranamsarees?gwpx=MW9oc3JzZDg1Nmx0aA=="
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Instagram"
@@ -133,7 +133,7 @@ export default function Footer() {
                   </svg>
                 </a>
                 <a
-                  href="https://facebook.com"
+                  href="https://www.facebook.com/share/1A7dvCzRpC/"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Facebook"
