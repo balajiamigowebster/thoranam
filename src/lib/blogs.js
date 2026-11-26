@@ -12,8 +12,8 @@ export const BLOG_POSTS = [
       name: "Thoranam Textile Studio",
       role: "Master Drapers & Heritage Curators",
     },
-    image: "/images/blogs/best-saree-shop-in-chennai.webp",
-    imageAlt: "Best Saree Shop in Chennai - Elegant model draping an ethereal ice blue pastel saree from Thoranam Boutique",
+    image: "/images/blogs/best-saree-shop-in-chennai.jpg",
+    imageAlt: "Best Saree Shop in Chennai - Royal golden yellow and emerald parrot green Kanchipuram silk saree with rich golden zari motifs from Thoranam Boutique",
     product: {
       id: 10,
       url: "https://thoranam.co/products",
