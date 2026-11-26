@@ -1,5 +1,168 @@
 export const BLOG_POSTS = [
   {
+    slug: "best-traditional-saree-shop-in-chennai",
+    title: "Best Traditional Saree Shop in Chennai: Authentic Kanchipuram Pattu, Pure Zari Weaves & Heritage Guide",
+    seoTitle: "Best Traditional Saree Shop in Chennai | Thoranam Boutique - Pure Silk & Zari",
+    seoDescription:
+      "Searching for the best traditional saree shop in Chennai? Discover Thoranam Boutique for authentic heirloom Kanchipuram bridal pattu, korvai weaves, and temple zari silk sarees.",
+    category: "TRADITIONAL SAREES & HERITAGE WEAVES",
+    readTime: "9 min read",
+    publishedAt: "2026-11-26",
+    author: {
+      name: "Thoranam Heritage Weavers Guild",
+      role: "Traditional Handloom Conservators",
+    },
+    image: "/images/blogs/best-traditional-saree-shop-in-chennai.jpg",
+    imageAlt: "Best Traditional Saree Shop in Chennai - Royal mustard gold and emerald green pure Kanchipuram silk saree with intricate floral zari border from Thoranam Boutique",
+    product: {
+      id: 12,
+      url: "https://thoranam.co/products",
+      title: "Royal Mustard & Emerald Green Heritage Kanchipuram Silk Saree",
+      price: "₹ 8,999.00 - ₹ 24,500.00",
+      category: "Pure Traditional Kanchipuram Silk",
+      color: "Royal Mustard Gold & Deep Emerald Green with Pure Gold Zari",
+      fabric: "100% Certified Mulberry Silk (Double Warp Murukku Pattu) with Silver/Gold Zari",
+      inStock: true,
+    },
+    excerpt:
+      "Looking for the best traditional saree shop in Chennai? Step into Thoranam Boutique's world of authentic pure Kanchipuram pattu, korvai hand-interlocking borders, sacred temple motifs, and certified pure zari bridal sarees.",
+    tags: [
+      "Best Traditional Saree Shop in Chennai",
+      "Traditional Saree Shop in Chennai",
+      "Best Traditional Silk Saree Shop in Chennai",
+      "Kanchipuram Silk Sarees Chennai",
+      "Traditional Saree Shopping Chennai",
+      "Pure Pattu Sarees Chennai",
+      "Bridal Muhurtham Sarees Chennai",
+      "Authentic Kanchipuram Pattu",
+      "Thoranam Traditional Boutique",
+      "Pure Zari Silk Sarees Chennai",
+      "Mylapore Traditional Sarees",
+      "Handloom Silk Saree Chennai",
+    ],
+    faqs: [
+      {
+        question: "Which is the best traditional saree shop in Chennai for pure Kanchipuram silks?",
+        answer:
+          "Thoranam Boutique is renowned as one of the best traditional saree shops in Chennai. Renowned for pure mulberry silk (murukku pattu), traditional Korvai handloom weaving, certified pure gold and silver zari, and sacred motifs like Mayil (peacock), Rudraksha, and Gopuram, Thoranam brings unadulterated heritage directly from master weavers to connoisseurs.",
+      },
+      {
+        question: "What makes traditional South Indian sarees from Chennai distinctive?",
+        answer:
+          "Traditional Chennai sarees, especially pure Kanchipuram pattu, are distinguished by their high tensile 3-ply twisted silk yarn, heavy drape, contrasting temple Korvai borders that require two weavers on a single loom, and authentic zari spun with real silver and gold electroplating.",
+      },
+      {
+        question: "How do I identify genuine traditional pure silk pattu sarees in Chennai?",
+        answer:
+          "Always verify the Silk Mark India certification, inspect the petni or korvai joint where the body meets the border (handloom joints show distinct interlocking stitches), test the zari threads under light for an antique metallic luster rather than synthetic plastic glitter, and purchase from reputable heritage boutiques such as Thoranam.",
+      },
+      {
+        question: "What are the essential traditional sarees every South Indian bridal trousseau needs?",
+        answer:
+          "A classic bridal trousseau includes: 1) A grand Korvai Muhurtham Kanchipuram Silk in auspicious shades of mustard, crimson red, or vermilion gold; 2) An antique Banarasi or Brocade silk saree for the sangeet/reception; 3) A rich temple border tissue or lightweight silk-cotton saree for early morning poojas and Vratham rituals.",
+      },
+      {
+        question: "Does Thoranam ship authentic traditional Chennai sarees internationally?",
+        answer:
+          "Yes. Thoranam Boutique provides worldwide insured express delivery across the USA, UK, Canada, Australia, Singapore, Malaysia, and the Middle East, complete with authentic Silk Mark certification tags and custom stitched blouse services directly from https://thoranam.co.",
+      },
+    ],
+    content: `
+      <h2>The Timeless Grandeur of Chennai's Traditional Saree Heritage</h2>
+      <p>
+        In the cultural capital of Tamil Nadu, traditional sarees are not mere garments—they are sacred heirlooms passed down through generations. From Vedic weddings and Margazhi music festivals in Mylapore to auspicious temple ceremonies, the rustle of authentic South Indian handloom silk represents divine grace and artistic immortality. If you are seeking the <strong>best traditional saree shop in Chennai</strong>, your journey leads to <strong>Thoranam Boutique</strong>, the revered destination where centuries-old weaving traditions meet uncompromising purity and bespoke curation.
+      </p>
+      <p>
+        While modern fashion trends evolve rapidly, traditional connoisseurs understand that a genuine Kanchipuram pattu with pure zari, contrasting korvai borders, and traditional color harmonies never loses its majesty. Whether adorned in auspicious mustard gold, sacred kumkum red, or deep emerald green, Thoranam preserves the authentic essence of South Indian craftsmanship.
+      </p>
+
+      <h2>Why Thoranam is Celebrated as the Best Traditional Saree Shop in Chennai</h2>
+      <p>
+        In an era flooded with synthetic fast-fashion imitations and machine-loomed powerloom replicas, Thoranam upholds the sanctity of handloom weaving:
+      </p>
+      <ul>
+        <li><strong>Pure Handloom Korvai Craftsmanship:</strong> Authentic handloom sarees woven using the age-old Korvai technique, where two master weavers sit side by side to interlock contrasting borders with the body using shuttle artistry.</li>
+        <li><strong>Heirloom-Grade Pure Mulberry Silk:</strong> Crafted from 3-ply and 4-ply tightly twisted (Murukku Pattu) silk threads for exceptional durability, natural luster, and architectural pleat precision.</li>
+        <li><strong>Certified Pure &amp; Tested Zari:</strong> Weaves embellished with electroplated silver and gold zari threads that maintain their radiant glow across decades without tarnishing.</li>
+        <li><strong>Sacred Vedic &amp; Temple Motifs:</strong> Featuring auspicious iconography such as <em>Mayil chakram</em> (peacock), <em>Yali</em> (temple protector), <em>Rudraksha</em>, <em>Gopuram</em> (temple spires), and <em>Manga</em> (paisley).</li>
+        <li><strong>Transparent Artisan Pricing:</strong> Direct from master weaver cooperatives in Kanchipuram and Arani, eliminating distributor markups while ensuring fair weaver wages.</li>
+      </ul>
+
+      <h2>Iconic Traditional Saree Varieties Available at Thoranam</h2>
+
+      <h3>1. Korvai Muhurtham Kanchipuram Silk Sarees</h3>
+      <p>
+        The undisputed jewel of traditional South Indian bridal wear. Characterized by contrasting vibrant borders (such as royal mustard gold paired with rich emerald green), heavy brocade pallus, and dense zari buttas, these sarees represent bridal royalty at its highest peak.
+      </p>
+
+      <h3>2. Temple Gopuram &amp; Nizam Border Drapes</h3>
+      <p>
+        Inspired by the majestic Dravidian architecture of Thanjavur and Madurai temples, these sarees showcase stepped triangular borders (rekku or gopuram motifs) that create striking geometric elegance down the pleat line.
+      </p>
+
+      <h3>3. Madisar &amp; Classical Ritual Sarees</h3>
+      <p>
+        Designed for auspicious rituals, Grihapravesham ceremonies, and traditional 9-yard Madisar draping, crafted in lightweight, breathable pure silk and fine cotton blends that hold structured tucks comfortably throughout lengthy Vedic poojas.
+      </p>
+
+      <h3>4. Vintage Banaras Brocade &amp; Kadiyal Weaves</h3>
+      <p>
+        For brides seeking North-meets-South royal heritage, our curated collection of Banarasi Kadiyal sarees combines Varanasi zari craftsmanship with classic South Indian motifs.
+      </p>
+
+      <h2>Traditional Chennai Saree Shopping: Traditional Megastores vs. Thoranam Boutique</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Criteria</th>
+            <th>Conventional T. Nagar Showrooms</th>
+            <th>Thoranam Boutique (Store &amp; Online)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Weaving Origin</strong></td>
+            <td>Mixed commercial powerloom &amp; handloom</td>
+            <td>100% Certified Artisan Handloom Weaves</td>
+          </tr>
+          <tr>
+            <td><strong>Silk Purity</strong></td>
+            <td>Blended fibers frequently unlabeled</td>
+            <td>100% Pure Mulberry Silk with Silk Mark Guarantee</td>
+          </tr>
+          <tr>
+            <td><strong>Border Work</strong></td>
+            <td>Attached borders via modern machine stitching</td>
+            <td>Authentic Hand-Interlocked Korvai / Petni Joints</td>
+          </tr>
+          <tr>
+            <td><strong>Shopping Experience</strong></td>
+            <td>Crowded halls, rushed decisions</td>
+            <td>Personalized heritage consultation &amp; global digital preview</td>
+          </tr>
+          <tr>
+            <td><strong>Zari Longevity</strong></td>
+            <td>Synthetic plastic zari that dulls quickly</td>
+            <td>Certified Tested/Pure Metallic Zari that lasts generations</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Care and Preservation Guide for Traditional Silk Sarees</h2>
+      <ol>
+        <li><strong>Muslin Cloth Storage:</strong> Always wrap your traditional pure pattu sarees in unbleached pure cotton or muslin bags to let the natural silk fibers breathe.</li>
+        <li><strong>Periodic Refolding:</strong> Unfurl and change the fold lines of your silk sarees every 4 to 6 months to prevent zari breakage along creased edges.</li>
+        <li><strong>Avoid Direct Scents:</strong> Never spray alcohol perfumes or direct air fresheners onto metallic zari borders, as chemical compounds cause oxidation.</li>
+        <li><strong>Professional Dry Cleaning:</strong> Entrust your prized heirloom drapes only to reputable dry cleaners specializing in South Indian silk garments.</li>
+      </ol>
+
+      <h2>Experience Authentic Tradition at Thoranam Boutique</h2>
+      <p>
+        Whether curating a royal bridal muhurtham ensemble or honoring auspicious temple festivities, indulge in genuine craftsmanship. Explore Thoranam’s coveted traditional collection online at <a href="https://thoranam.co" class="font-bold underline text-[#800F17]">https://thoranam.co</a> or book a personalized consultation today.
+      </p>
+    `,
+  },
+  {
     slug: "best-saree-shop-in-chennai",
     title: "Best Saree Shop in Chennai: Luxury Handloom Silks, Cottons & Designer Boutique Guide",
     seoTitle: "Best Saree Shop in Chennai | Thoranam Boutique - Handloom Silks & Cottons",
@@ -12,8 +175,8 @@ export const BLOG_POSTS = [
       name: "Thoranam Textile Studio",
       role: "Master Drapers & Heritage Curators",
     },
-    image: "/images/blogs/best-saree-shop-in-chennai.jpg",
-    imageAlt: "Best Saree Shop in Chennai - Royal golden yellow and emerald parrot green Kanchipuram silk saree with rich golden zari motifs from Thoranam Boutique",
+    image: "/images/blogs/best-saree-shop-in-chennai.webp",
+    imageAlt: "Best Saree Shop in Chennai - Elegant model draping an ethereal ice blue pastel saree from Thoranam Boutique",
     product: {
       id: 10,
       url: "https://thoranam.co/products",
