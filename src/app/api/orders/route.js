@@ -16,12 +16,10 @@ export async function POST(request) {
     const body = await request.json();
     const order = await orderController.createOrder(body);
 
-    // Send email notification for direct/COD orders in background
+    // Send email notification for direct/COD orders
     try {
-      sendOrderNotificationEmail(order, {
+      await sendOrderNotificationEmail(order, {
         paymentId: body.payment_id || "COD (Cash on Delivery)",
-      }).catch((emailErr) => {
-        console.error("[Orders API] Background email error:", emailErr);
       });
     } catch (e) {
       console.warn("[Orders API] Email trigger warning:", e);

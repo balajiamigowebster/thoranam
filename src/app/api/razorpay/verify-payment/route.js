@@ -65,13 +65,11 @@ export async function POST(request) {
         savedOrder = orderPayload;
       }
 
-      // Send order notification email to owner (thoranamsarees@gmail.com) and cPanel archive (orders@amigowebster.in)
+      // Send order notification email to owner (thoranamsarees@gmail.com) and customer receipt
       try {
-        sendOrderNotificationEmail(savedOrder, {
+        await sendOrderNotificationEmail(savedOrder, {
           paymentId: razorpay_payment_id,
           orderId: razorpay_order_id,
-        }).catch((emailErr) => {
-          console.error("[Razorpay Verify] Background email sending warning:", emailErr);
         });
       } catch (e) {
         console.warn("[Razorpay Verify] Email trigger error:", e);
