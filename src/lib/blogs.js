@@ -1,5 +1,162 @@
 export const BLOG_POSTS = [
   {
+    slug: "best-saree-shop-in-chennai",
+    title: "Best Saree Shop in Chennai: Luxury Handloom Silks, Cottons & Designer Boutique Guide",
+    seoTitle: "Best Saree Shop in Chennai | Thoranam Boutique - Handloom Silks & Cottons",
+    seoDescription:
+      "Looking for the best saree shop in Chennai? Discover Thoranam Boutique for authentic Kanchipuram silk, Banarasi silk cotton, breezy summer cottons, and bridal drapes.",
+    category: "SHOPPING GUIDE & CHENNAI BOUTIQUE",
+    readTime: "8 min read",
+    publishedAt: "2026-11-26",
+    author: {
+      name: "Thoranam Textile Studio",
+      role: "Master Drapers & Heritage Curators",
+    },
+    image: "/images/blogs/best-saree-shop-in-chennai.webp",
+    imageAlt: "Best Saree Shop in Chennai - Elegant model draping an ethereal ice blue pastel saree from Thoranam Boutique",
+    product: {
+      id: 10,
+      url: "https://thoranam.co/products",
+      title: "Handcrafted Heritage Sarees Collection - Thoranam Chennai",
+      price: "₹ 1,899.00 - ₹ 15,999.00",
+      category: "Pure Silks, Banarasi & Breathable Cottons",
+      color: "Pastel Hues, Jewel Tones & Metallic Zari Weaves",
+      fabric: "Pure Mulberry Silk, Banaras Silk Cotton, Soft Linen & Organic Cotton",
+      inStock: true,
+    },
+    excerpt:
+      "Discover why Thoranam is celebrated as the best saree shop in Chennai. From heirloom Kanchipuram bridal silks and lightweight Banarasi silk cottons to everyday pastel drapes, explore our curated masterclass on Chennai saree shopping.",
+    tags: [
+      "Best Saree Shop in Chennai",
+      "Saree Shop in Chennai",
+      "Best Silk Saree Shops in Chennai",
+      "Chennai Saree Shopping",
+      "Kanchipuram Silk Sarees Chennai",
+      "Designer Sarees Chennai",
+      "Handloom Saree Boutique Chennai",
+      "Thoranam Boutique Chennai",
+      "Bridal Sarees Chennai",
+      "T Nagar Saree Alternatives",
+      "Cotton Sarees Chennai",
+      "Online Saree Store Chennai",
+    ],
+    faqs: [
+      {
+        question: "Which is the best saree shop in Chennai for authentic handloom sarees?",
+        answer:
+          "Thoranam Boutique is recognized among the best saree shops in Chennai for authentic handloom craftsmanship. Specializing in ethically sourced Kanchipuram bridal pattu, breezy Banarasi silk cottons, and handcrafted pastel weaves, Thoranam offers pure fabrics, certified zari, transparent pricing, and personalized styling both in-store and online at https://thoranam.co.",
+      },
+      {
+        question: "Where can I buy bridal silk sarees in Chennai without T. Nagar crowds?",
+        answer:
+          "If you want to avoid overwhelming commercial crowds in T. Nagar, boutique destinations like Thoranam provide curated, boutique-exclusive shopping experiences. With high-resolution digital previews, bespoke video consultations, and tranquil boutique appointments, you can select premium bridal sarees with undivided artisan attention.",
+      },
+      {
+        question: "What types of sarees are most popular in Chennai?",
+        answer:
+          "Chennai's saree lovers cherish traditional pure Kanchipuram silk sarees for weddings and muhurthams, lightweight Banarasi silk-cotton sarees for receptions and festive pujas, featherlight Mangalagiri and Chettinad cottons for daily tropical comfort, and contemporary organza or tissue drapes for evening cocktail parties.",
+      },
+      {
+        question: "How do I check the authenticity of pure silk sarees in Chennai?",
+        answer:
+          "Always look for the official Silk Mark certification tag, test the zari luster (genuine gold or silver zari possesses a warm metallic glow rather than a plastic sheen), inspect the reverse side of the weave (authentic handloom weaves show subtle weaver handcrafting rather than uniform machine knots), and purchase from reputable boutiques like Thoranam.",
+      },
+      {
+        question: "Can I order authentic Chennai sarees online with worldwide shipping?",
+        answer:
+          "Yes. Thoranam Boutique ships authentic handcrafted sarees directly from Chennai across India and worldwide, including the USA, UK, Canada, Singapore, Malaysia, and the UAE, with fully tracked, insured express delivery at https://thoranam.co.",
+      },
+    ],
+    content: `
+      <h2>Welcome to Chennai: India's Capital of Saree Elegance</h2>
+      <p>
+        Chennai has long been celebrated as the spiritual and cultural heart of South Indian handloom textiles. From the classical melodies echoing during the December Margazhi season to grand South Indian temple muhurthams, the saree is woven into the very soul of the city. Whether you are a bride curating her heirloom wedding trousseau, an NRI visiting Tamil Nadu for festival shopping, or someone searching for breezy everyday cottons, finding the <strong>best saree shop in Chennai</strong> is essential to discovering authentic artistry without compromise.
+      </p>
+      <p>
+        While traditional shopping hubs like T. Nagar, Mylapore, and Cathedral Road buzz with heritage crowds, modern connoisseurs are turning to curated boutique ateliers. Leading this renaissance is <strong>Thoranam Boutique</strong>, where traditional handloom mastery meets contemporary luxury, tailored silhouettes, and seamless online shopping.
+      </p>
+
+      <h2>Why Thoranam is Ranked Among the Best Saree Shops in Chennai</h2>
+      <p>
+        In an era of mass-produced power-loom duplicates, Thoranam stands firm on handloom authenticity, transparent pricing, and design exclusivity:
+      </p>
+      <ul>
+        <li><strong>Direct Artisan Partnerships:</strong> Every drape is sourced directly from master weaver clusters across Kanchipuram, Varanasi, Mangalagiri, and Bengal, ensuring fair artisan remuneration and pristine textile integrity.</li>
+        <li><strong>Curated Exclusive Color Palettes:</strong> Beyond standard primary reds and greens, Thoranam curates sophisticated pastel shades, powder blues, sage mints, blush rose, and antique mocha tones that flatter modern celebrations.</li>
+        <li><strong>Weightless Luxury:</strong> We engineer drapes designed for Chennai’s tropical climate—infusing the luminous sheen of pure silk with the airy, breathable comfort of superfine natural cotton.</li>
+        <li><strong>Transparent Quality &amp; Certified Zari:</strong> Strict fabric quality control, pure certified zari thread inspections, and honest customer consultations.</li>
+      </ul>
+
+      <h2>The Ultimate Chennai Saree Guide: Fabrics &amp; Occasions</h2>
+
+      <h3>1. Pure Kanchipuram Silk Sarees (Bridal &amp; Temple Muhurtham)</h3>
+      <p>
+        No Chennai wedding is complete without the majestic rustle of a pure Kanchipuram silk saree. Woven with double warp and three-ply silk thread (murukku pattu), these sarees feature iconic korvai weaving where the contrasting border and pallu are interlocking by hand. Key traditional motifs include the <em>mayil</em> (peacock), <em>rudraksha</em>, <em>yaali</em> (mythical guardian), and classical temple gopuram borders.
+      </p>
+
+      <h3>2. Banarasi Silk Cotton &amp; Tissue Drapes (Festive &amp; Reception Wear)</h3>
+      <p>
+        For evening receptions, sangeets, and festive pujas, heavy bridal silks can feel cumbersome. That is why Chennai fashion enthusiasts adore Thoranam’s signature Banarasi silk cottons and soft metallic tissue sarees. Featuring intricate floral diamond jaal and kadwa zari motifs, they provide regal luminescence while remaining featherlight for hours of dancing and celebrating.
+      </p>
+
+      <h3>3. Mangalagiri, Linen &amp; Organic Cottons (Breezy Daily &amp; Office Elegance)</h3>
+      <p>
+        Chennai’s warm coastal breeze calls for fabrics that breathe. Our handpicked collection of 80s and 100s count combed cottons, textured pure linen sarees, and authentic Mangalagiri Nizam-border drapes ensure unmatched comfort during boardroom presentations, cultural concerts, and relaxed Sunday brunches.
+      </p>
+
+      <h2>Comparing Chennai Saree Shopping Experiences</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Shopping Feature</th>
+            <th>Traditional T. Nagar Mega-Stores</th>
+            <th>Thoranam Boutique (Store &amp; Online)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Atmosphere &amp; Ambience</strong></td>
+            <td>Crowded, rushed, multi-storey sales rush</td>
+            <td>Tranquil, personalized curation &amp; seamless digital store</td>
+          </tr>
+          <tr>
+            <td><strong>Design Exclusivity</strong></td>
+            <td>Mass manufactured identical runs</td>
+            <td>Limited-edition handcrafted artisan drops</td>
+          </tr>
+          <tr>
+            <td><strong>Color Curation</strong></td>
+            <td>Predominantly conventional loud tones</td>
+            <td>Modern pastels, dual tones &amp; heirloom jewel colors</td>
+          </tr>
+          <tr>
+            <td><strong>Fabric Purity</strong></td>
+            <td>Mixed blends often unlabeled</td>
+            <td>100% Tested pure silks, authentic cottons &amp; verified zari</td>
+          </tr>
+          <tr>
+            <td><strong>Worldwide Delivery</strong></td>
+            <td>Varies, cumbersome parcel handling</td>
+            <td>Express worldwide shipping with doorstep tracking</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Essential Tips for Saree Shopping in Chennai</h2>
+      <ol>
+        <li><strong>Inspect the Zari:</strong> High-grade sarees use silver and gold electroplated tested zari or pure zari. Scratch gently or inspect the reverse weave—real zari will reveal a warm reddish-gold silk core rather than white synthetic threads.</li>
+        <li><strong>Check the Draped Weight:</strong> A superior silk-cotton saree should drape gracefully around your curves without ballooning or stiff bunching.</li>
+        <li><strong>Demand Uncut Blouse Lengths:</strong> Authentic sarees provide 80cm to 1 meter of running unstitched blouse fabric matching the saree border and pallu harmony.</li>
+        <li><strong>Choose Digital Convenience:</strong> If traveling across Chennai traffic feels daunting, explore <a href="https://thoranam.co" target="_blank" rel="noopener">Thoranam.co</a> to browse 4K high-resolution drapery photos and video reels from the comfort of your home.</li>
+      </ol>
+
+      <h2>Visit Thoranam: Your Destination for the Best Sarees in Chennai</h2>
+      <p>
+        Whether you are walking down the aisle, hosting a festive festival gathering, or gifting an unforgettable heirloom, experience handloom weaving at its peak. Explore our latest arrivals online at <a href="https://thoranam.co" class="font-bold underline text-[#800F17]">https://thoranam.co</a> and discover why thousands of textile lovers celebrate Thoranam as Chennai’s premier saree boutique.
+      </p>
+    `,
+  },
+  {
     slug: "heritage-gold-banaras-silk-cotton-saree",
     title: "Heritage Gold – Banaras Silk Cotton Saree: Handcrafted Weave, Styling Guide & Buying Tips",
     seoTitle: "Heritage Gold – Banaras Silk Cotton Saree | Thoranam Boutique",
