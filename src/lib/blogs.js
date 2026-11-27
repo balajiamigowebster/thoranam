@@ -1,5 +1,170 @@
 export const BLOG_POSTS = [
   {
+    slug: "buy-silk-sarees-online",
+    title: "Buy Silk Sarees Online: Authentic Handloom Pattu, Bridal Weaves & Worldwide Delivery Guide",
+    seoTitle: "Buy Silk Sarees Online | Pure Handloom Pattu & Bridal Silk Sarees - Thoranam",
+    seoDescription:
+      "Buy pure silk sarees online at Thoranam Boutique. Explore authentic Kanchipuram silk, Banarasi pattu, soft silks, and bridal weaves with Silk Mark guarantee & worldwide shipping.",
+    category: "ONLINE SHOPPING & SILK GUIDE",
+    readTime: "8 min read",
+    publishedAt: "2026-11-27",
+    author: {
+      name: "Thoranam Textile Studio",
+      role: "Lead Handloom & Bridal Curators",
+    },
+    image: "/images/blogs/buy-silk-sarees-online.jpg",
+    imageAlt: "Buy Silk Sarees Online - Beautiful model gracefully draping a vibrant burnt orange checked silk saree with rich chocolate brown zari border from Thoranam Boutique",
+    product: {
+      id: 15,
+      url: "https://thoranam.co/products",
+      title: "Handcrafted Pure Silk Sarees Collection - Thoranam Boutique",
+      price: "₹ 3,499.00 - ₹ 28,500.00",
+      category: "Pure Handloom Silk & Bridal Pattu",
+      color: "Burnt Orange, Royal Mustard, Crimson Red & Pastel Silk Hues",
+      fabric: "100% Certified Mulberry Silk with Pure Silver & Gold Zari",
+      inStock: true,
+    },
+    excerpt:
+      "Looking to buy silk sarees online with guaranteed authenticity? Discover Thoranam Boutique's curated digital atelier featuring certified pure Kanchipuram pattu, lightweight soft silks, Banarasi brocades, and worldwide express shipping.",
+    tags: [
+      "Buy Silk Sarees Online",
+      "Silk Sarees Online Shopping",
+      "Pure Handloom Silk Sarees Online",
+      "Buy Kanchipuram Silk Sarees Online",
+      "Soft Silk Sarees Online",
+      "Bridal Silk Sarees Online",
+      "Pure Pattu Sarees Online",
+      "Thoranam Silk Sarees",
+      "Silk Mark Certified Sarees Online",
+      "Traditional Sarees Online India",
+      "Wedding Sarees Online Shopping",
+      "Buy Indian Sarees Online USA",
+    ],
+    faqs: [
+      {
+        question: "How can I safely buy pure silk sarees online with authenticity guarantee?",
+        answer:
+          "When buying silk sarees online, always choose reputable ateliers like Thoranam Boutique that provide Silk Mark India certification, detailed high-definition 4K weave close-ups, clear fabric composition disclosures (such as pure mulberry silk and tested zari), and transparent customer return or exchange policies.",
+      },
+      {
+        question: "Where is the best place to buy authentic silk sarees online?",
+        answer:
+          "Thoranam Boutique (https://thoranam.co) is one of the premier digital destinations to buy authentic silk sarees online. Sourcing directly from weaver clusters across Kanchipuram, Varanasi, and Arani, Thoranam delivers handloom perfection without middlemen markups.",
+      },
+      {
+        question: "What types of silk sarees are available to buy online at Thoranam?",
+        answer:
+          "You can explore a versatile array of handloom silk drapes, including authentic Korvai bridal Kanchipuram pattu, featherlight Banarasi silk cottons, contemporary printed and checkered soft silks, metallic tissue organza, and festive party-wear drapes.",
+      },
+      {
+        question: "Does Thoranam offer international shipping when I buy silk sarees online?",
+        answer:
+          "Yes. Thoranam offers fully tracked, insured express global shipping to the USA, UK, Canada, Australia, Singapore, Malaysia, UAE, and over 50 countries worldwide with secure international payment gateways.",
+      },
+      {
+        question: "How do I maintain and care for silk sarees bought online?",
+        answer:
+          "Store your pure silk sarees wrapped in breathable unbleached muslin or cotton cloth. Refold them periodically every 4-6 months, keep away from direct moisture or harsh sunlight, avoid direct perfume contact on zari borders, and opt exclusively for professional dry cleaning.",
+      },
+    ],
+    content: `
+      <h2>The Digital Revolution: Why Connoisseurs Buy Silk Sarees Online</h2>
+      <p>
+        The sheer splendor of an Indian silk saree—its regal luster, architectural drape, and sacred cultural resonance—holds a cherished place in every woman's wardrobe. In the past, acquiring an authentic handloom drape required extensive travel to crowded textile markets. Today, discerning patrons and global saree enthusiasts can seamlessly <strong>buy silk sarees online</strong> with absolute confidence, unmatched transparency, and boutique convenience.
+      </p>
+      <p>
+        At <strong>Thoranam Boutique</strong>, we have redefined the online saree shopping experience. By pairing centuries-old handloom weaving traditions with high-definition digital previews, transparent fabric disclosures, and personalized digital styling, finding your dream silk saree has never been more effortless.
+      </p>
+
+      <h2>5 Essential Rules Before You Buy Silk Sarees Online</h2>
+      <p>
+        With thousands of online platforms offering sarees, making an informed purchase ensures you receive genuine heirloom textiles rather than polyester or powerloom duplicates:
+      </p>
+      <ol>
+        <li><strong>Demand Silk Mark Certification:</strong> Authentic pure silk sarees in India carry the certified Silk Mark tag, guaranteeing 100% natural mulberry silk yarn.</li>
+        <li><strong>Examine Close-up Weave Details:</strong> Look for platforms that showcase unedited high-resolution images and video clips of the body, korvai border joints, and intricate pallu motifs.</li>
+        <li><strong>Verify Zari Specifications:</strong> Distinguish between tested/pure electroplated zari (which yields an heirloom metallic glow) and synthetic plastic glitter zari.</li>
+        <li><strong>Review Blouse Fabric Inclusions:</strong> Ensure the saree includes an authentic matching running or contrasting unstitched blouse piece (typically 80cm to 1m).</li>
+        <li><strong>Check Reliable Shipping &amp; Transit Insurance:</strong> Premium online boutiques like Thoranam guarantee tamper-proof packaging, door-to-door tracking, and full transit insurance.</li>
+      </ol>
+
+      <h2>Curated Silk Collections to Buy Online at Thoranam</h2>
+
+      <h3>1. Heirloom Kanchipuram Pattu (Bridal &amp; Muhurtham)</h3>
+      <p>
+        Woven with tightly twisted 3-ply and 4-ply mulberry silk yarns (murukku pattu), these iconic South Indian drapes feature contrasting Korvai borders, pure gold/silver zari, and auspicious motifs like <em>Mayil</em> (peacock), <em>Rudraksha</em>, and temple gopurams.
+      </p>
+
+      <h3>2. Contemporary Checkered &amp; Soft Silk Sarees</h3>
+      <p>
+        For modern celebrations, festive gatherings, and daytime events, our contemporary checkered silks—such as vibrant burnt orange bodies framed by striking dark chocolate borders and subtle golden checks—offer unmatched lightweight drapeability with vibrant panache.
+      </p>
+
+      <h3>3. Regal Banarasi Silk Cotton &amp; Brocades</h3>
+      <p>
+        Striking a harmonious balance between royal Mughal opulence and breathable comfort, our Banarasi silk cottons provide radiant luminescence without the heavy stiffness of traditional brocades.
+      </p>
+
+      <h3>4. Ethereal Tissue &amp; Organza Silks</h3>
+      <p>
+        Perfect for cocktail soirees, sangeet evenings, and contemporary wedding receptions, featuring translucent body textures with radiant metallic threadwork.
+      </p>
+
+      <h2>Why Buy Silk Sarees Online at Thoranam Boutique?</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Shopping Feature</th>
+            <th>Conventional Online Portals</th>
+            <th>Thoranam Boutique Online</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Fabric Authenticity</strong></td>
+            <td>Mixed synthetic blends often unlabeled</td>
+            <td>100% Certified Pure Silk with Silk Mark Verification</td>
+          </tr>
+          <tr>
+            <td><strong>Weaver Source</strong></td>
+            <td>Middlemen brokers &amp; mass traders</td>
+            <td>Direct weaver cooperative partnerships across India</td>
+          </tr>
+          <tr>
+            <td><strong>Visual Accuracy</strong></td>
+            <td>Heavily filtered studio photography</td>
+            <td>Natural true-to-life color palettes &amp; video showcases</td>
+          </tr>
+          <tr>
+            <td><strong>Customer Assistance</strong></td>
+            <td>Automated bots with minimal product knowledge</td>
+            <td>Expert drape consultations &amp; WhatsApp video support</td>
+          </tr>
+          <tr>
+            <td><strong>Worldwide Delivery</strong></td>
+            <td>Standard postal delays</td>
+            <td>Express worldwide doorstep delivery with real-time tracking</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>How to Style Your Silk Saree for Maximum Elegance</h2>
+      <p>
+        When you buy silk sarees online, styling them creatively elevates your complete ensemble:
+      </p>
+      <ul>
+        <li><strong>Contrasting Designer Blouses:</strong> Pair a vibrant warm-toned saree (such as burnt orange or mustard) with a rich dark chocolate brown, deep velvet maroon, or brocade elbow-length blouse.</li>
+        <li><strong>Heirloom Jewellery Pairing:</strong> Classic temple jewellery in antique matte gold, uncut polki chokers, or South Sea pearl guttapusalu malas create a timeless aristocratic aura.</li>
+        <li><strong>Hair &amp; Floral Accents:</strong> A neat low bun adorned with fresh fragrant jasmine (malli poo) or baby's breath flowers complements traditional silk drapes impeccably.</li>
+      </ul>
+
+      <h2>Begin Your Handloom Journey Today</h2>
+      <p>
+        Experience the joy of handloom luxury delivered right to your doorstep. Browse our exclusive collection to <strong>buy silk sarees online</strong> at <a href="https://thoranam.co" class="font-bold underline text-[#800F17]">https://thoranam.co</a> and celebrate the enduring majesty of authentic Indian heritage.
+      </p>
+    `,
+  },
+  {
     slug: "best-traditional-saree-shop-in-chennai",
     title: "Best Traditional Saree Shop in Chennai: Authentic Kanchipuram Pattu, Pure Zari Weaves & Heritage Guide",
     seoTitle: "Best Traditional Saree Shop in Chennai | Thoranam Boutique - Pure Silk & Zari",
