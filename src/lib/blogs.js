@@ -1,5 +1,155 @@
 export const BLOG_POSTS = [
   {
+    slug: "kanchipuram-silk-sarees",
+    title: "Kanchipuram Silk Sarees: Pure Handloom Bridal Pattu, Korvai Weaving & Authenticity Guide",
+    seoTitle: "Kanchipuram Silk Sarees | Pure Handloom Pattu & Bridal Silk - Thoranam",
+    seoDescription:
+      "Explore authentic Kanchipuram silk sarees at Thoranam Boutique. Handwoven pure mulberry silk with korvai borders, pure gold zari motifs, and Silk Mark guarantee.",
+    category: "BRIDAL PATTU & HERITAGE WEAVES",
+    readTime: "9 min read",
+    publishedAt: "2026-11-27",
+    author: {
+      name: "Thoranam Heritage Weavers Guild",
+      role: "Traditional Handloom Conservators",
+    },
+    image: "/images/blogs/kanchipuram-silk-sarees.jpg",
+    imageAlt: "Kanchipuram Silk Sarees - Exquisite copper rose gold pure Kanchipuram silk saree with intricate floral diamond jaal and grand traditional golden zari border",
+    product: {
+      id: 18,
+      url: "https://thoranam.co/products",
+      title: "Copper Rose Gold Heritage Kanchipuram Silk Saree",
+      price: "₹ 12,500.00 - ₹ 32,000.00",
+      category: "Pure Kanchipuram Silk / Bridal Pattu",
+      color: "Copper Rose Gold with Lustrous Pure Metallic Zari",
+      fabric: "100% Mulberry Silk (3-ply Murukku Pattu) with Certified Silver & Gold Zari",
+      inStock: true,
+    },
+    excerpt:
+      "Celebrate the timeless majesty of authentic Kanchipuram silk sarees. Explore our comprehensive guide to pure mulberry silk, Korvai interlocking border artistry, sacred Vedic temple motifs, and how to verify Silk Mark authenticity.",
+    tags: [
+      "Kanchipuram Silk Sarees",
+      "Kanchipuram Pattu Sarees",
+      "Pure Kanchipuram Silk Sarees",
+      "Bridal Kanchipuram Silk Sarees",
+      "Kanchipuram Wedding Sarees",
+      "Original Kanchipuram Sarees",
+      "Traditional Kanchipuram Pattu",
+      "Kanchi Pattu Sarees Online",
+      "Korvai Kanchipuram Silk",
+      "Silk Mark Kanchipuram Saree",
+      "Thoranam Kanchipuram Silks",
+      "Handloom Silk Sarees India",
+    ],
+    faqs: [
+      {
+        question: "What makes authentic Kanchipuram silk sarees so special and durable?",
+        answer:
+          "Authentic Kanchipuram silk sarees are woven from 100% pure mulberry silk yarn twisted tightly into a 3-ply or 4-ply thread (known as 'Murukku Pattu'). This high yarn density gives the saree exceptional tensile strength, a luxuriant weight, and crisp structural pleating that lasts for generations without sagging.",
+      },
+      {
+        question: "What is the traditional 'Korvai' technique in Kanchipuram sarees?",
+        answer:
+          "Korvai is an iconic handloom weaving technique where the body of the saree and its contrasting borders are woven on separate shuttles and interlocked by hand at the seams by two master weavers working synchronously on a single pit loom. This interlocking seam is a hallmark of genuine handloom Kanchipuram silk.",
+      },
+      {
+        question: "How can I verify the purity of a Kanchipuram silk saree?",
+        answer:
+          "Look for the official Silk Mark India certification tag, examine the border joints for authentic Korvai interlocking stitches rather than machine seams, check the zari (authentic tested or pure zari reveals a warm red silk filament core when unraveled slightly), and buy from trusted boutiques like Thoranam.",
+      },
+      {
+        question: "Which motifs are traditionally featured on Kanchipuram silk sarees?",
+        answer:
+          "Sacred motifs derived from South Indian temple carvings include Mayil (peacock chakram), Yali (lion-elephant mythical protector), Rudraksha beads, Gopuram (temple pyramids), Hamsa (mythical swan), and floral diamond jaal patterns symbolizing prosperity and auspicious blessings.",
+      },
+      {
+        question: "Can I buy authentic Kanchipuram silk sarees online with worldwide shipping?",
+        answer:
+          "Yes. Thoranam Boutique (https://thoranam.co) offers certified handloom Kanchipuram silk sarees online with insured, door-to-door express worldwide shipping to the USA, UK, Canada, Australia, Singapore, UAE, and across India.",
+      },
+    ],
+    content: `
+      <h2>The Queen of Silks: The Timeless Legacy of Kanchipuram Silk Sarees</h2>
+      <p>
+        Originating from the historic temple town of Kanchipuram in Tamil Nadu, <strong>Kanchipuram silk sarees</strong>—affectionately known as <em>Kanchi Pattu</em>—are revered as the crowning jewel of Indian handloom textile artistry. For over four centuries, master weavers tracing their lineage to Sage Markandeya (the divine weaver of the gods) have spun fine mulberry silk and luminous metallic zari into breathtaking tapestries of beauty, devotion, and royal grandeur.
+      </p>
+      <p>
+        From South Indian wedding muhurthams and Vedic poojas to milestone anniversaries and international red-carpet galas, an authentic <strong>Kanchipuram silk saree</strong> is an incomparable statement of heritage. At <strong>Thoranam Boutique</strong>, we preserve this sublime tradition through direct partnerships with master weaver guilds, ensuring every drape meets the highest standards of handloom purity and artistry.
+      </p>
+
+      <h2>Anatomy of Authentic Kanchipuram Silk: What Sets It Apart</h2>
+      <p>
+        The distinctive durability and radiant sheen of a genuine Kanchipuram saree stem from unique textile engineering:
+      </p>
+      <ul>
+        <li><strong>Murukku Pattu (High-Twist Mulberry Silk):</strong> The warp and weft use 3-ply and 4-ply tightly twisted silk threads. This imparts a firm, substantial body and allows architectural pleats to stay immaculate all day.</li>
+        <li><strong>Petni &amp; Korvai Interlocking Craftsmanship:</strong> Unlike modern machine weaves where borders are printed or stitched onto the fabric, authentic Kanchipuram sarees have their borders and pallu hand-interlocked with the body using dedicated shuttles operated by two weavers.</li>
+        <li><strong>Certified Pure &amp; Tested Zari:</strong> Authentic Kanchipuram borders are embellished with genuine silver threads electroplated with pure 24-karat gold, creating a warm, non-tarnishing metallic luminescence that endures through generations.</li>
+      </ul>
+
+      <h2>Auspicious Motifs and Sacred Symbols</h2>
+      <p>
+        Every motif handwoven into a Kanchipuram drape draws inspiration from Chola and Pallava temple architecture and Hindu cosmology:
+      </p>
+      <ol>
+        <li><strong>Mayil (Peacock Chakram):</strong> Represents beauty, grace, and celestial elegance.</li>
+        <li><strong>Yali:</strong> A mythical creature combining the features of a lion, elephant, and horse, symbolizing divine protection and strength.</li>
+        <li><strong>Temple Gopuram (Rekku):</strong> Stepped triangular pyramidal spires symbolizing spiritual ascent and architectural symmetry.</li>
+        <li><strong>Floral Diamond Jaal &amp; Buttas:</strong> Symmetrical geometric lattice grids enclosing delicate blooming blossoms representing abundance and joy.</li>
+      </ol>
+
+      <h2>Comparing Handloom Kanchipuram Sarees vs. Powerloom Replicas</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Characteristic</th>
+            <th>Authentic Handloom Kanchipuram (Thoranam)</th>
+            <th>Powerloom / Synthetic Imitation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Silk Quality</strong></td>
+            <td>100% Pure Mulberry Silk with Silk Mark tag</td>
+            <td>Polyester blends or regenerated rayon</td>
+          </tr>
+          <tr>
+            <td><strong>Border Weaving</strong></td>
+            <td>Authentic hand-interlocked Korvai / Petni joint</td>
+            <td>Continuous machine weave or stitched border edge</td>
+          </tr>
+          <tr>
+            <td><strong>Zari Thread</strong></td>
+            <td>Pure silver wire electroplated with gold (Tested Zari)</td>
+            <td>Synthetic metallic plastic film (glitter foil)</td>
+          </tr>
+          <tr>
+            <td><strong>Drape &amp; Longevity</strong></td>
+            <td>Heirloom-grade; lasts 50+ years with proper care</td>
+            <td>Crinkles, pills, and tears after a few wears</td>
+          </tr>
+          <tr>
+            <td><strong>Weaver Remuneration</strong></td>
+            <td>Ethically sourced; supports artisan livelihood</td>
+            <td>Industrial automation with zero artisan benefit</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Essential Care and Maintenance for Heirloom Kanchipuram Silks</h2>
+      <ul>
+        <li><strong>Muslin Wrap Storage:</strong> Wrap your Kanchi pattu in pure unbleached cotton or muslin cloth. Avoid plastic covers, which trap moisture and cause mildew.</li>
+        <li><strong>Refold Frequently:</strong> Change the fold orientation every 4 to 6 months to prevent the dense zari fibers from becoming brittle along crease lines.</li>
+        <li><strong>No Direct Fragrances:</strong> Keep alcohol-based perfumes and chemical deodorants away from pure zari borders to prevent oxidation.</li>
+        <li><strong>Professional Dry Clean Only:</strong> Never machine wash or hand-soak your pure silk saree; always choose professional dry cleaning.</li>
+      </ul>
+
+      <h2>Discover Certified Kanchipuram Silk Sarees at Thoranam</h2>
+      <p>
+        Whether you are a bride preparing for your sacred muhurtham, a mother curating an heirloom gift, or an admirer of timeless Indian handlooms, experience genuine Kanchipuram weaving at its zenith. Browse Thoranam Boutique’s handpicked bridal and heritage collection online at <a href="https://thoranam.co" class="font-bold underline text-[#800F17]">https://thoranam.co</a> with express doorstep delivery worldwide.
+      </p>
+    `,
+  },
+  {
     slug: "buy-silk-sarees-online",
     title: "Buy Silk Sarees Online: Authentic Handloom Pattu, Bridal Weaves & Worldwide Delivery Guide",
     seoTitle: "Buy Silk Sarees Online | Pure Handloom Pattu & Bridal Silk Sarees - Thoranam",
